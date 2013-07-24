@@ -1,0 +1,14 @@
+blib*
+Makefile
+Makefile.old
+pm_to_blib*
+*.tar.gz
+.lwpcookies
+cover_db
+pod2htm*.tmp
+/RTx-REST*
+*.bak
+*.swp
+/MYMETA.*
+/t/tmp
+/xt/tmp
