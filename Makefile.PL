@@ -12,6 +12,7 @@ requires_rt('4.1.17');
 requires 'Encode';
 requires 'JSON';
 requires 'Moose';
+requires 'MooseX::NonMoose';
 requires 'namespace::autoclean';
 requires 'Plack::Builder';
 requires 'Scalar::Util';
