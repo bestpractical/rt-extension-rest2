@@ -10,6 +10,8 @@ use Web::Machine::Util qw( bind_path create_date );
 use Encode qw( decode_utf8 );
 use JSON ();
 
+requires 'current_user';
+
 has 'record_class' => (
     is          => 'ro',
     isa         => 'ClassName',
@@ -21,13 +23,6 @@ has 'record_class' => (
 has 'record' => (
     is          => 'ro',
     isa         => 'RT::Record',
-    required    => 1,
-    lazy_build  => 1,
-);
-
-has 'current_user' => (
-    is          => 'ro',
-    isa         => 'RT::CurrentUser',
     required    => 1,
     lazy_build  => 1,
 );
@@ -45,11 +40,6 @@ sub _build_record {
     my $record = $self->record_class->new( $self->current_user );
     $record->Load( bind_path('/:id', $self->request->path_info) );
     return $record;
-}
-
-# XXX TODO: real sessions
-sub _build_current_user {
-    $_[0]->request->env->{"rt.current_user"} || RT::CurrentUser->new;
 }
 
 sub serialize_record {
