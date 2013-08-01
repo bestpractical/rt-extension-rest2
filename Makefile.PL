@@ -18,10 +18,7 @@ requires 'namespace::autoclean';
 requires 'Plack::Builder';
 requires 'Scalar::Util';
 requires 'UNIVERSAL::require';
-requires 'Web::Machine';
-
-# A critical bug fix for Web::Machine is needed for most clients to behave properly:
-#   cpanm git://github.com/tsibley/Web-Machine.git@content-length-after-filters
+requires 'Web::Machine' => '0.12';
 
 sign;
 WriteAll;
