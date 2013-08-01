@@ -11,6 +11,7 @@ requires_rt('4.1.17');
 
 requires 'Encode';
 requires 'JSON';
+requires 'Module::Pluggable';
 requires 'Moose';
 requires 'MooseX::NonMoose';
 requires 'namespace::autoclean';

@@ -1,5 +1,7 @@
 use strict;
 use warnings;
+use 5.010;
+
 package RTx::REST;
 
 our $VERSION = '0.01';
@@ -7,6 +9,11 @@ our $VERSION = '0.01';
 use UNIVERSAL::require;
 use Plack::Builder;
 use Web::Machine;
+use Module::Pluggable
+    sub_name    => "_resources",
+    search_path => ["RTx::REST::Resource"],
+    max_depth   => 4,
+    require     => 1;
 
 =head1 NAME
 
@@ -16,16 +23,22 @@ RTx-REST - Adds a modern REST API to RT under /REST/2.0/
 
 # XXX TODO: API doc
 
+sub resources {
+    state @resources;
+    @resources = grep { s/^RTx::REST::Resource:://; $_ } $_[0]->_resources
+        unless @resources;
+    return @resources;
+}
+
 sub resource {
-    my $class = "RTx::REST::Resource::$_[0]";
-    $class->require or die $@;
     Web::Machine->new(
-        resource => $class,
+        resource => "RTx::REST::Resource::$_[0]",
     )->to_app;
 }
 
 sub app {
-    sub {
+    my $class = shift;
+    return sub {
         # XXX TODO: logging of SQL queries in RT's framework for doing so
         # XXX TODO: Need a dispatcher?  Or do it inside resources?  Web::Simple?
         RT::ConnectToDatabase();
@@ -47,7 +60,7 @@ sub app {
                     }
                 };
             mount "/\L$_"   => resource($_)
-                for qw(Ticket Queue User);
+                for $class->resources;
             mount "/"       => sub { [ 404, ['Content-type' => 'text/plain'], ['Unknown resource'] ] };
         };
         $dispatch->(@_);
