@@ -18,9 +18,15 @@ no_index:
   directory:
     - inc
 requires:
+  Encode: 0
+  JSON: 0
+  Moose: 0
+  MooseX::NonMoose: 0
   Plack::Builder: 0
+  Scalar::Util: 0
   UNIVERSAL::require: 0
   Web::Machine: 0
+  namespace::autoclean: 0
 resources:
   license: http://opensource.org/licenses/gpl-license.php
 version: 0.01
