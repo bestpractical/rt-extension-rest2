@@ -43,13 +43,20 @@ sub _build_record {
 }
 
 sub serialize_record {
-    my $self = shift;
-    my %data = $self->record->Serialize(@_);
+    my $self    = shift;
+    my $record  = $self->record;
+    my %data    = $record->Serialize(@_);
 
     for my $column (grep !ref($data{$_}), keys %data) {
-        if ($self->record->_Accessible($column => "read")) {
-            # XXX TODO: dates are in GMT, and should be marked as such
-            $data{$column} = $self->record->$column;
+        if ($record->_Accessible($column => "read")) {
+            $data{$column} = $record->$column;
+
+            # Promote raw SQL dates to a standard format
+            if ($record->_Accessible($column => "type") =~ /(datetime|timestamp)/i) {
+                my $date = RT::Date->new( $self->current_user );
+                $date->Set( Format => 'sql', Value => $data{$column} );
+                $data{$column} = $date->W3CDTF( Timezone => 'UTC' );
+            }
         } else {
             delete $data{$column};
         }
