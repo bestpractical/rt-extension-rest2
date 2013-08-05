@@ -12,12 +12,12 @@ requires_rt('4.1.17');
 requires 'Encode';
 requires 'JSON';
 requires 'Module::Pluggable' => '4.8';
+requires 'Module::Runtime';
 requires 'Moose';
 requires 'MooseX::NonMoose';
 requires 'namespace::autoclean';
 requires 'Plack::Builder';
 requires 'Scalar::Util';
-requires 'UNIVERSAL::require';
 requires 'Web::Machine' => '0.12';
 
 sign;
