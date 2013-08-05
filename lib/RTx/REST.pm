@@ -15,9 +15,53 @@ use Module::Pluggable
     max_depth   => 4,
     require     => 1;
 
+=encoding utf-8
+
 =head1 NAME
 
 RTx-REST - Adds a modern REST API to RT under /REST/2.0/
+
+=head1 USAGE
+
+Currently provided endpoints under C</REST/2.0/> are:
+
+    GET /ticket/:id
+    PUT /ticket/:id <JSON body>
+    DELETE /ticket/:id
+        Sets ticket status to "deleted".
+
+    GET /queue/:id
+    PUT /queue/:id <JSON body>
+    DELETE /queue/:id
+        Disables the queue.
+
+    GET /user/:id
+    PUT /user/:id <JSON body>
+    DELETE /user/:id
+        Disables the user.
+
+For queues and users, C<:id> may be the numeric id or the unique name.
+
+When a GET request is made, each endpoint returns a JSON representation of the
+specified record, or a 404 if not found.
+
+When a PUT request is made, the request body should be a modified copy (or
+partial copy) of the JSON representation of the specified record, and the
+record will be updated.
+
+A DELETE request to a resource will delete or disable the underlying record.
+
+=head2 Authentication
+
+Currently authentication is limited to internal RT usernames and passwords,
+provided via HTTP Basic auth.  Most HTTP libraries already have a way of
+providing basic auth credentials when making requests.  Using curl, for
+example:
+
+    curl -u username:password …
+
+This sort of authentication should B<always> be done over HTTPS/SSL for
+security.  You should only serve up the C</REST/2.0/> endpoint over SSL.
 
 =cut
 
