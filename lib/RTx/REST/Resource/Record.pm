@@ -125,6 +125,14 @@ sub to_json {
     return JSON::to_json($self->serialize_record, { pretty => 1 });
 }
 
+sub finish_request {
+    my $self = shift;
+    # Ensure the record object is destroyed before the request finishes, for
+    # any cleanup that may need to happen (i.e. TransactionBatch).
+    $self->clear_record;
+    return $self->SUPER::finish_request(@_);
+}
+
 __PACKAGE__->meta->make_immutable;
 
 1;
