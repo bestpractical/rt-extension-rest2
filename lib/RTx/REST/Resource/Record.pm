@@ -81,6 +81,10 @@ sub serialize_record {
             url     => "/$class/$id",
         };
     }
+
+    # Add the resource url for this record
+    $data{_url} = join "/", $self->base_uri, $self->record->id;
+
     return \%data;
 }
 
