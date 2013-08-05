@@ -5,6 +5,7 @@ use warnings;
 use Moose::Role;
 use namespace::autoclean;
 use JSON ();
+use RTx::REST::Util qw( looks_like_uid );
 
 requires 'record';
 requires 'record_class';
@@ -23,6 +24,22 @@ sub from_json {
 sub update_resource {
     my $self = shift;
     my $data = shift;
+
+    # Sanitize input
+    for my $field (sort keys %$data) {
+        my $value = $data->{$field};
+        next unless ref $value;
+        if (looks_like_uid($value)) {
+            # Deconstruct UIDs back into simple foreign key IDs, assuming it
+            # points to the same record type (class).
+            $data->{$field} = $value->{id} || 0;
+        }
+        else {
+            RT->Logger->debug("Received unknown value via JSON for field $field: ".ref($value));
+            delete $data->{$field};
+        }
+    }
+
     my @results = $self->record->Update(
         ARGSRef       => $data,
         AttributesRef => [ $self->record->WritableAttributes ],
