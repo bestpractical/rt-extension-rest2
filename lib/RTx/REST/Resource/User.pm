@@ -6,7 +6,7 @@ use Moose;
 use namespace::autoclean;
 
 extends 'RTx::REST::Resource::Record';
-with 'RTx::REST::Resource::Record::DisableOnDelete';
+with 'RTx::REST::Resource::Record::DeletableByDisabling';
 with 'RTx::REST::Resource::Record::DisabledFromPrincipal';
 
 around 'serialize_record' => sub {

@@ -105,6 +105,14 @@ sub last_modified {
     return create_date($updated);
 }
 
+sub allowed_methods {
+    my $self = shift;
+    my @ok = ('GET', 'HEAD');
+    push @ok, 'DELETE'  if $self->DOES("RTx::REST::Resource::Record::Deletable");
+    push @ok, 'PUT'     if $self->DOES("RTx::REST::Resource::Record::Updatable");
+    return \@ok;
+}
+
 sub charsets_provided { [ 'utf-8' ] }
 sub default_charset   {   'utf-8'   }
 

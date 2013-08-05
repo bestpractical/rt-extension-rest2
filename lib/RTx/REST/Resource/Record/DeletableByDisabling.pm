@@ -1,4 +1,4 @@
-package RTx::REST::Resource::Record::DisableOnDelete;
+package RTx::REST::Resource::Record::DeletableByDisabling;
 use strict;
 use warnings;
 

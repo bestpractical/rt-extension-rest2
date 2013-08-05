@@ -8,15 +8,6 @@ use namespace::autoclean;
 requires 'record';
 requires 'record_class';
 
-around 'allowed_methods' => sub {
-    my $orig = shift;
-    my $self = shift;
-    my $ok   = $self->$orig(@_);
-    push @$ok, "DELETE"
-        unless grep $_ eq "DELETE", @$ok;
-    return $ok;
-};
-
 sub delete_resource {
     my $self = shift;
     my ($ok, $msg) = $self->record->Delete;
