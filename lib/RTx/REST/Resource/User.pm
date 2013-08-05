@@ -7,6 +7,7 @@ use namespace::autoclean;
 
 extends 'RTx::REST::Resource::Record';
 with 'RTx::REST::Resource::Record::DeletableByDisabling';
+with 'RTx::REST::Resource::Record::Updatable';
 
 around 'serialize_record' => sub {
     my $orig = shift;
