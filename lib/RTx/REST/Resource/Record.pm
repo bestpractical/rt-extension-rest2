@@ -84,6 +84,10 @@ sub serialize_record {
     return \%data;
 }
 
+sub base_uri {
+    $_[0]->request->base
+}
+
 sub resource_exists {
     $_[0]->record->id
 }
