@@ -1,11 +1,12 @@
-package RTx::REST::Resource::Role::Record::Deletable;
+package RTx::REST::Resource::Record::Deletable;
 use strict;
 use warnings;
 
 use Moose::Role;
 use namespace::autoclean;
 
-with 'RTx::REST::Resource::Role::Record';
+requires 'record';
+requires 'record_class';
 
 around 'allowed_methods' => sub {
     my $orig = shift;

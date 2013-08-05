@@ -1,11 +1,11 @@
-package RTx::REST::Resource::Role::Record::DisableOnDelete;
+package RTx::REST::Resource::Record::DisableOnDelete;
 use strict;
 use warnings;
 
 use Moose::Role;
 use namespace::autoclean;
 
-with 'RTx::REST::Resource::Role::Record::Deletable';
+with 'RTx::REST::Resource::Record::Deletable';
 
 sub delete_resource {
     my $self = shift;

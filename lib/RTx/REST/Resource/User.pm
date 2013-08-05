@@ -5,10 +5,9 @@ use warnings;
 use Moose;
 use namespace::autoclean;
 
-extends 'RTx::REST::Resource';
-with 'RTx::REST::Resource::Role::Record';
-with 'RTx::REST::Resource::Role::Record::DisableOnDelete';
-with 'RTx::REST::Resource::Role::Record::DisabledFromPrincipal';
+extends 'RTx::REST::Resource::Record';
+with 'RTx::REST::Resource::Record::DisableOnDelete';
+with 'RTx::REST::Resource::Record::DisabledFromPrincipal';
 
 around 'serialize_record' => sub {
     my $orig = shift;

@@ -5,9 +5,8 @@ use warnings;
 use Moose;
 use namespace::autoclean;
 
-extends 'RTx::REST::Resource';
-with 'RTx::REST::Resource::Role::Record';
-with 'RTx::REST::Resource::Role::Record::Deletable';
+extends 'RTx::REST::Resource::Record';
+with 'RTx::REST::Resource::Record::Deletable';
 
 sub forbidden {
     my $self = shift;

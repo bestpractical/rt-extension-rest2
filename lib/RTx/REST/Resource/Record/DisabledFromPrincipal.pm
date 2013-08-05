@@ -1,11 +1,12 @@
-package RTx::REST::Resource::Role::Record::DisabledFromPrincipal;
+package RTx::REST::Resource::Record::DisabledFromPrincipal;
 use strict;
 use warnings;
 
 use Moose::Role;
 use namespace::autoclean;
 
-with 'RTx::REST::Resource::Role::Record';
+requires 'record';
+requires 'record_class';
 
 around 'serialize_record' => sub {
     my $orig = shift;

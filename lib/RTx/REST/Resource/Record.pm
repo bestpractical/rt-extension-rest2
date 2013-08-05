@@ -1,16 +1,16 @@
-package RTx::REST::Resource::Role::Record;
+package RTx::REST::Resource::Record;
 use strict;
 use warnings;
 
-use Moose::Role;
+use Moose;
 use namespace::autoclean;
+
+extends 'RTx::REST::Resource';
 
 use Scalar::Util qw( blessed );
 use Web::Machine::Util qw( bind_path create_date );
 use Encode qw( decode_utf8 );
 use JSON ();
-
-requires 'current_user';
 
 has 'record_class' => (
     is          => 'ro',
@@ -116,5 +116,7 @@ sub to_json {
     my $self = shift;
     return JSON::to_json($self->serialize_record, { pretty => 1 });
 }
+
+__PACKAGE__->meta->make_immutable;
 
 1;
