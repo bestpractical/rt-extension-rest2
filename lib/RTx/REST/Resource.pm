@@ -27,7 +27,6 @@ sub finish_request {
     }
 }
 
-no Moose;
 __PACKAGE__->meta->make_immutable;
 
 1;
