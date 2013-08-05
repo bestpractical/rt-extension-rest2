@@ -7,13 +7,13 @@ use namespace::autoclean;
 
 extends 'RTx::REST::Resource::Record';
 with 'RTx::REST::Resource::Record::DeletableByDisabling';
-with 'RTx::REST::Resource::Record::DisabledFromPrincipal';
 
 around 'serialize_record' => sub {
     my $orig = shift;
     my $self = shift;
     my $data = $self->$orig(@_);
     $data->{Privileged} = $self->record->Privileged ? 1 : 0;
+    $data->{Disabled}   = $self->record->PrincipalObj->Disabled;
     return $data;
 };
 
