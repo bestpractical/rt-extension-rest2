@@ -5,6 +5,7 @@ use warnings;
 use Sub::Exporter -setup => {
     exports => [qw[
         looks_like_uid
+        expand_uid
         serialize_record
     ]]
 };
@@ -14,6 +15,25 @@ sub looks_like_uid {
     return 0 unless ref $value eq 'HASH';
     return 0 unless $value->{type} and $value->{id} and $value->{url};
     return 1;
+}
+
+sub expand_uid {
+    my $uid = shift;
+       $uid = $$uid if ref $uid eq 'SCALAR';
+
+    return if not defined $uid;
+
+    my ($class, $rtname, $id) = $uid =~ /^([^-]+?)(?:-(.+?))?-(.+)$/;
+    return unless $class and $id;
+
+    $class =~ s/^RT:://;
+    $class = lc $class;
+
+    return {
+        type    => $class,
+        id      => $id,
+        url     => "/$class/$id",
+    };
 }
 
 sub serialize_record {
@@ -37,22 +57,7 @@ sub serialize_record {
 
     # Replace UIDs with object placeholders
     for my $uid (grep ref eq 'SCALAR', values %data) {
-        if (not defined $$uid) {
-            $uid = undef;
-            next;
-        }
-
-        my ($class, $rtname, $id) = $$uid =~ /^([^-]+?)(?:-(.+?))?-(.+)$/;
-        next unless $class and $id;
-
-        $class =~ s/^RT:://;
-        $class = lc $class;
-
-        $uid = {
-            type    => $class,
-            id      => $id,
-            url     => "/$class/$id",
-        };
+        $uid = expand_uid($uid);
     }
     return \%data;
 }
