@@ -12,6 +12,7 @@ use Web::Machine::Util qw( bind_path create_date );
 use Encode qw( decode_utf8 );
 use Module::Runtime qw( require_module );
 use JSON ();
+use RTx::REST::Util qw( serialize_record );
 
 has 'record_class' => (
     is          => 'ro',
@@ -43,50 +44,14 @@ sub _build_record {
     return $record;
 }
 
-sub serialize_record {
-    my $self    = shift;
-    my $record  = $self->record;
-    my %data    = $record->Serialize(@_);
-
-    for my $column (grep !ref($data{$_}), keys %data) {
-        if ($record->_Accessible($column => "read")) {
-            $data{$column} = $record->$column;
-
-            # Promote raw SQL dates to a standard format
-            if ($record->_Accessible($column => "type") =~ /(datetime|timestamp)/i) {
-                my $date = RT::Date->new( $self->current_user );
-                $date->Set( Format => 'sql', Value => $data{$column} );
-                $data{$column} = $date->W3CDTF( Timezone => 'UTC' );
-            }
-        } else {
-            delete $data{$column};
-        }
-    }
-
-    # Replace UIDs with object placeholders
-    for my $uid (grep ref eq 'SCALAR', values %data) {
-        if (not defined $$uid) {
-            $uid = undef;
-            next;
-        }
-
-        my ($class, $rtname, $id) = $$uid =~ /^([^-]+?)(?:-(.+?))?-(.+)$/;
-        next unless $class and $id;
-
-        $class =~ s/^RT:://;
-        $class = lc $class;
-
-        $uid = {
-            type    => $class,
-            id      => $id,
-            url     => "/$class/$id",
-        };
-    }
+sub serialize {
+    my $self = shift;
+    my $data = serialize_record( $self->record );
 
     # Add the resource url for this record
-    $data{_url} = join "/", $self->base_uri, $self->record->id;
+    $data->{_url} = join "/", $self->base_uri, $self->record->id;
 
-    return \%data;
+    return $data;
 }
 
 sub base_uri {
@@ -131,7 +96,7 @@ sub content_types_provided { [
 
 sub to_json {
     my $self = shift;
-    return JSON::to_json($self->serialize_record, { pretty => 1 });
+    return JSON::to_json($self->serialize, { pretty => 1 });
 }
 
 sub finish_request {

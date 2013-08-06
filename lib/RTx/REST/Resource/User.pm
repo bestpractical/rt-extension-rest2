@@ -9,7 +9,7 @@ extends 'RTx::REST::Resource::Record';
 with 'RTx::REST::Resource::Record::DeletableByDisabling';
 with 'RTx::REST::Resource::Record::Updatable';
 
-around 'serialize_record' => sub {
+around 'serialize' => sub {
     my $orig = shift;
     my $self = shift;
     my $data = $self->$orig(@_);
