@@ -30,6 +30,8 @@ Currently provided endpoints under C</REST/2.0/> are:
     DELETE /ticket/:id
         Sets ticket status to "deleted".
 
+    GET /tickets?query=<TicketSQL>
+
     GET /queue/:id
     PUT /queue/:id <JSON body>
     DELETE /queue/:id
