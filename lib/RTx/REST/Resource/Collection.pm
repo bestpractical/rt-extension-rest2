@@ -64,8 +64,6 @@ sub serialize {
     my $collection = $self->collection;
     my @results;
 
-    # XXX TODO: paging
-
     while (my $item = $collection->Next) {
         push @results, serialize_record($item);
     }
