@@ -9,8 +9,15 @@ extends 'RTx::REST::Resource::Collection';
 
 use RT::Search::Simple;
 
-sub limit_collection {
-    my ($self, $tickets) = @_;
+has 'query' => (
+    is          => 'ro',
+    isa         => 'Str',
+    required    => 1,
+    lazy_build  => 1,
+);
+
+sub _build_query {
+    my $self  = shift;
     my $query = $self->request->param('query') || "";
 
     if ($self->request->param('simple') and $query) {
@@ -18,13 +25,18 @@ sub limit_collection {
         # XXX TODO: Special-casing of "#NNN" isn't used
         my $search = RT::Search::Simple->new(
             Argument    => $query,
-            TicketsObj  => $tickets,
+            TicketsObj  => $self->collection,
         );
         $query = $search->QueryToSQL;
     }
+    return $query;
+}
 
-    my ($ok, $msg) = $tickets->FromSQL($query);
-    # XXX TODO: thread errors back to client; abort request with 4xx code?
+sub limit_collection {
+    my $self = shift;
+    my ($ok, $msg) = $self->collection->FromSQL( $self->query );
+    $self->response->body($msg) if not $ok;
+    return $ok;
 }
 
 __PACKAGE__->meta->make_immutable;

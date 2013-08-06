@@ -40,24 +40,28 @@ sub _collection_class {
 sub _build_collection {
     my $self = shift;
     my $collection = $self->collection_class->new( $self->current_user );
-    $self->limit_collection($collection);
-    $self->paging($collection);
     return $collection;
 }
 
-sub paging {
-    my ($self, $collection) = @_;
+sub setup_paging {
+    my $self = shift;
     my $per_page = $self->request->param('per_page') || 20;
        $per_page = 20  if $per_page <= 0;
        $per_page = 100 if $per_page > 100;
-    $collection->RowsPerPage($per_page);
+    $self->collection->RowsPerPage($per_page);
 
     my $page = $self->request->param('page') || 1;
        $page = 1 if $page < 0;
-    $collection->GotoPage($page - 1);
+    $self->collection->GotoPage($page - 1);
 }
 
-sub limit_collection { }
+sub limit_collection { 1 }
+
+sub search {
+    my $self = shift;
+    $self->setup_paging;
+    return $self->limit_collection;
+}
 
 sub serialize {
     my $self = shift;
@@ -87,6 +91,8 @@ sub content_types_provided { [
 
 sub to_json {
     my $self = shift;
+    $self->search
+        or return \400;
     return JSON::to_json($self->serialize, { pretty => 1 });
 }
 
