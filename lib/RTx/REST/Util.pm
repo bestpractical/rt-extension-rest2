@@ -42,6 +42,8 @@ sub serialize_record {
 
     for my $column (grep !ref($data{$_}), keys %data) {
         if ($record->_Accessible($column => "read")) {
+            # Replace values via the Perl API for consistency, access control,
+            # and utf-8 handling.
             $data{$column} = $record->$column;
 
             # Promote raw SQL dates to a standard format
