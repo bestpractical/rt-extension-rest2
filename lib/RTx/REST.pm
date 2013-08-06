@@ -94,6 +94,20 @@ example:
 This sort of authentication should B<always> be done over HTTPS/SSL for
 security.  You should only serve up the C</REST/2.0/> endpoint over SSL.
 
+=head2 Conditional requests (If-Modified-Since)
+
+You can take advantage of the C<Last-Modified> headers returned by most single
+resource endpoints.  Add a C<If-Modified-Since> header to your requests for
+the same resource, using the most recent C<Last-Modified> value seen, and the
+API may respond with a 304 Not Modified.  You can also use HEAD requests to
+check for updates without receiving the actual content when there is a newer
+version.
+
+=head2 Status codes
+
+The REST API uses the full range of HTTP status codes, and your client should
+handle them appropriately.
+
 =cut
 
 # XXX TODO: API doc
