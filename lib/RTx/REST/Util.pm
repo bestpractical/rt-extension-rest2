@@ -59,6 +59,22 @@ sub serialize_record {
     for my $uid (grep ref eq 'SCALAR', values %data) {
         $uid = expand_uid($uid);
     }
+
+    # Include role members, if applicable
+    if ($record->DOES("RT::Record::Role::Roles")) {
+        for my $role ($record->Roles) {
+            my $members = $data{$role} = [];
+            my $group = $record->RoleGroup($role);
+            my $gm = $group->MembersObj;
+            while ($_ = $gm->Next) {
+                push @$members, expand_uid($_->MemberObj->Object->UID);
+            }
+
+            # Avoid the extra array ref for single member roles
+            $data{$role} = shift @$members
+                if $group->SingleMemberRoleGroup;
+        }
+    }
     return \%data;
 }
 
