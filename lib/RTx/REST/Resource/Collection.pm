@@ -41,7 +41,20 @@ sub _build_collection {
     my $self = shift;
     my $collection = $self->collection_class->new( $self->current_user );
     $self->limit_collection($collection);
+    $self->paging($collection);
     return $collection;
+}
+
+sub paging {
+    my ($self, $collection) = @_;
+    my $per_page = $self->request->param('per_page') || 20;
+       $per_page = 20  if $per_page <= 0;
+       $per_page = 100 if $per_page > 100;
+    $collection->RowsPerPage($per_page);
+
+    my $page = $self->request->param('page') || 1;
+       $page = 1 if $page < 0;
+    $collection->GotoPage($page - 1);
 }
 
 sub limit_collection { }
@@ -57,9 +70,11 @@ sub serialize {
         push @results, serialize_record($item);
     }
     return {
-        count => scalar(@results)       || 0,
-        total => $collection->CountAll  || 0,
-        items => \@results,
+        count       => scalar(@results)         + 0,
+        total       => $collection->CountAll    + 0,
+        per_page    => $collection->RowsPerPage + 0,
+        page        => ($collection->FirstRow / $collection->RowsPerPage) + 1,
+        items       => \@results,
     };
 }
 

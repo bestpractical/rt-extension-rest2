@@ -23,6 +23,8 @@ RTx-REST - Adds a modern REST API to RT under /REST/2.0/
 
 =head1 USAGE
 
+=head2 Summary
+
 Currently provided endpoints under C</REST/2.0/> are:
 
     GET /ticket/:id
@@ -45,13 +47,40 @@ Currently provided endpoints under C</REST/2.0/> are:
 For queues and users, C<:id> may be the numeric id or the unique name.
 
 When a GET request is made, each endpoint returns a JSON representation of the
-specified record, or a 404 if not found.
+specified resource, or a 404 if not found.
 
 When a PUT request is made, the request body should be a modified copy (or
-partial copy) of the JSON representation of the specified record, and the
+partial copy) of the JSON representation of the specified resource, and the
 record will be updated.
 
 A DELETE request to a resource will delete or disable the underlying record.
+
+=head2 Paging
+
+All plural resources (such as C</tickets>) require pagination, controlled by
+the query parameters C<page> and C<per_page>.  The default page size is 20
+items, but it may be increased up to 100 (or decreased if desired).  Page
+numbers start at 1.
+
+=head2 Example of plural resources (collections)
+
+Resources which represent a collection of other resources use the following
+standard JSON format:
+
+    {
+       "count" : 20,
+       "page" : 1,
+       "per_page" : 20,
+       "total" : 3810,
+       "items" : [
+          { … },
+          { … },
+          …
+       ]
+    }
+
+Each item is nearly the same representation used when an individual resource
+is requested.
 
 =head2 Authentication
 
