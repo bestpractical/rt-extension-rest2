@@ -5,7 +5,7 @@ use warnings;
 use Moose::Role;
 use namespace::autoclean;
 use JSON ();
-use RTx::REST::Util qw( deserialize_record );
+use RTx::REST::Util qw( deserialize_record error_as_json );
 
 requires 'record';
 requires 'record_class';
@@ -37,8 +37,9 @@ sub update_resource {
     my $data = shift;
 
     if (not $self->resource_exists) {
-        $self->response->body("Resource does not exist; use POST to create");
-        return \404;
+        return error_as_json(
+            $self->response,
+            \404, "Resource does not exist; use POST to create");
     }
 
     # XXX TODO: ->Update doesn't handle roles
@@ -57,16 +58,18 @@ sub create_resource {
     my $data = shift;
 
     if ($self->resource_exists) {
-        $self->response->body("Resource already exists; use PUT to update");
-        return \409;
+        return error_as_json(
+            $self->response,
+            \409, "Resource already exists; use PUT to update");
     }
 
     my ($ok, $msg) = $self->record->Create( %$data );
     if ($ok) {
         return;
     } else {
-        $self->response->body($msg || "Create failed for unknown reason");
-        return \409;
+        return error_as_json(
+            $self->response,
+            \409, $msg || "Create failed for unknown reason");
     }
 }
 

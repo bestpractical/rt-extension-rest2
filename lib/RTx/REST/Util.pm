@@ -8,6 +8,7 @@ use Sub::Exporter -setup => {
         expand_uid
         serialize_record
         deserialize_record
+        error_as_json
     ]]
 };
 
@@ -112,6 +113,18 @@ sub deserialize_record {
         }
     }
     return $data;
+}
+
+sub error_as_json {
+    my $response = shift;
+    my $return = shift;
+    $response->header( "Content-type" => "application/json; charset=utf-8" );
+    $response->body(
+        JSON::to_json(
+            { message => join "", @_ }
+        )
+    );
+    return $return;
 }
 
 1;
