@@ -41,6 +41,7 @@ sub update_resource {
         return \404;
     }
 
+    # XXX TODO: ->Update doesn't handle roles
     my @results = $self->record->Update(
         ARGSRef       => $data,
         AttributesRef => [ $self->record->WritableAttributes ],

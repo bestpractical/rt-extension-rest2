@@ -13,6 +13,7 @@ sub delete_resource {
     my ($ok, $msg) = $self->record->Delete;
     RT->Logger->debug("Failed to delete ", $self->record_class, " #", $self->record->id, ": $msg")
         unless $ok;
+    # XXX TODO: why can't I return a status code here?  only true/false is available.
     return $ok;
 }
 
