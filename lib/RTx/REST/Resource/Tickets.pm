@@ -6,6 +6,7 @@ use Moose;
 use namespace::autoclean;
 
 extends 'RTx::REST::Resource::Collection';
+with 'RTx::REST::Resource::Collection::ProcessPOSTasGET';
 
 use RT::Search::Simple;
 
@@ -30,6 +31,10 @@ sub _build_query {
         $query = $search->QueryToSQL;
     }
     return $query;
+}
+
+sub allowed_methods {
+    [ 'GET', 'HEAD', 'POST' ]
 }
 
 sub limit_collection {
