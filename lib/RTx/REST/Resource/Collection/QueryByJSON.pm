@@ -7,6 +7,8 @@ use namespace::autoclean;
 
 use JSON ();
 
+with 'RTx::REST::Resource::Collection::ProcessPOSTasGET';
+
 requires 'collection';
 
 has 'query' => (
@@ -49,12 +51,6 @@ sub limit_collection {
                 : () ),
         );
     }
-    return 1;
-}
-
-sub process_post {
-    my $self = shift;
-    $self->response->body( $self->to_json );
     return 1;
 }
 
