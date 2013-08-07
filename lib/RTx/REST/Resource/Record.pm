@@ -40,7 +40,8 @@ sub _record_class {
 sub _build_record {
     my $self = shift;
     my $record = $self->record_class->new( $self->current_user );
-    $record->Load( bind_path('/:id', $self->request->path_info) );
+    my $id = bind_path('/:id', $self->request->path_info);
+    $record->Load($id) if $id;
     return $record;
 }
 
