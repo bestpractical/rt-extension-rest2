@@ -9,6 +9,7 @@ extends 'RTx::REST::Resource';
 
 use Scalar::Util qw( blessed );
 use Web::Machine::Util qw( bind_path create_date );
+use Web::Machine::FSM::States qw( is_status_code );
 use Encode qw( decode_utf8 );
 use Module::Runtime qw( require_module );
 use JSON ();
@@ -91,8 +92,9 @@ sub content_types_provided { [
 
 sub to_json {
     my $self = shift;
-    $self->search
-        or return \400;
+    my $status = $self->search;
+    return $status if is_status_code($status);
+    return \400 unless $status;
     return JSON::to_json($self->serialize, { pretty => 1 });
 }
 
