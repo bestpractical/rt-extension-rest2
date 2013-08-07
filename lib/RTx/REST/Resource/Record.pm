@@ -82,8 +82,8 @@ sub last_modified {
 sub allowed_methods {
     my $self = shift;
     my @ok = ('GET', 'HEAD');
-    push @ok, 'DELETE'  if $self->DOES("RTx::REST::Resource::Record::Deletable");
-    push @ok, 'PUT'     if $self->DOES("RTx::REST::Resource::Record::Updatable");
+    push @ok, 'DELETE'      if $self->DOES("RTx::REST::Resource::Record::Deletable");
+    push @ok, 'PUT', 'POST' if $self->DOES("RTx::REST::Resource::Record::Writable");
     return \@ok;
 }
 

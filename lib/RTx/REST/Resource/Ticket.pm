@@ -7,7 +7,7 @@ use namespace::autoclean;
 
 extends 'RTx::REST::Resource::Record';
 with 'RTx::REST::Resource::Record::Deletable';
-with 'RTx::REST::Resource::Record::Updatable';
+with 'RTx::REST::Resource::Record::Writable';
 
 sub forbidden {
     my $self = shift;

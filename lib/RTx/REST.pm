@@ -53,6 +53,20 @@ record will be updated.
 
 A DELETE request to a resource will delete or disable the underlying record.
 
+=head2 Creating
+
+    POST /ticket
+    POST /queue
+    POST /user
+
+A POST request to a resource endpoint, without a specific id/name, will create
+a new resource of that type.  The request should have a JSON payload similar to
+the ones returned for existing resources.
+
+On success, the return status is 201 Created and a Location header points to
+the new resource uri.  On failure, the status code indicates the nature of the
+issue, and a descriptive message is in the response body.
+
 =head2 Searching
 
 =head3 Tickets
