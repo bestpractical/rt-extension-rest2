@@ -32,9 +32,6 @@ Currently provided endpoints under C</REST/2.0/> are:
     DELETE /ticket/:id
         Sets ticket status to "deleted".
 
-    GET /tickets?query=<TicketSQL>
-    GET /tickets?simple=1;query=<simple search query>
-
     GET /queue/:id
     PUT /queue/:id <JSON body>
     DELETE /queue/:id
@@ -56,12 +53,46 @@ record will be updated.
 
 A DELETE request to a resource will delete or disable the underlying record.
 
-=head2 Paging
+=head2 Searching
 
-All plural resources (such as C</tickets>) require pagination, controlled by
-the query parameters C<page> and C<per_page>.  The default page size is 20
-items, but it may be increased up to 100 (or decreased if desired).  Page
-numbers start at 1.
+=head3 Tickets
+
+    GET /tickets?query=<TicketSQL>
+    GET /tickets?simple=1;query=<simple search query>
+    POST /tickets
+        With the 'query' and optional 'simple' parameters
+
+The C<query> parameter expects TicketSQL by default unless a true value is sent
+for the C<simple> parameter.
+
+Results are returned in
+L<the format described below|/"Example of plural resources (collections)">.
+
+=head3 Queues and users
+
+    POST /queues
+    POST /users
+
+These resources accept a basic JSON structure as the search conditions which
+specifies one or more fields to limit on (using specified operators and
+values).  An example:
+
+    curl -si -u user:pass http://rt.example.com/REST/2.0/queues -XPOST --data-binary '
+        [
+            { "field":    "Name",
+              "operator": "LIKE",
+              "value":    "Engineering" },
+
+            { "field":    "Lifecycle",
+              "value":    "helpdesk" }
+        ]
+    '
+
+The JSON payload must be an array of hashes with the keys C<field> and C<value>
+and optionally C<operator>.
+
+Results are returned in
+L<the format described below|/"Example of plural resources (collections)">.
 
 =head2 Example of plural resources (collections)
 
@@ -82,6 +113,13 @@ standard JSON format:
 
 Each item is nearly the same representation used when an individual resource
 is requested.
+
+=head2 Paging
+
+All plural resources (such as C</tickets>) require pagination, controlled by
+the query parameters C<page> and C<per_page>.  The default page size is 20
+items, but it may be increased up to 100 (or decreased if desired).  Page
+numbers start at 1.
 
 =head2 Authentication
 
