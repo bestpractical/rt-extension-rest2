@@ -85,6 +85,8 @@ sub deserialize_record {
     my $record = shift;
     my $data   = shift;
 
+    my $does_roles = $record->DOES("RT::Record::Role::Roles");
+
     # Sanitize input for the Perl API
     for my $field (sort keys %$data) {
         my $value = $data->{$field};
@@ -93,6 +95,16 @@ sub deserialize_record {
             # Deconstruct UIDs back into simple foreign key IDs, assuming it
             # points to the same record type (class).
             $data->{$field} = $value->{id} || 0;
+        }
+        elsif ($does_roles and $record->HasRole($field)) {
+            my @members = ref $value eq 'ARRAY'
+                ? @$value : $value;
+
+            for my $member (@members) {
+                $member = $member->{id} || 0
+                    if looks_like_uid($member);
+            }
+            $data->{$field} = \@members;
         }
         else {
             RT->Logger->debug("Received unknown value via JSON for field $field: ".ref($value));
