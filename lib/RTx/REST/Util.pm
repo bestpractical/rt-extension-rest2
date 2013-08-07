@@ -7,6 +7,7 @@ use Sub::Exporter -setup => {
         looks_like_uid
         expand_uid
         serialize_record
+        deserialize_record
     ]]
 };
 
@@ -78,6 +79,27 @@ sub serialize_record {
         }
     }
     return \%data;
+}
+
+sub deserialize_record {
+    my $record = shift;
+    my $data   = shift;
+
+    # Sanitize input for the Perl API
+    for my $field (sort keys %$data) {
+        my $value = $data->{$field};
+        next unless ref $value;
+        if (looks_like_uid($value)) {
+            # Deconstruct UIDs back into simple foreign key IDs, assuming it
+            # points to the same record type (class).
+            $data->{$field} = $value->{id} || 0;
+        }
+        else {
+            RT->Logger->debug("Received unknown value via JSON for field $field: ".ref($value));
+            delete $data->{$field};
+        }
+    }
+    return $data;
 }
 
 1;
