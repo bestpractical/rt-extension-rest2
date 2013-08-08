@@ -8,6 +8,8 @@ use namespace::autoclean;
 use JSON ();
 
 with 'RTx::REST::Resource::Collection::ProcessPOSTasGET';
+with 'RTx::REST::Resource::Role::RequestBodyIsJSON'
+     => { type => 'ARRAY' };
 
 requires 'collection';
 
@@ -20,7 +22,7 @@ has 'query' => (
 
 sub _build_query {
     my $self = shift;
-    return JSON::from_json( $self->request->content || '[]' );
+    return JSON::from_json( $self->request->content );
 }
 
 sub allowed_methods {

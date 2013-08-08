@@ -7,6 +7,9 @@ use namespace::autoclean;
 use JSON ();
 use RTx::REST::Util qw( deserialize_record error_as_json );
 
+with 'RTx::REST::Resource::Role::RequestBodyIsJSON'
+     => { type => 'HASH' };
+
 requires 'record';
 requires 'record_class';
 

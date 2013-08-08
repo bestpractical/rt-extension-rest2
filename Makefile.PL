@@ -15,6 +15,7 @@ requires 'Module::Pluggable' => '4.8';
 requires 'Module::Runtime';
 requires 'Moose';
 requires 'MooseX::NonMoose';
+requires 'MooseX::Role::Parameterized';
 requires 'namespace::autoclean';
 requires 'Plack::Builder';
 requires 'Scalar::Util';
