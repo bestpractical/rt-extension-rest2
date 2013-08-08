@@ -16,6 +16,13 @@ sub forbidden {
     return 1;
 }
 
+sub create_record {
+    my $self = shift;
+    my $data = shift;
+    my ($ok, $txn, $msg) = $self->record->Create(%$data);
+    return ($ok, $msg);
+}
+
 __PACKAGE__->meta->make_immutable;
 
 1;

@@ -56,6 +56,12 @@ sub update_resource {
     return;
 }
 
+sub create_record {
+    my $self = shift;
+    my $data = shift;
+    return $self->record->Create( %$data );
+}
+
 sub create_resource {
     my $self = shift;
     my $data = shift;
@@ -66,7 +72,7 @@ sub create_resource {
             \409, "Resource already exists; use PUT to update");
     }
 
-    my ($ok, $msg) = $self->record->Create( %$data );
+    my ($ok, $msg) = $self->create_record($data);
     if ($ok) {
         return;
     } else {
