@@ -2,6 +2,8 @@ package RTx::REST::Util;
 use strict;
 use warnings;
 
+use JSON ();
+
 use Sub::Exporter -setup => {
     exports => [qw[
         looks_like_uid
@@ -119,11 +121,7 @@ sub error_as_json {
     my $response = shift;
     my $return = shift;
     $response->header( "Content-type" => "application/json; charset=utf-8" );
-    $response->body(
-        JSON::to_json(
-            { message => join "", @_ }
-        )
-    );
+    $response->body( JSON::encode_json({ message => join "", @_ }) );
     return $return;
 }
 

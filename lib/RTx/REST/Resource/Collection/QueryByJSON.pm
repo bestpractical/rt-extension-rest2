@@ -22,7 +22,7 @@ has 'query' => (
 
 sub _build_query {
     my $self = shift;
-    return JSON::from_json( $self->request->content );
+    return JSON::decode_json( $self->request->content );
 }
 
 sub allowed_methods {

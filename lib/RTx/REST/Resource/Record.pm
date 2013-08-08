@@ -9,7 +9,6 @@ extends 'RTx::REST::Resource';
 
 use Scalar::Util qw( blessed );
 use Web::Machine::Util qw( bind_path create_date );
-use Encode qw( decode_utf8 );
 use Module::Runtime qw( require_module );
 use JSON ();
 use RTx::REST::Util qw( serialize_record );

@@ -8,6 +8,7 @@ use namespace::autoclean;
 extends 'RTx::REST::Resource::Collection';
 with 'RTx::REST::Resource::Collection::ProcessPOSTasGET';
 
+use Encode qw( decode_utf8 );
 use RTx::REST::Util qw( error_as_json );
 use RT::Search::Simple;
 
@@ -20,7 +21,7 @@ has 'query' => (
 
 sub _build_query {
     my $self  = shift;
-    my $query = $self->request->param('query') || "";
+    my $query = decode_utf8($self->request->param('query') || "");
 
     if ($self->request->param('simple') and $query) {
         # XXX TODO: Note that "normal" ModifyQuery callback isn't invoked

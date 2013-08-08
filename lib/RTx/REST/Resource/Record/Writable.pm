@@ -26,7 +26,7 @@ sub from_json {
     my $self = shift;
     my $data = deserialize_record(
         $self->record,
-        JSON::from_json( $self->request->content ),
+        JSON::decode_json( $self->request->content ),
     );
 
     my $method = $self->request->method;
@@ -52,7 +52,7 @@ sub update_resource {
     );
     # XXX TODO: Figure out how to return success/failure?  Core RT::Record's
     # ->Update will need to be replaced or improved.
-    $self->response->body( JSON::to_json(\@results) );
+    $self->response->body( JSON::encode_json(\@results) );
     return;
 }
 
