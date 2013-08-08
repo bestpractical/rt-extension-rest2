@@ -181,6 +181,11 @@ sub resource {
 sub app {
     my $class = shift;
     return sub {
+        my ($env) = @_;
+        $env->{'psgix.logger'} = sub {
+            my $what = shift;
+            RT->Logger->log(%$what);
+        };
         # XXX TODO: logging of SQL queries in RT's framework for doing so
         # XXX TODO: Need a dispatcher?  Or do it inside resources?  Web::Simple?
         RT::ConnectToDatabase();

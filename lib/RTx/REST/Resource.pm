@@ -20,13 +20,6 @@ sub _build_current_user {
     $_[0]->request->env->{"rt.current_user"} || RT::CurrentUser->new;
 }
 
-sub finish_request {
-    my ($self, $meta) = @_;
-    if ($meta->{exception}) {
-        RT->Logger->crit("Error processing resource request: $meta->{exception}");
-    }
-}
-
 __PACKAGE__->meta->make_immutable;
 
 1;
