@@ -81,6 +81,23 @@ sub serialize_record {
                 if $group->SingleMemberRoleGroup;
         }
     }
+
+    # Custom fields; no role yet, but we have registered lookup types
+    my %registered_type = map {; $_ => 1 } RT::CustomField->LookupTypes;
+    if ($registered_type{$record->CustomFieldLookupType}) {
+        my $cfs = $record->CustomFields;
+        while (my $cf = $cfs->Next) {
+            # Multiple CFs with the same name will use the same key
+            my $key = "CF." . $cf->Name;
+            my $values = $data{$key} ||= [];
+            my $ocfvs  = $cf->ValuesForObject( $record );
+            while (my $ocfv = $ocfvs->Next) {
+                # XXX TODO: handle image/file uploads specially
+                # XXX TODO: we sometimes need to use LargeContent instead
+                push @$values, $ocfv->Content;
+            }
+        }
+    }
     return \%data;
 }
 
