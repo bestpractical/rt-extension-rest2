@@ -9,11 +9,6 @@ our $VERSION = '0.01';
 use UNIVERSAL::require;
 use Plack::Builder;
 use Web::Machine;
-use Module::Pluggable
-    sub_name    => "_resources",
-    search_path => ["RTx::REST::Resource"],
-    max_depth   => 4,
-    require     => 1;
 
 =encoding utf-8
 
@@ -166,10 +161,14 @@ handle them appropriately.
 # XXX TODO: API doc
 
 sub resources {
-    state @resources;
-    @resources = grep { s/^RTx::REST::Resource:://; $_ } $_[0]->_resources
-        unless @resources;
-    return @resources;
+    return qw(
+        Queue
+        Queues
+        Ticket
+        Tickets
+        User
+        Users
+    );
 }
 
 sub resource {
@@ -206,8 +205,10 @@ sub app {
                         return 0;
                     }
                 };
-            mount "/\L$_"   => resource($_)
-                for $class->resources;
+            for ($class->resources) {
+                (my $path = lc $_) =~ s{::}{/}g;
+                mount "/$path" => resource($_);
+            }
             mount "/"       => sub { [ 404, ['Content-type' => 'text/plain'], ['Unknown resource'] ] };
         };
         $dispatch->(@_);
