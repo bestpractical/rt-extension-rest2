@@ -17,8 +17,7 @@ has 'collection_class' => (
     is          => 'ro',
     isa         => 'ClassName',
     required    => 1,
-    lazy        => 1,
-    default     => \&_collection_class,
+    lazy_build  => 1,
 );
 
 has 'collection' => (
@@ -28,7 +27,7 @@ has 'collection' => (
     lazy_build  => 1,
 );
 
-sub _collection_class {
+sub _build_collection_class {
     my $self   = shift;
     my ($type) = blessed($self) =~ /::(\w+)$/;
     my $class  = "RT::$type";

@@ -17,8 +17,7 @@ has 'record_class' => (
     is          => 'ro',
     isa         => 'ClassName',
     required    => 1,
-    lazy        => 1,
-    default     => \&_record_class,
+    lazy_build  => 1,
 );
 
 has 'record' => (
@@ -28,7 +27,7 @@ has 'record' => (
     lazy_build  => 1,
 );
 
-sub _record_class {
+sub _build_record_class {
     my $self   = shift;
     my ($type) = blessed($self) =~ /::(\w+)$/;
     my $class  = "RT::$type";
