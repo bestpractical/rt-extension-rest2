@@ -17,7 +17,7 @@ use Sub::Exporter -setup => {
 sub looks_like_uid {
     my $value = shift;
     return 0 unless ref $value eq 'HASH';
-    return 0 unless $value->{type} and $value->{id} and $value->{url};
+    return 0 unless $value->{type} and $value->{id} and $value->{_url};
     return 1;
 }
 
@@ -36,7 +36,7 @@ sub expand_uid {
     return {
         type    => $class,
         id      => $id,
-        url     => "/$class/$id",
+        _url    => RTx::REST->base_uri . "/$class/$id",
     };
 }
 

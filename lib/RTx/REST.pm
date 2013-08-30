@@ -228,6 +228,10 @@ sub base_path {
     RT->Config->Get("WebPath") . "/REST/2.0"
 }
 
+sub base_uri {
+    RT->Config->Get("WebBaseURL") . base_path()
+}
+
 =head1 INSTALLATION 
 
 =over
