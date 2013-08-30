@@ -98,11 +98,16 @@ sub serialize_record {
             my $ocfvs  = $cf->ValuesForObject( $record );
             my $type   = $cf->Type;
             while (my $ocfv = $ocfvs->Next) {
-                # XXX TODO: handle image/file uploads specially
-                # XXX TODO: we sometimes need to use LargeContent instead
                 my $content = $ocfv->Content;
                 if ($type eq 'DateTime') {
                     $content = format_datetime($content);
+                }
+                elsif ($type eq 'Image' or $type eq 'Binary') {
+                    $content = {
+                        content_type => $ocfv->ContentType,
+                        filename     => $content,
+                        _url         => RTx::REST->base_uri . "/download/cf/" . $ocfv->id,
+                    };
                 }
                 push @$values, $content;
             }
