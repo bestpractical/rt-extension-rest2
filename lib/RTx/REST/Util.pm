@@ -40,6 +40,13 @@ sub expand_uid {
     };
 }
 
+sub format_datetime {
+    my $sql  = shift;
+    my $date = RT::Date->new( RT->SystemUser );
+    $date->Set( Format => 'sql', Value => $sql );
+    return $date->W3CDTF( Timezone => 'UTC' );
+}
+
 sub serialize_record {
     my $record = shift;
     my %data   = $record->Serialize(@_);
@@ -52,9 +59,7 @@ sub serialize_record {
 
             # Promote raw SQL dates to a standard format
             if ($record->_Accessible($column => "type") =~ /(datetime|timestamp)/i) {
-                my $date = RT::Date->new( $record->CurrentUser );
-                $date->Set( Format => 'sql', Value => $data{$column} );
-                $data{$column} = $date->W3CDTF( Timezone => 'UTC' );
+                $data{$column} = format_datetime( $data{$column} );
             }
         } else {
             delete $data{$column};
