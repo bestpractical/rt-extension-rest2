@@ -96,10 +96,15 @@ sub serialize_record {
             my $key = "CF." . $cf->Name;
             my $values = $data{$key} ||= [];
             my $ocfvs  = $cf->ValuesForObject( $record );
+            my $type   = $cf->Type;
             while (my $ocfv = $ocfvs->Next) {
                 # XXX TODO: handle image/file uploads specially
                 # XXX TODO: we sometimes need to use LargeContent instead
-                push @$values, $ocfv->Content;
+                my $content = $ocfv->Content;
+                if ($type eq 'DateTime') {
+                    $content = format_datetime($content);
+                }
+                push @$values, $content;
             }
         }
     }
