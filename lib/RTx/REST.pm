@@ -224,6 +224,10 @@ sub PSGIWrap {
     };
 }
 
+sub base_path {
+    RT->Config->Get("WebPath") . "/REST/2.0"
+}
+
 =head1 INSTALLATION 
 
 =over
