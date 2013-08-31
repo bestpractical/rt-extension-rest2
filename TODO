@@ -1,0 +1,8 @@
+Find TODOs in the code via `ag TODO`.
+
+XXX TODO: Include Links in record serializations
+XXX TODO: Serialized resources for CFs, Links, Groups
+XXX TODO: History + attachments
+XXX TODO: Articles, Classes, Topics
+XXX TODO: Updating of roles and CFs (and links, etc)
+XXX TODO: Adding comments/replies
