@@ -10,8 +10,6 @@ extends 'RTx::REST::Resource';
 use Scalar::Util qw( blessed );
 use Web::Machine::Util qw( bind_path create_date );
 use Module::Runtime qw( require_module );
-use JSON ();
-use RTx::REST::Util qw( serialize_record );
 
 has 'record_class' => (
     is          => 'ro',
@@ -43,16 +41,6 @@ sub _build_record {
     return $record;
 }
 
-sub serialize {
-    my $self = shift;
-    my $data = serialize_record( $self->record );
-
-    # Add the resource url for this record
-    $data->{_url} = join "/", $self->base_uri, $self->record->id;
-
-    return $data;
-}
-
 sub base_uri {
     $_[0]->request->base
 }
@@ -80,22 +68,11 @@ sub last_modified {
 
 sub allowed_methods {
     my $self = shift;
-    my @ok = ('GET', 'HEAD');
+    my @ok;
+    push @ok, 'GET', 'HEAD' if $self->DOES("RTx::REST::Resource::Record::Readable");
     push @ok, 'DELETE'      if $self->DOES("RTx::REST::Resource::Record::Deletable");
     push @ok, 'PUT', 'POST' if $self->DOES("RTx::REST::Resource::Record::Writable");
     return \@ok;
-}
-
-sub charsets_provided { [ 'utf-8' ] }
-sub default_charset   {   'utf-8'   }
-
-sub content_types_provided { [
-    { 'application/json' => 'to_json' },
-] }
-
-sub to_json {
-    my $self = shift;
-    return JSON::to_json($self->serialize, { pretty => 1 });
 }
 
 sub finish_request {

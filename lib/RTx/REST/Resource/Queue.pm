@@ -6,6 +6,7 @@ use Moose;
 use namespace::autoclean;
 
 extends 'RTx::REST::Resource::Record';
+with 'RTx::REST::Resource::Record::Readable';
 with 'RTx::REST::Resource::Record::DeletableByDisabling';
 with 'RTx::REST::Resource::Record::Writable';
 
