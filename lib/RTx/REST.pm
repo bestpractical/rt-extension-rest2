@@ -168,6 +168,7 @@ sub resources {
         Tickets
         User
         Users
+        Download::CF
     );
 }
 
