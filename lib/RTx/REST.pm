@@ -233,7 +233,7 @@ sub base_uri {
     RT->Config->Get("WebBaseURL") . base_path()
 }
 
-=head1 INSTALLATION 
+=head1 INSTALLATION
 
 =over
 
@@ -249,9 +249,7 @@ May need root permissions
 
 Add this line:
 
-    Set(@Plugins, qw(RTx::REST));
-
-or add C<RTx::REST> to your existing C<@Plugins> line.
+    Plugin('RTx::REST');
 
 =item Clear your mason cache
 
