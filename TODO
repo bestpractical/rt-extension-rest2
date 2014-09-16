@@ -1,5 +1,21 @@
 Find TODOs in the code via `ag TODO`.
 
+* Testing
+* Rename to RT::Extension::REST2
+* Implement main endpoints:
+  - /tickets
+  - /users
+  - /groups
+  - /queues
+  - /articles
+  - /customfields
+  - /scrips
+  - /roles
+  - /templates
+* Rename REST->app method: to_app and possibly add to_psgi_app alias
+* Implement Basic HTTP authen
+* Remove any session mocking
+
 XXX TODO: Include Links in record serializations
 XXX TODO: Serialized resources for CFs, Links, Groups
 XXX TODO: History + attachments
