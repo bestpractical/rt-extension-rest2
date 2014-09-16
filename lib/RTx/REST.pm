@@ -178,7 +178,9 @@ sub resource {
     )->to_app;
 }
 
-sub app {
+sub to_psgi_app { shift->to_app(@_) }
+
+sub to_app {
     my $class = shift;
     return sub {
         my ($env) = @_;
@@ -220,7 +222,7 @@ sub app {
 sub PSGIWrap {
     my ($class, $app) = @_;
     builder {
-        mount "/REST/2.0"   => $class->app;
+        mount "/REST/2.0"   => $class->to_app;
         mount "/"           => $app;
     };
 }

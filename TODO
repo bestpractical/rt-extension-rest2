@@ -12,7 +12,6 @@ Find TODOs in the code via `ag TODO`.
   - /scrips
   - /roles
   - /templates
-* Rename REST->app method: to_app and possibly add to_psgi_app alias
 * Implement Basic HTTP authen
 * Remove any session mocking
 
