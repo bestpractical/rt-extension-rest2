@@ -182,48 +182,48 @@ sub to_psgi_app { shift->to_app(@_) }
 
 sub to_app {
     my $class = shift;
-    return sub {
-        my ($env) = @_;
-        $env->{'psgix.logger'} = sub {
-            my $what = shift;
-            RT->Logger->log(%$what);
-        };
-        # XXX TODO: logging of SQL queries in RT's framework for doing so
+
+    return builder {
+        enable '+RT::Extension::REST2::Middleware::Log';
+
         # XXX TODO: Need a dispatcher?  Or do it inside resources?  Web::Simple?
         RT::ConnectToDatabase();
-        my $dispatch = builder {
-            # XXX TODO: better auth integration
-            enable "Auth::Basic",
-                realm         => RT->Config->Get("rtname") . " API",
-                authenticator => sub {
-                    my ($user, $pass, $env) = @_;
-                    my $cu = RT::CurrentUser->new;
-                    $cu->Load($user);
+        sub {
+            my ($env) = @_;
+            my $dispatch = builder {
+                # XXX TODO: better auth integration
+                enable "Auth::Basic",
+                    realm         => RT->Config->Get("rtname") . " API",
+                    authenticator => sub {
+                        my ($user, $pass, $env) = @_;
+                        my $cu = RT::CurrentUser->new;
+                        $cu->Load($user);
 
-                    if ($cu->id and $cu->IsPassword($pass)) {
-                        $env->{"rt.current_user"} = $cu;
-                        return 1;
-                    } else {
-                        RT->Logger->error("FAILED LOGIN for $user from $env->{REMOTE_ADDR}");
-                        return 0;
-                    }
-                };
-            for ($class->resources) {
-                (my $path = lc $_) =~ s{::}{/}g;
-                mount "/$path" => resource($_);
-            }
-            mount "/"       => sub { [ 404, ['Content-type' => 'text/plain'], ['Unknown resource'] ] };
-        };
-        $dispatch->(@_);
-    }
+                        if ($cu->id and $cu->IsPassword($pass)) {
+                            $env->{"rt.current_user"} = $cu;
+                            return 1;
+                        } else {
+                            RT->Logger->error("FAILED LOGIN for $user from $env->{REMOTE_ADDR}");
+                            return 0;
+                        }
+                    };
+                for ($class->resources) {
+                    (my $path = lc $_) =~ s{::}{/}g;
+                    mount "/$path" => resource($_);
+                }
+                mount "/"       => sub { [ 404, ['Content-type' => 'text/plain'], ['Unknown resource'] ] };
+            };
+            $dispatch->(@_);
+        }
+    };
 }
 
 # Called by RT::Interface::Web::Handler->PSGIApp
 sub PSGIWrap {
     my ($class, $app) = @_;
-    builder {
-        mount "/REST/2.0"   => $class->to_app;
-        mount "/"           => $app;
+    return builder {
+        mount '/REST/2.0' => $class->to_app;
+        mount '/' => $app;
     };
 }
 
