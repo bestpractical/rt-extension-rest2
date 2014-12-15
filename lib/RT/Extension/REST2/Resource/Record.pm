@@ -1,11 +1,11 @@
-package RTx::REST::Resource::Record;
+package RT::Extension::REST2::Resource::Record;
 use strict;
 use warnings;
 
 use Moose;
 use namespace::autoclean;
 
-extends 'RTx::REST::Resource';
+extends 'RT::Extension::REST2::Resource';
 
 use Scalar::Util qw( blessed );
 use Web::Machine::Util qw( bind_path create_date );
@@ -69,9 +69,9 @@ sub last_modified {
 sub allowed_methods {
     my $self = shift;
     my @ok;
-    push @ok, 'GET', 'HEAD' if $self->DOES("RTx::REST::Resource::Record::Readable");
-    push @ok, 'DELETE'      if $self->DOES("RTx::REST::Resource::Record::Deletable");
-    push @ok, 'PUT', 'POST' if $self->DOES("RTx::REST::Resource::Record::Writable");
+    push @ok, 'GET', 'HEAD' if $self->DOES("RT::Extension::REST2::Resource::Record::Readable");
+    push @ok, 'DELETE'      if $self->DOES("RT::Extension::REST2::Resource::Record::Deletable");
+    push @ok, 'PUT', 'POST' if $self->DOES("RT::Extension::REST2::Resource::Record::Writable");
     return \@ok;
 }
 

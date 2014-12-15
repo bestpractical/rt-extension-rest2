@@ -1,7 +1,6 @@
 Find TODOs in the code via `ag TODO`.
 
 * Testing
-* Rename to RT::Extension::REST2
 * Implement main endpoints:
   - /tickets
   - /users

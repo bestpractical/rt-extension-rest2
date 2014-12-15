@@ -1,4 +1,4 @@
-package RTx::REST::Resource;
+package RT::Extension::REST2::Resource;
 use strict;
 use warnings;
 

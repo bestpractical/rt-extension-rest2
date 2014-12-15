@@ -1,14 +1,14 @@
-package RTx::REST::Resource::Ticket;
+package RT::Extension::REST2::Resource::Ticket;
 use strict;
 use warnings;
 
 use Moose;
 use namespace::autoclean;
 
-extends 'RTx::REST::Resource::Record';
-with 'RTx::REST::Resource::Record::Readable';
-with 'RTx::REST::Resource::Record::Deletable';
-with 'RTx::REST::Resource::Record::Writable';
+extends 'RT::Extension::REST2::Resource::Record';
+with 'RT::Extension::REST2::Resource::Record::Readable';
+with 'RT::Extension::REST2::Resource::Record::Deletable';
+with 'RT::Extension::REST2::Resource::Record::Writable';
 
 sub forbidden {
     my $self = shift;

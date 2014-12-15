@@ -1,15 +1,15 @@
-package RTx::REST::Resource::Tickets;
+package RT::Extension::REST2::Resource::Tickets;
 use strict;
 use warnings;
 
 use Moose;
 use namespace::autoclean;
 
-extends 'RTx::REST::Resource::Collection';
-with 'RTx::REST::Resource::Collection::ProcessPOSTasGET';
+extends 'RT::Extension::REST2::Resource::Collection';
+with 'RT::Extension::REST2::Resource::Collection::ProcessPOSTasGET';
 
 use Encode qw( decode_utf8 );
-use RTx::REST::Util qw( error_as_json );
+use RT::Extension::REST2::Util qw( error_as_json );
 use RT::Search::Simple;
 
 has 'query' => (

@@ -1,8 +1,8 @@
 use inc::Module::Install;
 
-RTx 'RTx-REST';
-all_from 'lib/RTx/REST.pm';
-readme_from 'lib/RTx/REST.pm';
+RTx 'RT-Extension-REST2';
+all_from 'lib/RT/Extension/REST2.pm';
+readme_from 'lib/RT/Extension/REST2.pm';
 license  'gplv2';
 
 requires_rt('4.2.4');

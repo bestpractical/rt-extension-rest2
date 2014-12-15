@@ -1,4 +1,4 @@
-package RTx::REST::Resource::Record::Readable;
+package RT::Extension::REST2::Resource::Record::Readable;
 use strict;
 use warnings;
 
@@ -11,7 +11,7 @@ requires 'current_user';
 requires 'base_uri';
 
 use JSON ();
-use RTx::REST::Util qw( serialize_record );
+use RT::Extension::REST2::Util qw( serialize_record );
 
 sub serialize {
     my $self = shift;

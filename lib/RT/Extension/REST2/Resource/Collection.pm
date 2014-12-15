@@ -1,17 +1,17 @@
-package RTx::REST::Resource::Collection;
+package RT::Extension::REST2::Resource::Collection;
 use strict;
 use warnings;
 
 use Moose;
 use namespace::autoclean;
 
-extends 'RTx::REST::Resource';
+extends 'RT::Extension::REST2::Resource';
 
 use Scalar::Util qw( blessed );
 use Web::Machine::Util qw( bind_path create_date );
 use Web::Machine::FSM::States qw( is_status_code );
 use Module::Runtime qw( require_module );
-use RTx::REST::Util qw( serialize_record );
+use RT::Extension::REST2::Util qw( serialize_record );
 
 has 'collection_class' => (
     is          => 'ro',

@@ -1,4 +1,4 @@
-package RTx::REST::Resource::Record::Deletable;
+package RT::Extension::REST2::Resource::Record::Deletable;
 use strict;
 use warnings;
 

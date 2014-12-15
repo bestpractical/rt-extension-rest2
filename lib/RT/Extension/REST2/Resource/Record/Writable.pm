@@ -1,13 +1,13 @@
-package RTx::REST::Resource::Record::Writable;
+package RT::Extension::REST2::Resource::Record::Writable;
 use strict;
 use warnings;
 
 use Moose::Role;
 use namespace::autoclean;
 use JSON ();
-use RTx::REST::Util qw( deserialize_record error_as_json );
+use RT::Extension::REST2::Util qw( deserialize_record error_as_json );
 
-with 'RTx::REST::Resource::Role::RequestBodyIsJSON'
+with 'RT::Extension::REST2::Resource::Role::RequestBodyIsJSON'
      => { type => 'HASH' };
 
 requires 'record';

@@ -1,4 +1,4 @@
-package RTx::REST::Resource::Collection::ProcessPOSTasGET;
+package RT::Extension::REST2::Resource::Collection::ProcessPOSTasGET;
 use strict;
 use warnings;
 

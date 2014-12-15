@@ -1,11 +1,11 @@
-package RTx::REST::Resource::Download::CF;
+package RT::Extension::REST2::Resource::Download::CF;
 use strict;
 use warnings;
 
 use Moose;
 use namespace::autoclean;
 
-extends 'RTx::REST::Resource::Record';
+extends 'RT::Extension::REST2::Resource::Record';
 
 has 'content_type' => (
     is          => 'ro',

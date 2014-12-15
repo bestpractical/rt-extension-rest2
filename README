@@ -1,5 +1,5 @@
 NAME
-    RTx-REST - Adds a modern REST API to RT under /REST/2.0/
+    RT-Extension-REST2 - Adds a modern REST API to RT under /REST/2.0/
 
 INSTALLATION
     "perl Makefile.PL"
@@ -10,9 +10,9 @@ INSTALLATION
     Edit your /opt/rt4/etc/RT_SiteConfig.pm
         Add this line:
 
-            Set(@Plugins, qw(RTx::REST));
+            Set(@Plugins, qw(RT::Extension::REST2));
 
-        or add "RTx::REST" to your existing @Plugins line.
+        or add "RT::Extension::REST2" to your existing @Plugins line.
 
     Clear your mason cache
             rm -rf /opt/rt4/var/mason_data/obj
@@ -23,9 +23,9 @@ AUTHOR
     Thomas Sibley <trs@bestpractical.com>
 
 BUGS
-    All bugs should be reported via email to bug-RTx-REST@rt.cpan.org
-    <mailto:bug-RTx-REST@rt.cpan.org> or via the web at rt.cpan.org
-    <http://rt.cpan.org/Public/Dist/Display.html?Name=RTx-REST>.
+    All bugs should be reported via email to bug-RT-Extension-REST2@rt.cpan.org
+    <mailto:bug-RT-Extension-REST2@rt.cpan.org> or via the web at rt.cpan.org
+    <http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-REST2>.
 
 LICENSE AND COPYRIGHT
     This software is Copyright (c) 2013 by Best Practical Solutions

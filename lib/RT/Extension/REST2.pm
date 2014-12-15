@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use 5.010;
 
-package RTx::REST;
+package RT::Extension::REST2;
 
 our $VERSION = '0.01';
 
@@ -14,7 +14,7 @@ use Web::Machine;
 
 =head1 NAME
 
-RTx-REST - Adds a modern REST API to RT under /REST/2.0/
+RT-Extension-REST2 - Adds a modern REST API to RT under /REST/2.0/
 
 =head1 USAGE
 
@@ -174,7 +174,7 @@ sub resources {
 
 sub resource {
     Web::Machine->new(
-        resource => "RTx::REST::Resource::$_[0]",
+        resource => "RT::Extension::REST2::Resource::$_[0]",
     )->to_app;
 }
 
@@ -251,7 +251,7 @@ May need root permissions
 
 Add this line:
 
-    Plugin('RTx::REST');
+    Plugin('RT::Extension::REST2');
 
 =item Clear your mason cache
 
@@ -268,9 +268,9 @@ Thomas Sibley <trs@bestpractical.com>
 =head1 BUGS
 
 All bugs should be reported via email to
-L<bug-RTx-REST@rt.cpan.org|mailto:bug-RTx-REST@rt.cpan.org>
+L<bug-RT-Extension-REST2@rt.cpan.org|mailto:bug-RT-Extension-REST2@rt.cpan.org>
 or via the web at
-L<rt.cpan.org|http://rt.cpan.org/Public/Dist/Display.html?Name=RTx-REST>.
+L<rt.cpan.org|http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-REST2>.
 
 =head1 LICENSE AND COPYRIGHT
 

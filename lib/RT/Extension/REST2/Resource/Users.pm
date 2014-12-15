@@ -1,12 +1,12 @@
-package RTx::REST::Resource::Users;
+package RT::Extension::REST2::Resource::Users;
 use strict;
 use warnings;
 
 use Moose;
 use namespace::autoclean;
 
-extends 'RTx::REST::Resource::Collection';
-with 'RTx::REST::Resource::Collection::QueryByJSON';
+extends 'RT::Extension::REST2::Resource::Collection';
+with 'RT::Extension::REST2::Resource::Collection::QueryByJSON';
 
 sub searchable_fields {
     my $class = $_[0]->collection->RecordClass;

@@ -1,4 +1,4 @@
-package RTx::REST::Resource::Collection::QueryByJSON;
+package RT::Extension::REST2::Resource::Collection::QueryByJSON;
 use strict;
 use warnings;
 
@@ -7,8 +7,8 @@ use namespace::autoclean;
 
 use JSON ();
 
-with 'RTx::REST::Resource::Collection::ProcessPOSTasGET';
-with 'RTx::REST::Resource::Role::RequestBodyIsJSON'
+with 'RT::Extension::REST2::Resource::Collection::ProcessPOSTasGET';
+with 'RT::Extension::REST2::Resource::Role::RequestBodyIsJSON'
      => { type => 'ARRAY' };
 
 requires 'collection';

@@ -13,7 +13,7 @@ license: gplv2
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
-name: RTx-REST
+name: RT-Extension-REST2
 no_index:
   directory:
     - inc
