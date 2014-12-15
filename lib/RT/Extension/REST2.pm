@@ -5,6 +5,7 @@ use 5.010;
 package RT::Extension::REST2;
 
 our $VERSION = '0.01';
+our $REST_PATH = '/REST/2.0';
 
 use UNIVERSAL::require;
 use Plack::Builder;
@@ -202,21 +203,21 @@ sub to_app {
     };
 }
 
+sub base_path {
+    RT->Config->Get('WebPath') . $REST_PATH
+}
+
+sub base_uri {
+    RT->Config->Get('WebBaseURL') . shift->base_path
+}
+
 # Called by RT::Interface::Web::Handler->PSGIApp
 sub PSGIWrap {
     my ($class, $app) = @_;
     return builder {
-        mount '/REST/2.0' => $class->to_app;
+        mount $REST_PATH => $class->to_app;
         mount '/' => $app;
     };
-}
-
-sub base_path {
-    RT->Config->Get("WebPath") . "/REST/2.0"
-}
-
-sub base_uri {
-    RT->Config->Get("WebBaseURL") . base_path()
 }
 
 =head1 INSTALLATION
