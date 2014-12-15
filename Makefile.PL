@@ -18,6 +18,7 @@ requires 'Plack::Builder';
 requires 'Scalar::Util';
 requires 'Sub::Exporter';
 requires 'Web::Machine' => '0.12';
+requires 'Class::Method::Modifiers';
 
 sign;
 WriteAll;

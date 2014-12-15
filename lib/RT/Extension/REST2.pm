@@ -132,10 +132,9 @@ numbers start at 1.
 
 =head2 Authentication
 
-Currently authentication is limited to internal RT usernames and passwords,
-provided via HTTP Basic auth.  Most HTTP libraries already have a way of
-providing basic auth credentials when making requests.  Using curl, for
-example:
+Authentication is limited to internal RT usernames and passwords, provided via
+HTTP Basic auth. Most HTTP libraries already have a way of providing basic
+auth credentials when making requests.  Using curl, for example:
 
     curl -u username:password …
 
@@ -183,30 +182,15 @@ sub to_psgi_app { shift->to_app(@_) }
 sub to_app {
     my $class = shift;
 
+    RT::ConnectToDatabase();
+
     return builder {
         enable '+RT::Extension::REST2::Middleware::Log';
+        enable '+RT::Extension::REST2::Middleware::Auth';
 
-        # XXX TODO: Need a dispatcher?  Or do it inside resources?  Web::Simple?
-        RT::ConnectToDatabase();
         sub {
             my ($env) = @_;
             my $dispatch = builder {
-                # XXX TODO: better auth integration
-                enable "Auth::Basic",
-                    realm         => RT->Config->Get("rtname") . " API",
-                    authenticator => sub {
-                        my ($user, $pass, $env) = @_;
-                        my $cu = RT::CurrentUser->new;
-                        $cu->Load($user);
-
-                        if ($cu->id and $cu->IsPassword($pass)) {
-                            $env->{"rt.current_user"} = $cu;
-                            return 1;
-                        } else {
-                            RT->Logger->error("FAILED LOGIN for $user from $env->{REMOTE_ADDR}");
-                            return 0;
-                        }
-                    };
                 for ($class->resources) {
                     (my $path = lc $_) =~ s{::}{/}g;
                     mount "/$path" => resource($_);
