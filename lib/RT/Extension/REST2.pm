@@ -17,6 +17,48 @@ use Web::Machine;
 
 RT-Extension-REST2 - Adds a modern REST API to RT under /REST/2.0/
 
+=head1 INSTALLATION
+
+=over
+
+=item C<perl Makefile.PL>
+
+=item C<make>
+
+=item C<make install>
+
+May need root permissions
+
+=item Edit your F</opt/rt4/etc/RT_SiteConfig.pm>
+
+Add this line:
+
+    Plugin('RT::Extension::REST2');
+
+=item Clear your mason cache
+
+    rm -rf /opt/rt4/var/mason_data/obj
+
+=item Restart your webserver
+
+=back
+
+=head1 CONFIGURATION
+
+=over
+
+=item C<$RESTPath>
+
+The relative path from C<$WebPath> where you want to have the REST API being
+served.
+
+C<$RESTPath> requires a leading / but no trailing /, or it can be blank.
+
+Defaults to C</REST/2.0>. Thus, if you have C<$WebPath> set to C</rt> then the
+base REST API URI will be like C<https://example.com/rt/REST/2.0>.
+
+=back
+
 =head1 USAGE
 
 =head2 Summary
@@ -87,7 +129,7 @@ These resources accept a basic JSON structure as the search conditions which
 specifies one or more fields to limit on (using specified operators and
 values).  An example:
 
-    curl -si -u user:pass http://rt.example.com/REST/2.0/queues -XPOST --data-binary '
+    curl -si -u user:pass https://rt.example.com/REST/2.0/queues -XPOST --data-binary '
         [
             { "field":    "Name",
               "operator": "LIKE",
@@ -220,35 +262,9 @@ sub PSGIWrap {
     };
 }
 
-=head1 INSTALLATION
-
-=over
-
-=item C<perl Makefile.PL>
-
-=item C<make>
-
-=item C<make install>
-
-May need root permissions
-
-=item Edit your F</opt/rt4/etc/RT_SiteConfig.pm>
-
-Add this line:
-
-    Plugin('RT::Extension::REST2');
-
-=item Clear your mason cache
-
-    rm -rf /opt/rt4/var/mason_data/obj
-
-=item Restart your webserver
-
-=back
-
 =head1 AUTHOR
 
-Thomas Sibley <trs@bestpractical.com>
+Best Practical Solutions, LLC <modules@bestpractical.com>
 
 =head1 BUGS
 
