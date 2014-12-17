@@ -18,7 +18,10 @@ requires 'Plack::Builder';
 requires 'Scalar::Util';
 requires 'Sub::Exporter';
 requires 'Web::Machine' => '0.12';
+requires 'Web::Simple';
 requires 'Class::Method::Modifiers';
+requires 'Plack::Middleware::RequestHeaders';
+requires 'Plack::Middleware::ReverseProxyPath';
 
 sign;
 WriteAll;

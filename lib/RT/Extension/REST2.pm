@@ -9,7 +9,7 @@ our $REST_PATH = '/REST/2.0';
 
 use UNIVERSAL::require;
 use Plack::Builder;
-use Web::Machine;
+use RT::Extension::REST2::Dispatcher;
 
 =encoding utf-8
 
@@ -202,24 +202,6 @@ handle them appropriately.
 
 # XXX TODO: API doc
 
-sub resources {
-    return qw(
-        Queue
-        Queues
-        Ticket
-        Tickets
-        User
-        Users
-        Download::CF
-    );
-}
-
-sub resource {
-    Web::Machine->new(
-        resource => "RT::Extension::REST2::Resource::$_[0]",
-    )->to_app;
-}
-
 sub to_psgi_app { shift->to_app(@_) }
 
 sub to_app {
@@ -227,21 +209,18 @@ sub to_app {
 
     RT::ConnectToDatabase();
 
+    my $rest_path = $class->rest_path;
+
     return builder {
         enable '+RT::Extension::REST2::Middleware::Log';
         enable '+RT::Extension::REST2::Middleware::Auth';
-
-        sub {
-            my ($env) = @_;
-            my $dispatch = builder {
-                for ($class->resources) {
-                    (my $path = lc $_) =~ s{::}{/}g;
-                    mount "/$path" => resource($_);
-                }
-                mount "/"       => sub { [ 404, ['Content-type' => 'text/plain'], ['Unknown resource'] ] };
-            };
-            $dispatch->(@_);
-        }
+        enable 'RequestHeaders',
+            set => [
+                'X-Forwarded-Script-Name' => '/',
+                'X-Traversal-Path' => $rest_path,
+            ];
+        enable 'ReverseProxyPath';
+        RT::Extension::REST2::Dispatcher->to_psgi_app;
     };
 }
 
