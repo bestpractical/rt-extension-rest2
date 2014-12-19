@@ -4,7 +4,7 @@ use 5.010;
 
 package RT::Extension::REST2;
 
-our $VERSION = '0.01';
+our $VERSION = '0.10';
 our $REST_PATH = '/REST/2.0';
 
 use UNIVERSAL::require;
