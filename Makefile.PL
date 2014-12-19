@@ -23,5 +23,7 @@ requires 'Plack::Middleware::ReverseProxyPath';
 requires 'Module::Path';
 requires 'Pod::POM';
 
+recommends 'JSON::XS';
+
 sign;
 WriteAll;
