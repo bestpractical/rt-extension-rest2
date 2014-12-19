@@ -20,6 +20,8 @@ requires 'Web::Simple';
 requires 'Class::Method::Modifiers';
 requires 'Plack::Middleware::RequestHeaders';
 requires 'Plack::Middleware::ReverseProxyPath';
+requires 'Module::Path';
+requires 'Pod::POM';
 
 sign;
 WriteAll;
