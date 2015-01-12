@@ -2,33 +2,173 @@ NAME
     RT-Extension-REST2 - Adds a modern REST API to RT under /REST/2.0/
 
 INSTALLATION
-    "perl Makefile.PL"
-    "make"
-    "make install"
+    perl Makefile.PL
+    make
+    make install
         May need root permissions
 
     Edit your /opt/rt4/etc/RT_SiteConfig.pm
         Add this line:
 
-            Set(@Plugins, qw(RT::Extension::REST2));
-
-        or add "RT::Extension::REST2" to your existing @Plugins line.
+            Plugin('RT::Extension::REST2');
 
     Clear your mason cache
             rm -rf /opt/rt4/var/mason_data/obj
 
     Restart your webserver
 
+CONFIGURATION
+    $RESTPath
+        The relative path from $WebPath where you want to have the REST API
+        being served.
+
+        $RESTPath requires a leading / but no trailing /, or it can be
+        blank.
+
+        Defaults to /REST/2.0. Thus, if you have $WebPath set to /rt then
+        the base REST API URI will be like https://example.com/rt/REST/2.0.
+
+USAGE
+  Summary
+    Currently provided endpoints under /REST/2.0/ are:
+
+        GET /ticket/:id
+        PUT /ticket/:id <JSON body>
+        DELETE /ticket/:id
+            Sets ticket status to "deleted".
+
+        GET /queue/:id
+        PUT /queue/:id <JSON body>
+        DELETE /queue/:id
+            Disables the queue.
+
+        GET /user/:id
+        PUT /user/:id <JSON body>
+        DELETE /user/:id
+            Disables the user.
+
+    For queues and users, :id may be the numeric id or the unique name.
+
+    When a GET request is made, each endpoint returns a JSON representation
+    of the specified resource, or a 404 if not found.
+
+    When a PUT request is made, the request body should be a modified copy
+    (or partial copy) of the JSON representation of the specified resource,
+    and the record will be updated.
+
+    A DELETE request to a resource will delete or disable the underlying
+    record.
+
+  Creating
+        POST /ticket
+        POST /queue
+        POST /user
+
+    A POST request to a resource endpoint, without a specific id/name, will
+    create a new resource of that type. The request should have a JSON
+    payload similar to the ones returned for existing resources.
+
+    On success, the return status is 201 Created and a Location header
+    points to the new resource uri. On failure, the status code indicates
+    the nature of the issue, and a descriptive message is in the response
+    body.
+
+  Searching
+   Tickets
+        GET /tickets?query=<TicketSQL>
+        GET /tickets?simple=1;query=<simple search query>
+        POST /tickets
+            With the 'query' and optional 'simple' parameters
+
+    The query parameter expects TicketSQL by default unless a true value is
+    sent for the simple parameter.
+
+    Results are returned in the format described below.
+
+   Queues and users
+        POST /queues
+        POST /users
+
+    These resources accept a basic JSON structure as the search conditions
+    which specifies one or more fields to limit on (using specified
+    operators and values). An example:
+
+        curl -si -u user:pass https://rt.example.com/REST/2.0/queues -XPOST --data-binary '
+            [
+                { "field":    "Name",
+                  "operator": "LIKE",
+                  "value":    "Engineering" },
+
+                { "field":    "Lifecycle",
+                  "value":    "helpdesk" }
+            ]
+        '
+
+    The JSON payload must be an array of hashes with the keys field and
+    value and optionally operator.
+
+    Results are returned in the format described below.
+
+  Example of plural resources (collections)
+    Resources which represent a collection of other resources use the
+    following standard JSON format:
+
+        {
+           "count" : 20,
+           "page" : 1,
+           "per_page" : 20,
+           "total" : 3810,
+           "items" : [
+              { … },
+              { … },
+              …
+           ]
+        }
+
+    Each item is nearly the same representation used when an individual
+    resource is requested.
+
+  Paging
+    All plural resources (such as /tickets) require pagination, controlled
+    by the query parameters page and per_page. The default page size is 20
+    items, but it may be increased up to 100 (or decreased if desired). Page
+    numbers start at 1.
+
+  Authentication
+    Authentication is limited to internal RT usernames and passwords,
+    provided via HTTP Basic auth. Most HTTP libraries already have a way of
+    providing basic auth credentials when making requests. Using curl, for
+    example:
+
+        curl -u username:password …
+
+    This sort of authentication should always be done over HTTPS/SSL for
+    security. You should only serve up the /REST/2.0/ endpoint over SSL.
+
+  Conditional requests (If-Modified-Since)
+    You can take advantage of the Last-Modified headers returned by most
+    single resource endpoints. Add a If-Modified-Since header to your
+    requests for the same resource, using the most recent Last-Modified
+    value seen, and the API may respond with a 304 Not Modified. You can
+    also use HEAD requests to check for updates without receiving the actual
+    content when there is a newer version.
+
+  Status codes
+    The REST API uses the full range of HTTP status codes, and your client
+    should handle them appropriately.
+
 AUTHOR
-    Thomas Sibley <trs@bestpractical.com>
+    Best Practical Solutions, LLC <modules@bestpractical.com>
 
 BUGS
-    All bugs should be reported via email to bug-RT-Extension-REST2@rt.cpan.org
-    <mailto:bug-RT-Extension-REST2@rt.cpan.org> or via the web at rt.cpan.org
+    All bugs should be reported via email to
+    bug-RT-Extension-REST2@rt.cpan.org
+    <mailto:bug-RT-Extension-REST2@rt.cpan.org> or via the web at
+    rt.cpan.org
     <http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-REST2>.
 
 LICENSE AND COPYRIGHT
-    This software is Copyright (c) 2013 by Best Practical Solutions
+    This software is Copyright (c) 2015 by Best Practical Solutions, LLC.
 
     This is free software, licensed under:
 
