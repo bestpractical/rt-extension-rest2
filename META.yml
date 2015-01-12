@@ -39,7 +39,9 @@ requires:
   namespace::autoclean: 0
   perl: 5.10.1
 resources:
+  homepage: https://github.com/bestpractical/rt-extension-rest2/tree
   license: http://opensource.org/licenses/gpl-license.php
+  repository: https://github.com/bestpractical/rt-extension-rest2.git
 version: '0.10'
 x_module_install_rtx_version: '0.37'
 x_requires_rt: 4.2.4
