@@ -1,8 +1,6 @@
 use inc::Module::Install;
 
 RTx 'RT-Extension-REST2';
-all_from 'lib/RT/Extension/REST2.pm';
-readme_from 'lib/RT/Extension/REST2.pm';
 license  'gplv2';
 
 requires_rt('4.2.4');
@@ -18,6 +16,14 @@ requires 'Plack::Builder';
 requires 'Scalar::Util';
 requires 'Sub::Exporter';
 requires 'Web::Machine' => '0.12';
+requires 'Web::Simple';
+requires 'Class::Method::Modifiers';
+requires 'Plack::Middleware::RequestHeaders';
+requires 'Plack::Middleware::ReverseProxyPath';
+requires 'Module::Path';
+requires 'Pod::POM';
+
+recommends 'JSON::XS';
 
 sign;
 WriteAll;

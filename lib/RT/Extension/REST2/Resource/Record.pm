@@ -36,7 +36,7 @@ sub _build_record_class {
 sub _build_record {
     my $self = shift;
     my $record = $self->record_class->new( $self->current_user );
-    my $id = bind_path('/:id', $self->request->path_info);
+    my ($type, $id) = bind_path('/:type/:id', $self->request->path_info);
     $record->Load($id) if $id;
     return $record;
 }

@@ -4,17 +4,60 @@ use 5.010;
 
 package RT::Extension::REST2;
 
-our $VERSION = '0.01';
+our $VERSION = '0.10';
+our $REST_PATH = '/REST/2.0';
 
 use UNIVERSAL::require;
 use Plack::Builder;
-use Web::Machine;
+use RT::Extension::REST2::Dispatcher;
 
 =encoding utf-8
 
 =head1 NAME
 
 RT-Extension-REST2 - Adds a modern REST API to RT under /REST/2.0/
+
+=head1 INSTALLATION
+
+=over
+
+=item C<perl Makefile.PL>
+
+=item C<make>
+
+=item C<make install>
+
+May need root permissions
+
+=item Edit your F</opt/rt4/etc/RT_SiteConfig.pm>
+
+Add this line:
+
+    Plugin('RT::Extension::REST2');
+
+=item Clear your mason cache
+
+    rm -rf /opt/rt4/var/mason_data/obj
+
+=item Restart your webserver
+
+=back
+
+=head1 CONFIGURATION
+
+=over
+
+=item C<$RESTPath>
+
+The relative path from C<$WebPath> where you want to have the REST API being
+served.
+
+C<$RESTPath> requires a leading / but no trailing /, or it can be blank.
+
+Defaults to C</REST/2.0>. Thus, if you have C<$WebPath> set to C</rt> then the
+base REST API URI will be like C<https://example.com/rt/REST/2.0>.
+
+=back
 
 =head1 USAGE
 
@@ -86,7 +129,7 @@ These resources accept a basic JSON structure as the search conditions which
 specifies one or more fields to limit on (using specified operators and
 values).  An example:
 
-    curl -si -u user:pass http://rt.example.com/REST/2.0/queues -XPOST --data-binary '
+    curl -si -u user:pass https://rt.example.com/REST/2.0/queues -XPOST --data-binary '
         [
             { "field":    "Name",
               "operator": "LIKE",
@@ -132,10 +175,9 @@ numbers start at 1.
 
 =head2 Authentication
 
-Currently authentication is limited to internal RT usernames and passwords,
-provided via HTTP Basic auth.  Most HTTP libraries already have a way of
-providing basic auth credentials when making requests.  Using curl, for
-example:
+Authentication is limited to internal RT usernames and passwords, provided via
+HTTP Basic auth. Most HTTP libraries already have a way of providing basic
+auth credentials when making requests.  Using curl, for example:
 
     curl -u username:password …
 
@@ -160,110 +202,48 @@ handle them appropriately.
 
 # XXX TODO: API doc
 
-sub resources {
-    return qw(
-        Queue
-        Queues
-        Ticket
-        Tickets
-        User
-        Users
-        Download::CF
-    );
-}
-
-sub resource {
-    Web::Machine->new(
-        resource => "RT::Extension::REST2::Resource::$_[0]",
-    )->to_app;
-}
-
 sub to_psgi_app { shift->to_app(@_) }
 
 sub to_app {
     my $class = shift;
-    return sub {
-        my ($env) = @_;
-        $env->{'psgix.logger'} = sub {
-            my $what = shift;
-            RT->Logger->log(%$what);
-        };
-        # XXX TODO: logging of SQL queries in RT's framework for doing so
-        # XXX TODO: Need a dispatcher?  Or do it inside resources?  Web::Simple?
-        RT::ConnectToDatabase();
-        my $dispatch = builder {
-            # XXX TODO: better auth integration
-            enable "Auth::Basic",
-                realm         => RT->Config->Get("rtname") . " API",
-                authenticator => sub {
-                    my ($user, $pass, $env) = @_;
-                    my $cu = RT::CurrentUser->new;
-                    $cu->Load($user);
 
-                    if ($cu->id and $cu->IsPassword($pass)) {
-                        $env->{"rt.current_user"} = $cu;
-                        return 1;
-                    } else {
-                        RT->Logger->error("FAILED LOGIN for $user from $env->{REMOTE_ADDR}");
-                        return 0;
-                    }
-                };
-            for ($class->resources) {
-                (my $path = lc $_) =~ s{::}{/}g;
-                mount "/$path" => resource($_);
-            }
-            mount "/"       => sub { [ 404, ['Content-type' => 'text/plain'], ['Unknown resource'] ] };
-        };
-        $dispatch->(@_);
-    }
+    RT::ConnectToDatabase();
+
+    my $rest_path = $class->rest_path;
+
+    return builder {
+        enable '+RT::Extension::REST2::Middleware::Log';
+        enable '+RT::Extension::REST2::Middleware::Auth';
+        enable 'RequestHeaders',
+            set => [
+                'X-Forwarded-Script-Name' => '/',
+                'X-Traversal-Path' => $rest_path,
+            ];
+        enable 'ReverseProxyPath';
+        RT::Extension::REST2::Dispatcher->to_psgi_app;
+    };
+}
+
+sub base_path {
+    RT->Config->Get('WebPath') . $REST_PATH
+}
+
+sub base_uri {
+    RT->Config->Get('WebBaseURL') . shift->base_path
 }
 
 # Called by RT::Interface::Web::Handler->PSGIApp
 sub PSGIWrap {
     my ($class, $app) = @_;
-    builder {
-        mount "/REST/2.0"   => $class->to_app;
-        mount "/"           => $app;
+    return builder {
+        mount $REST_PATH => $class->to_app;
+        mount '/' => $app;
     };
 }
 
-sub base_path {
-    RT->Config->Get("WebPath") . "/REST/2.0"
-}
-
-sub base_uri {
-    RT->Config->Get("WebBaseURL") . base_path()
-}
-
-=head1 INSTALLATION
-
-=over
-
-=item C<perl Makefile.PL>
-
-=item C<make>
-
-=item C<make install>
-
-May need root permissions
-
-=item Edit your F</opt/rt4/etc/RT_SiteConfig.pm>
-
-Add this line:
-
-    Plugin('RT::Extension::REST2');
-
-=item Clear your mason cache
-
-    rm -rf /opt/rt4/var/mason_data/obj
-
-=item Restart your webserver
-
-=back
-
 =head1 AUTHOR
 
-Thomas Sibley <trs@bestpractical.com>
+Best Practical Solutions, LLC <modules@bestpractical.com>
 
 =head1 BUGS
 
@@ -274,7 +254,7 @@ L<rt.cpan.org|http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-REST
 
 =head1 LICENSE AND COPYRIGHT
 
-This software is Copyright (c) 2013 by Best Practical Solutions
+This software is Copyright (c) 2015 by Best Practical Solutions, LLC.
 
 This is free software, licensed under:
 
