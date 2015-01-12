@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use 5.010;
+use 5.010001;
 
 package RT::Extension::REST2;
 
