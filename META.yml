@@ -1,7 +1,7 @@
 ---
-abstract: 'RT REST Extension'
+abstract: 'RT-Extension-REST2 Extension'
 author:
-  - 'Thomas Sibley <trs@bestpractical.com>'
+  - 'Best Practical Solutions, LLC <modules@bestpractical.com>'
 build_requires:
   ExtUtils::MakeMaker: 6.59
 configure_requires:
@@ -17,18 +17,29 @@ name: RT-Extension-REST2
 no_index:
   directory:
     - inc
+recommends:
+  JSON::XS: 0
 requires:
+  Class::Method::Modifiers: 0
   Encode: 0
   JSON: 0
-  Module::Pluggable: 0
+  Module::Path: 0
+  Module::Runtime: 0
   Moose: 0
   MooseX::NonMoose: 0
+  MooseX::Role::Parameterized: 0
   Plack::Builder: 0
+  Plack::Middleware::RequestHeaders: 0
+  Plack::Middleware::ReverseProxyPath: 0
+  Pod::POM: 0
   Scalar::Util: 0
-  UNIVERSAL::require: 0
-  Web::Machine: 0
+  Sub::Exporter: 0
+  Web::Machine: '0.12'
+  Web::Simple: 0
   namespace::autoclean: 0
-  perl: 5.10.0
+  perl: 5.10.1
 resources:
   license: http://opensource.org/licenses/gpl-license.php
-version: 0.01
+version: '0.10'
+x_module_install_rtx_version: '0.37'
+x_requires_rt: 4.2.4
