@@ -11,7 +11,7 @@ sub dispatch_request {
     sub (/) {
         return [
             200,
-            ['Content-Type' => 'text/html'],
+            ['Content-Type' => 'text/html; charset=utf-8'],
             [ podview_as_html('RT::Extension::REST2') ]
         ];
     },
