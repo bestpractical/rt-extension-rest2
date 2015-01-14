@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use 5.010;
+use 5.010001;
 
 package RT::Extension::REST2;
 
@@ -209,15 +209,13 @@ sub to_app {
 
     RT::ConnectToDatabase();
 
-    my $rest_path = $class->rest_path;
-
     return builder {
         enable '+RT::Extension::REST2::Middleware::Log';
         enable '+RT::Extension::REST2::Middleware::Auth';
         enable 'RequestHeaders',
             set => [
                 'X-Forwarded-Script-Name' => '/',
-                'X-Traversal-Path' => $rest_path,
+                'X-Traversal-Path' => $REST_PATH,
             ];
         enable 'ReverseProxyPath';
         RT::Extension::REST2::Dispatcher->to_psgi_app;
