@@ -13,4 +13,6 @@ sub mech {
     );
 }
 
+sub authorization_header { return 'Basic cm9vdDpwYXNzd29yZA==' }
+
 1;
