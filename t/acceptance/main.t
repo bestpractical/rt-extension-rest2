@@ -36,4 +36,12 @@ my $auth = RT::Extension::REST2::Test->authorization_header;
     }
 }
 
+{
+    ok(my $res = $mech->post(
+        $rest_base_path, { param => 'value' }, 'Authorization' => $auth
+    ), "POST $rest_base_path");
+    is($res->code, 405);
+    like($res->header('allow'), qr/GET|HEAD|OPTIONS/);
+}
+
 done_testing;
