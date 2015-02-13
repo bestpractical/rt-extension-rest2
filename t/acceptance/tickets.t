@@ -20,4 +20,54 @@ my $json = JSON->new->utf8;
     is($data->{'message'}, 'No tickets found');
 }
 
+TODO : {
+    local $TODO = 'Missing param validation';
+    ok(my $res = $mech->post(
+        $rest_base_path . '/ticket', {}, 'Authorization' => $auth
+    ));
+    is($res->code, 400);
+    like($res->header('content-type'), qr{application/json});
+    ok(my $data = $json->decode($res->content));
+    is($data->{'message'}, 'Missing required params');
+}
+
+TODO : {
+    local $TODO = 'Invalid input params should respond 400';
+    my $payload = $json->encode({
+        Subject => 'Ticket creation using REST',
+        From => 'wallace@reis.me',
+    });
+    ok(my $res = $mech->post(
+        $rest_base_path . '/ticket',
+        Content => $payload,
+        'Content-Type' => 'application/json; charset=utf-8',
+        'Authorization' => $auth
+    ));
+    is($res->code, 400);
+    like($res->header('content-type'), qr{application/json});
+    ok(my $data = $json->decode($res->content));
+    is($data->{'message'}, 'Could not create ticket. Queue not set');
+}
+
+TODO : {
+    local $TODO = 'Fix response Location URL';
+    my $payload = $json->encode({
+        Subject => 'Ticket creation using REST',
+        From => 'wallace@reis.me',
+        To => 'rt@localhost',
+        Queue => 'General',
+        Content => 'Testing ticket creation using REST API.',
+    });
+    ok(my $res = $mech->post(
+        $rest_base_path . '/ticket',
+        Content => $payload,
+        'Content-Type' => 'application/json; charset=utf-8',
+        'Authorization' => $auth
+    ));
+    is($res->code, 201);
+    like($res->header('content-type'), qr{application/json});
+    my $new_ticket_url = $res->header('location');
+    like($new_ticket_url, qr[/tickets/\d+]);
+}
+
 done_testing;
