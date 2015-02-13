@@ -10,7 +10,7 @@ use Web::Dispatch::HTTPMethods;
 sub dispatch_request {
     my ($self) = @_;
     sub (/**) {
-        my ($resource_name) = ucfirst(lc $_[1]) =~ /(\w+)\/?/;
+        my ($resource_name) = ucfirst(lc $_[1]) =~ /([^\/]+)\/?/;
         my $resource = "RT::Extension::REST2::Resource::${resource_name}";
         if ( $resource->require ) {
             return Web::Machine->new(
