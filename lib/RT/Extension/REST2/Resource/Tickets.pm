@@ -41,8 +41,16 @@ sub allowed_methods {
 
 sub limit_collection {
     my $self = shift;
-    my ($ok, $msg) = $self->collection->FromSQL( $self->query );
-    return error_as_json( $self->response, ($ok ? 1 : 0), $msg );
+    my $collection = $self->collection;
+    my ($ok, $msg) = $collection->FromSQL( $self->query );
+    if ($ok) {
+        unless ($collection->Count) {
+            ($ok, $msg) = (0, 'No tickets found');
+        }
+    }
+    return error_as_json(
+        $self->response, $ok ? 1 : 0, $msg
+    );
 }
 
 __PACKAGE__->meta->make_immutable;
