@@ -51,8 +51,7 @@ TODO : {
     is($data->{'message'}, 'Could not create ticket. Queue not set');
 }
 
-TODO : {
-    local $TODO = 'Fix response Location URL';
+{
     my $payload = $json->encode({
         Subject => 'Ticket creation using REST',
         From => 'wallace@reis.me',
@@ -69,8 +68,10 @@ TODO : {
     is($res->code, 201);
     like($res->header('content-type'), qr{application/json});
     my $new_ticket_url = $res->header('location');
-    like($new_ticket_url, qr[/tickets/\d+]);
-    $mech->get_ok($rest_base_path . $new_ticket_url);
+    like($new_ticket_url, qr[/ticket/\d+]);
+    $mech->get_ok($rest_base_path . $new_ticket_url,
+        ['Authorization' => $auth]
+    );
 }
 
 done_testing;

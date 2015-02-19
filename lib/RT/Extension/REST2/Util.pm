@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use JSON ();
+use Scalar::Util qw( blessed );
 
 use Sub::Exporter -setup => {
     exports => [qw[
@@ -11,6 +12,8 @@ use Sub::Exporter -setup => {
         serialize_record
         deserialize_record
         error_as_json
+        record_type
+        record_class
     ]]
 };
 
@@ -155,6 +158,17 @@ sub error_as_json {
     $response->header( "Content-type" => "application/json; charset=utf-8" );
     $response->body( JSON::encode_json({ message => join "", @_ }) );
     return $return;
+}
+
+sub record_type {
+    my $object = shift;
+    my ($type) = blessed($object) =~ /::(\w+)$/;
+    return $type;
+}
+
+sub record_class {
+    my $type = record_type(shift);
+    return "RT::$type";
 }
 
 1;
