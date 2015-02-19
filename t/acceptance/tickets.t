@@ -71,6 +71,7 @@ TODO : {
     like($res->header('content-type'), qr{application/json});
     my $new_ticket_url = $res->header('location');
     like($new_ticket_url, qr[/tickets/\d+]);
+    $mech->get_ok($rest_base_path . $new_ticket_url);
 }
 
 done_testing;
