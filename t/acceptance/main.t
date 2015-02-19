@@ -2,10 +2,13 @@ use strict;
 use warnings;
 use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
+use JSON;
+use Try::Tiny;
 
 my $mech = RT::Extension::REST2::Test->mech;
 
 my $rest_base_path = '/REST/2.0';
+my $json = JSON->new->utf8;
 
 {
     ok(my $res = $mech->get($rest_base_path), "GET $rest_base_path");
@@ -42,6 +45,12 @@ my $auth = RT::Extension::REST2::Test->authorization_header;
     ), "POST $rest_base_path");
     is($res->code, 405);
     like($res->header('allow'), qr/GET|HEAD|OPTIONS/);
+    TODO : {
+        local $TODO = 'Error response in JSON format';
+        like($res->header('content-type'), qr{application/json});
+        ok(my $data = try { $json->decode($res->content) });
+        is($data->{'message'}, 'Method not allowed');
+    }
 }
 
 done_testing;
