@@ -34,8 +34,7 @@ TODO : {
     is($data->{'message'}, 'Missing required params');
 }
 
-TODO : {
-    local $TODO = 'Invalid input params should respond 400';
+{
     my $payload = $json->encode({
         Subject => 'Ticket creation using REST',
         From => 'wallace@reis.me',
