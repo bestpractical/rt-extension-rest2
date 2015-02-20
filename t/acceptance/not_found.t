@@ -14,12 +14,9 @@ my $json = JSON->new->utf8;
 sub check_404 {
     my $res = shift;
     is($res->code, 404);
-    TODO : {
-        local $TODO = 'Error response in JSON format';
-        like($res->header('content-type'), qr{application/json});
-        ok(my $data = try { $json->decode($res->content) });
-        is($data->{'message'}, 'Not found');
-    }
+    like($res->header('content-type'), qr{application/json});
+    ok(my $data = try { $json->decode($res->content) });
+    is($data->{'message'}, 'Not Found');
 }
 
 {

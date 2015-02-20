@@ -194,6 +194,7 @@ sub to_app {
     RT::ConnectToDatabase();
 
     return builder {
+        enable '+RT::Extension::REST2::Middleware::ErrorAsJSON';
         enable '+RT::Extension::REST2::Middleware::Log';
         enable '+RT::Extension::REST2::Middleware::Auth';
         enable 'RequestHeaders',

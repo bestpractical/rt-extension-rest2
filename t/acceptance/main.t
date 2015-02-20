@@ -13,8 +13,9 @@ my $json = JSON->new->utf8;
 {
     ok(my $res = $mech->get($rest_base_path), "GET $rest_base_path");
     is($res->code, 401, 'Unauthorized');
-    is($res->content, 'Authorization required');
-    like($res->header('content-type'), qr{text/plain});
+    like($res->header('content-type'), qr{application/json});
+    ok(my $data = try { $json->decode($res->content) });
+    is($data->{'message'}, 'Unauthorized');
     like($res->header('www-authenticate'), qr/example\.com\s+REST\s+API/);
 }
 
@@ -45,12 +46,9 @@ my $auth = RT::Extension::REST2::Test->authorization_header;
     ), "POST $rest_base_path");
     is($res->code, 405);
     like($res->header('allow'), qr/GET|HEAD|OPTIONS/);
-    TODO : {
-        local $TODO = 'Error response in JSON format';
-        like($res->header('content-type'), qr{application/json});
-        ok(my $data = try { $json->decode($res->content) });
-        is($data->{'message'}, 'Method not allowed');
-    }
+    like($res->header('content-type'), qr{application/json});
+    ok(my $data = try { $json->decode($res->content) });
+    is($data->{'message'}, 'Method Not Allowed');
 }
 
 done_testing;
