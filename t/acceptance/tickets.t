@@ -68,10 +68,38 @@ TODO : {
     is($res->code, 201);
     like($res->header('content-type'), qr{application/json});
     my $new_ticket_url = $res->header('location');
-    like($new_ticket_url, qr[/ticket/\d+]);
+    ok(my $ticket_id = $new_ticket_url =~ qr[/ticket/(\d+)]);
+
     $mech->get_ok($rest_base_path . $new_ticket_url,
         ['Authorization' => $auth]
     );
+    $res = $mech->res;
+    like($res->header('content-type'), qr{application/json});
+    ok(my $data = $json->decode($res->content));
+    is($data->{'id'}, $ticket_id);
+    is($data->{'Type'}, 'ticket');
+    is($data->{'Status'}, 'new');
+    is($data->{'Subject'}, 'Ticket creation using REST');
+    like($data->{'_url'}, qr[/ticket/$ticket_id]);
+    ok(exists $data->{$_}) for qw(AdminCc TimeEstimated Started Cc
+                                  LastUpdated TimeWorked Resolved
+                                  Created Due Priority EffectiveId);
+    my $queue = $data->{'Queue'};
+    is($queue->{'id'}, 1);
+    is($queue->{'type'}, 'queue');
+    like($queue->{'_url'}, qr{/queue/1});
+    my $owner = $data->{'Owner'};
+    is($owner->{'id'}, 'Nobody');
+    is($owner->{'type'}, 'user');
+    like($owner->{'_url'}, qr{/user/Nobody});
+    my $creator = $data->{'Creator'};
+    is($creator->{'id'}, 'root');
+    is($creator->{'type'}, 'user');
+    like($creator->{'_url'}, qr{/user/root});
+    my $updated_by = $data->{'LastUpdatedBy'};
+    is($updated_by->{'id'}, 'root');
+    is($updated_by->{'type'}, 'user');
+    like($updated_by->{'_url'}, qr{/user/root});
 }
 
 done_testing;
