@@ -43,13 +43,14 @@ sub limit_collection {
     my $self = shift;
     my $collection = $self->collection;
     my ($ok, $msg) = $collection->FromSQL( $self->query );
+    my $status_code;
     if ($ok) {
         unless ($collection->Count) {
-            ($ok, $msg) = (0, 'No tickets found');
+            ($status_code, $ok, $msg) = (\404, 0, 'No tickets found');
         }
     }
     return error_as_json(
-        $self->response, $ok ? 1 : 0, $msg
+        $self->response, $ok ? 1 : ($status_code // 0), $msg
     );
 }
 

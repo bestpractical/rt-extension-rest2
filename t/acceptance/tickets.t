@@ -14,10 +14,7 @@ my $json = JSON->new->utf8;
     ok(my $res = $mech->get(
         $rest_base_path . '/tickets?query=id>0', 'Authorization' => $auth
     ));
-    TODO : {
-        local $TODO = 'Status code for no rows';
-        is($res->code, 404, 'DB empty, so no tickets found');
-    }
+    is($res->code, 404, 'DB empty, so no tickets found');
     like($res->header('content-type'), qr{application/json});
     ok(my $data = $json->decode($res->content));
     is($data->{'message'}, 'No tickets found');
