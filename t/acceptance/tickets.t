@@ -99,4 +99,18 @@ TODO : {
     like($updated_by->{'_url'}, qr{/user/root});
 }
 
+{
+    $mech->get_ok(
+        $rest_base_path . '/tickets?query=id>0', ['Authorization' => $auth]
+    );
+    my $res = $mech->res;
+    like($res->header('content-type'), qr{application/json});
+    ok(my $data = $json->decode($res->content));
+    is($data->{'count'}, 1);
+    is($data->{'page'}, 1);
+    is($data->{'per_page'}, 20);
+    is($data->{'total'}, 1);
+    is(scalar @{$data->{'items'}}, $data->{'count'});
+}
+
 done_testing;
