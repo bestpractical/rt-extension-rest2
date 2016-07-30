@@ -155,8 +155,13 @@ sub deserialize_record {
 sub error_as_json {
     my $response = shift;
     my $return = shift;
+
+    my $body = JSON::encode_json({ message => join "", @_ });
+
     $response->content_type( "application/json; charset=utf-8" );
-    $response->body( JSON::encode_json({ message => join "", @_ }) );
+    $response->content_length( length $body );
+    $response->body( $body );
+
     return $return;
 }
 
