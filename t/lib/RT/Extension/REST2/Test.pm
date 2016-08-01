@@ -34,7 +34,6 @@ sub mech {
             Password => 'password',
             Privileged => 1,
         );
-        $u->PrincipalObj->GrantRight( Right => 'SuperUser' );
         return $u;
     }
 }

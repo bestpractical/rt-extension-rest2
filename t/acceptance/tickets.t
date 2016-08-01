@@ -9,6 +9,7 @@ my $mech = RT::Extension::REST2::Test->mech;
 my $auth = RT::Extension::REST2::Test->authorization_header;
 my $rest_base_path = '/REST/2.0';
 my $json = JSON->new->utf8;
+my $user = RT::Extension::REST2::Test->user;
 
 # Empty DB
 {
@@ -61,12 +62,25 @@ my ($ticket_url, $ticket_id);
         Queue   => 'General',
         Content => 'Testing ticket creation using REST API.',
     });
+
+    # Rights Test - No CreateTicket
     ok(my $res = $mech->post( $rest_base_path . '/ticket',
         'Content'       => $payload,
         'Content-Type'  => 'application/json; charset=utf-8',
         'Authorization' => $auth
     ));
+    # TODO: This should return 403
+    is($res->code, 400);
+
+    # Rights Test - With CreateTicket
+    $user->PrincipalObj->GrantRight( Right => 'CreateTicket' );
+    ok($res = $mech->post( $rest_base_path . '/ticket',
+        'Content'       => $payload,
+        'Content-Type'  => 'application/json; charset=utf-8',
+        'Authorization' => $auth
+    ));
     is($res->code, 201);
+
     like($res->header('content-type'), qr{application/json});
     $ticket_url = $res->header('location');
     ok($ticket_id = $ticket_url =~ qr[/ticket/(\d+)]);
@@ -74,10 +88,21 @@ my ($ticket_url, $ticket_id);
 
 # Ticket Display
 {
+    # Rights Test - No ShowTicket
+    $mech->get(
+        $rest_base_path . $ticket_url, 'Authorization' => $auth
+    );
+    my $res = $mech->res;
+    is($res->code, 403);
+
+    # Rights Test - With ShowTicket
+    $user->PrincipalObj->GrantRight( Right => 'ShowTicket' );
     $mech->get_ok(
         $rest_base_path . $ticket_url, [Authorization => $auth]
     );
-    my $res = $mech->res;
+    $res = $mech->res;
+    is($res->code, 200);
+
     like($res->header('content-type'), qr{application/json});
     ok(my $data = $json->decode($res->content));
     is($data->{id}, $ticket_id);
