@@ -16,9 +16,10 @@ sub check_404 {
     is($res->code, 404);
     like($res->header('content-type'), qr{application/json});
     ok(my $data = try { $json->decode($res->content) });
-    is($data->{'message'}, 'Not Found');
+    is($data->{message}, 'Not Found');
 }
 
+# Check Proper 404 Response
 {
     for (qw[/foobar /foo /index.html /ticket.do/1 /1/1]) {
         my $path = $rest_base_path . $_;
