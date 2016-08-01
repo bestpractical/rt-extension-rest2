@@ -34,7 +34,7 @@ TODO : {
 {
     my $payload = $json->encode({
         Subject => 'Ticket creation using REST',
-        From => 'wallace@reis.me',
+        From => 'test@bestpractical.com',
     });
     ok(my $res = $mech->post(
         $rest_base_path . '/ticket',
@@ -51,7 +51,7 @@ TODO : {
 {
     my $payload = $json->encode({
         Subject => 'Ticket creation using REST',
-        From => 'wallace@reis.me',
+        From => 'test@bestpractical.com',
         To => 'rt@localhost',
         Queue => 'General',
         Content => 'Testing ticket creation using REST API.',
