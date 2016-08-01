@@ -90,13 +90,13 @@ TODO : {
     is($owner->{'type'}, 'user');
     like($owner->{'_url'}, qr{/user/Nobody});
     my $creator = $data->{'Creator'};
-    is($creator->{'id'}, 'root');
+    is($creator->{'id'}, 'test');
     is($creator->{'type'}, 'user');
-    like($creator->{'_url'}, qr{/user/root});
+    like($creator->{'_url'}, qr{/user/test});
     my $updated_by = $data->{'LastUpdatedBy'};
-    is($updated_by->{'id'}, 'root');
+    is($updated_by->{'id'}, 'test');
     is($updated_by->{'type'}, 'user');
-    like($updated_by->{'_url'}, qr{/user/root});
+    like($updated_by->{'_url'}, qr{/user/test});
 }
 
 {

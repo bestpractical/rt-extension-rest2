@@ -6,6 +6,7 @@ use base 'RT::Test';
 
 use RT::Extension::REST2;
 use Test::WWW::Mechanize::PSGI;
+use RT::User;
 
 sub mech {
     my $mech = Test::WWW::Mechanize::PSGI->new(
@@ -13,6 +14,29 @@ sub mech {
     );
 }
 
-sub authorization_header { return 'Basic cm9vdDpwYXNzd29yZA==' }
+{
+    my $u;
+
+    sub authorization_header {
+        $u = _create_user() unless ($u && $u->id);
+        return 'Basic dGVzdDpwYXNzd29yZA==';
+    }
+
+    sub user {
+        $u = _create_user() unless ($u && $u->id);
+        return $u;
+    }
+
+    sub _create_user {
+        my $u = RT::User->new( RT->SystemUser );
+        $u->Create(
+            Name => 'test',
+            Password => 'password',
+            Privileged => 1,
+        );
+        $u->PrincipalObj->GrantRight( Right => 'SuperUser' );
+        return $u;
+    }
+}
 
 1;
