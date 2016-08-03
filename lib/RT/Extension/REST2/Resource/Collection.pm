@@ -11,7 +11,7 @@ use Scalar::Util qw( blessed );
 use Web::Machine::Util qw( bind_path create_date );
 use Web::Machine::FSM::States qw( is_status_code );
 use Module::Runtime qw( require_module );
-use RT::Extension::REST2::Util qw( serialize_record );
+use RT::Extension::REST2::Util qw( serialize_record expand_uid );
 
 has 'collection_class' => (
     is          => 'ro',
@@ -67,7 +67,8 @@ sub serialize {
     my @results;
 
     while (my $item = $collection->Next) {
-        push @results, serialize_record($item);
+        # TODO: Allow selection of desired fields
+        push @results, expand_uid( $item->UID );
     }
     return {
         count       => scalar(@results)         + 0,
