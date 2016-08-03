@@ -16,8 +16,8 @@ sub call {
         my $psgi_res = shift;
         my $status_code = $psgi_res->[0];
         my $headers = $psgi_res->[1];
-        my $is_json
-            = Plack::Util::header_get($headers, 'content-type') =~ m/json/i;
+        my $content_type = Plack::Util::header_get($headers, 'content-type');
+        my $is_json = $content_type && $content_type =~ m/json/i;
         if ( is_error($status_code) && !$is_json ) {
             my $plack_res = Plack::Response->new($status_code, $headers);
             error_as_json($plack_res, undef, status_message($status_code));
