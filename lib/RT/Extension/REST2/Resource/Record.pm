@@ -42,9 +42,9 @@ sub _build_record {
 
 sub base_uri {
     my $self = shift;
-    my $base = $self->request->base;
-    my $type = record_type($self);
-    return $base . lc $type;
+    my $base = RT::Extension::REST2->base_uri;
+    my $type = lc record_type($self);
+    return join '/', $base, $type;
 }
 
 sub resource_exists {
