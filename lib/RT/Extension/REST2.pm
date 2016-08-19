@@ -15,7 +15,7 @@ use RT::Extension::REST2::Dispatcher;
 
 =head1 NAME
 
-RT-Extension-REST2 - Adds a modern REST API to RT under /REST/2.0/
+RT::Extension::REST2 - Adds a modern REST API to RT under /REST/2.0/
 
 =head1 INSTALLATION
 
@@ -40,22 +40,6 @@ Add this line:
     rm -rf /opt/rt4/var/mason_data/obj
 
 =item Restart your webserver
-
-=back
-
-=head1 CONFIGURATION
-
-=over
-
-=item C<$RESTPath>
-
-The relative path from C<$WebPath> where you want to have the REST API being
-served.
-
-C<$RESTPath> requires a leading / but no trailing /, or it can be blank.
-
-Defaults to C</REST/2.0>. Thus, if you have C<$WebPath> set to C</rt> then the
-base REST API URI will be like C<https://example.com/rt/REST/2.0>.
 
 =back
 
@@ -210,6 +194,7 @@ sub to_app {
     RT::ConnectToDatabase();
 
     return builder {
+        enable '+RT::Extension::REST2::Middleware::ErrorAsJSON';
         enable '+RT::Extension::REST2::Middleware::Log';
         enable '+RT::Extension::REST2::Middleware::Auth';
         enable 'RequestHeaders',
@@ -256,7 +241,7 @@ This software is Copyright (c) 2015 by Best Practical Solutions, LLC.
 
 This is free software, licensed under:
 
-  The GNU General Public License, Version 2, June 1991
+The GNU General Public License, Version 2, June 1991
 
 =cut
 

@@ -27,5 +27,7 @@ requires 'Pod::POM';
 
 recommends 'JSON::XS';
 
+test_requires 'Try::Tiny';
+
 sign;
 WriteAll;

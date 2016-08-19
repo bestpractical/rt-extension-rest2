@@ -78,7 +78,7 @@ sub create_resource {
     } else {
         return error_as_json(
             $self->response,
-            \409, $msg || "Create failed for unknown reason");
+            \400, $msg || "Create failed for unknown reason");
     }
 }
 

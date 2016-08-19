@@ -11,14 +11,15 @@ requires 'current_user';
 requires 'base_uri';
 
 use JSON ();
-use RT::Extension::REST2::Util qw( serialize_record );
+use RT::Extension::REST2::Util qw( serialize_record record_type );
 
 sub serialize {
     my $self = shift;
-    my $data = serialize_record( $self->record );
+    my $record = $self->record;
+    my $data = serialize_record($record);
 
     # Add the resource url for this record
-    $data->{_url} = join "/", $self->base_uri, $self->record->id;
+    $data->{_url} = join "/", $self->base_uri, $record->id;
 
     return $data;
 }

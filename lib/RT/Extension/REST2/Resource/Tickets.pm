@@ -42,7 +42,8 @@ sub allowed_methods {
 sub limit_collection {
     my $self = shift;
     my ($ok, $msg) = $self->collection->FromSQL( $self->query );
-    return error_as_json( $self->response, ($ok ? 1 : 0), $msg );
+    return error_as_json( $self->response, 0, $msg ) unless $ok;
+    return 1;
 }
 
 __PACKAGE__->meta->make_immutable;

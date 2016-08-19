@@ -7,9 +7,9 @@ use namespace::autoclean;
 
 extends 'RT::Extension::REST2::Resource';
 
-use Scalar::Util qw( blessed );
 use Web::Machine::Util qw( bind_path create_date );
 use Module::Runtime qw( require_module );
+use RT::Extension::REST2::Util qw(record_class record_type);
 
 has 'record_class' => (
     is          => 'ro',
@@ -26,9 +26,8 @@ has 'record' => (
 );
 
 sub _build_record_class {
-    my $self   = shift;
-    my ($type) = blessed($self) =~ /::(\w+)$/;
-    my $class  = "RT::$type";
+    my $self = shift;
+    my $class = record_class($self);
     require_module($class);
     return $class;
 }
@@ -42,7 +41,10 @@ sub _build_record {
 }
 
 sub base_uri {
-    $_[0]->request->base
+    my $self = shift;
+    my $base = RT::Extension::REST2->base_uri;
+    my $type = lc record_type($self);
+    return join '/', $base, $type;
 }
 
 sub resource_exists {
