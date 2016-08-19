@@ -16,10 +16,9 @@ my $user = RT::Extension::REST2::Test->user;
     ok(my $res = $mech->get(
         $rest_base_path . '/tickets?query=id>0', 'Authorization' => $auth
     ));
-    is($res->code, 404, 'DB empty, so no tickets found');
     like($res->header('content-type'), qr{application/json});
     ok(my $data = $json->decode($res->content));
-    is($data->{message}, 'No tickets found');
+    is($data->{count}, 0);
 }
 
 # Parameter Validation
@@ -90,7 +89,7 @@ my ($ticket_url, $ticket_id);
 {
     # Rights Test - No ShowTicket
     $mech->get(
-        $rest_base_path . $ticket_url, 'Authorization' => $auth
+        $ticket_url, 'Authorization' => $auth
     );
     my $res = $mech->res;
     is($res->code, 403);
@@ -98,7 +97,7 @@ my ($ticket_url, $ticket_id);
     # Rights Test - With ShowTicket
     $user->PrincipalObj->GrantRight( Right => 'ShowTicket' );
     $mech->get_ok(
-        $rest_base_path . $ticket_url, [Authorization => $auth]
+        $ticket_url, [Authorization => $auth]
     );
     $res = $mech->res;
     is($res->code, 200);
