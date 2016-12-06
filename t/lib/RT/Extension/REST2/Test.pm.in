@@ -2,6 +2,10 @@ package RT::Extension::REST2::Test;
 
 use strict;
 use warnings;
+
+### after: use lib qw(@RT_LIB_PATH@);
+use lib qw(/opt/rt4/local/lib /opt/rt4/lib);
+
 use base 'RT::Test';
 
 use RT::Extension::REST2;
