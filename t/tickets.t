@@ -136,4 +136,43 @@ my ($ticket_url, $ticket_id);
     like($ticket->{_url}, qr{$rest_base_path/ticket/1$});
 }
 
+# Ticket Update
+{
+    my $payload = $json->encode({
+        Subject  => 'Ticket update using REST',
+        Priority => 42,
+    });
+
+    # Rights Test - No ModifyTicket
+    my $res = $mech->put($ticket_url,
+        'Content'       => $payload,
+        'Content-Type'  => 'application/json; charset=utf-8',
+        'Authorization' => $auth,
+    );
+    TODO: {
+        local $TODO = "RT ->Update isn't introspectable";
+        is($res->code, 403);
+    };
+    is_deeply($mech->json_response, ['Ticket 1: Permission Denied', 'Ticket 1: Permission Denied']);
+
+    $user->PrincipalObj->GrantRight( Right => 'ModifyTicket' );
+
+    $res = $mech->put($ticket_url,
+        'Content'       => $payload,
+        'Content-Type'  => 'application/json; charset=utf-8',
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    is_deeply($mech->json_response, ["Ticket 1: Priority changed from (no value) to '42'", "Ticket 1: Subject changed from 'Ticket creation using REST' to 'Ticket update using REST'"]);
+
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is($content->{Subject}, 'Ticket update using REST');
+    is($content->{Priority}, 42);
+}
+
 done_testing;
