@@ -55,8 +55,10 @@ my ($ticket_url, $ticket_id);
         'Content-Type'  => 'application/json; charset=utf-8',
         'Authorization' => $auth,
     );
-    # TODO: This should return 403
-    is($res->code, 400);
+    TODO: {
+        local $TODO = "this should return 403";
+        is($res->code, 403);
+    }
 
     # Rights Test - With CreateTicket
     $user->PrincipalObj->GrantRight( Right => 'CreateTicket' );
