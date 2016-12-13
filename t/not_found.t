@@ -2,20 +2,16 @@ use strict;
 use warnings;
 use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
-use JSON;
 
 my $mech = RT::Extension::REST2::Test->mech;
 my $auth = RT::Extension::REST2::Test->authorization_header;
 my $rest_base_path = '/REST/2.0';
-my $json = JSON->new->utf8;
 
 sub is_404 {
     local $Test::Builder::Level = $Test::Builder::Level + 1;
     my $res = shift;
     is($res->code, 404);
-    is($res->header('content-type'), 'application/json; charset=utf-8');
-    my $content = $json->decode($res->content);
-    is($content->{message}, 'Not Found');
+    is($mech->json_response->{message}, 'Not Found');
 }
 
 # Proper 404 Response

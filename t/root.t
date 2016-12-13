@@ -2,21 +2,17 @@ use strict;
 use warnings;
 use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
-use JSON;
 
 my $mech = RT::Extension::REST2::Test->mech;
 
 my $rest_base_path = '/REST/2.0';
-my $json = JSON->new->utf8;
 
 # Unauthorized without Basic Auth
 {
     my $res = $mech->get($rest_base_path);
     is($res->code, 401, 'Unauthorized');
-    is($res->header('content-type'), 'application/json; charset=utf-8');
     is($res->header('www-authenticate'), 'Basic realm="example.com REST API"');
-    my $content = $json->decode($res->content);
-    is($content->{message}, 'Unauthorized');
+    is($mech->json_response->{message}, 'Unauthorized');
 }
 
 my $auth = RT::Extension::REST2::Test->authorization_header;
@@ -50,9 +46,7 @@ my $auth = RT::Extension::REST2::Test->authorization_header;
     );
     is($res->code, 405);
     is($res->header('allow'), 'GET,HEAD,OPTIONS');
-    is($res->header('content-type'), 'application/json; charset=utf-8');
-    my $content = $json->decode($res->content);
-    is($content->{message}, 'Method Not Allowed');
+    is($mech->json_response->{message}, 'Method Not Allowed');
 }
 
 done_testing;

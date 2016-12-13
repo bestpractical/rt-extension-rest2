@@ -2,7 +2,6 @@ use strict;
 use warnings;
 use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
-use JSON;
 
 my $mech = RT::Extension::REST2::Test->mech;
 
@@ -16,9 +15,8 @@ my $user = RT::Extension::REST2::Test->user;
     my $res = $mech->get("$rest_base_path/tickets?query=id>0",
         'Authorization' => $auth,
     );
-    is($res->header('content-type'), 'application/json; charset="utf-8"');
-    my $content = $json->decode($res->content);
-    is($content->{count}, 0);
+    is($res->code, 200);
+    is($mech->json_response->{count}, 0);
 }
 
 # Missing Queue
@@ -33,9 +31,7 @@ my $user = RT::Extension::REST2::Test->user;
         'Authorization' => $auth,
     );
     is($res->code, 400);
-    is($res->header('content-type'), 'application/json; charset=utf-8');
-    my $content = $json->decode($res->content);
-    is($content->{message}, 'Could not create ticket. Queue not set');
+    is($mech->json_response->{message}, 'Could not create ticket. Queue not set');
 }
 
 # Ticket Creation
@@ -68,8 +64,6 @@ my ($ticket_url, $ticket_id);
         'Authorization' => $auth,
     );
     is($res->code, 201);
-
-    is($res->header('content-type'), 'application/json; charset="utf-8"');
     ok($ticket_url = $res->header('location'));
     ok($ticket_id = $ticket_url =~ qr[/ticket/(\d+)]);
 }
@@ -92,8 +86,7 @@ my ($ticket_url, $ticket_id);
     );
     is($res->code, 200);
 
-    is($res->header('content-type'), 'application/json; charset="utf-8"');
-    my $content = $json->decode($res->content);
+    my $content = $mech->json_response;
     is($content->{id}, $ticket_id);
     is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
@@ -130,8 +123,7 @@ my ($ticket_url, $ticket_id);
         'Authorization' => $auth,
     );
     is($res->code, 200);
-    is($res->header('content-type'), 'application/json; charset="utf-8"');
-    my $content = $json->decode($res->content);
+    my $content = $mech->json_response;
     is($content->{count}, 1);
     is($content->{page}, 1);
     is($content->{per_page}, 20);

@@ -42,6 +42,9 @@ sub mech { RT::Extension::REST2::Test::Mechanize->new }
     package RT::Extension::REST2::Test::Mechanize;
     use parent 'Test::WWW::Mechanize::PSGI';
 
+    use JSON;
+    my $json = JSON->new->utf8;
+
     sub new {
         my $class = shift;
         my %args = (
@@ -49,6 +52,19 @@ sub mech { RT::Extension::REST2::Test::Mechanize->new }
             @_,
         );
         return $class->SUPER::new(%args);
+    }
+
+    sub json_response {
+        local $Test::Builder::Level = $Test::Builder::Level + 1;
+        my $self = shift;
+
+        my $res = $self->response;
+
+        local $main::TODO;
+        Test::More::like($res->header('content-type'),
+            qr{^application/json(?:; charset="?utf-8"?)?$});
+
+        return $json->decode($res->content);
     }
 }
 
