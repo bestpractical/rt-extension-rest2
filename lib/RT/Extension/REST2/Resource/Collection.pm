@@ -8,7 +8,6 @@ use namespace::autoclean;
 extends 'RT::Extension::REST2::Resource';
 
 use Scalar::Util qw( blessed );
-use Web::Machine::Util qw( bind_path create_date );
 use Web::Machine::FSM::States qw( is_status_code );
 use Module::Runtime qw( require_module );
 use RT::Extension::REST2::Util qw( serialize_record expand_uid );
