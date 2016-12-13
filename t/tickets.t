@@ -137,6 +137,11 @@ my ($ticket_url, $ticket_id);
     is($content->{per_page}, 20);
     is($content->{total}, 1);
     is(scalar @{$content->{items}}, 1);
+
+    my $ticket = $content->{items}->[0];
+    is($ticket->{type}, 'ticket');
+    is($ticket->{id}, 1);
+    like($ticket->{_url}, qr{$rest_base_path/ticket/1$});
 }
 
 done_testing;
