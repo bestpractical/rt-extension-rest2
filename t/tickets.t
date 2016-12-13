@@ -21,18 +21,6 @@ my $user = RT::Extension::REST2::Test->user;
     is($data->{count}, 0);
 }
 
-# Parameter Validation
-TODO : {
-    local $TODO = 'Missing param validation';
-    ok(my $res = $mech->post(
-        $rest_base_path . '/ticket', {}, 'Authorization' => $auth
-    ));
-    is($res->code, 400);
-    like($res->header('content-type'), qr{application/json});
-    ok(my $data = $json->decode($res->content));
-    is($data->{message}, 'Missing required params');
-}
-
 # Missing Queue
 {
     my $payload = $json->encode({
