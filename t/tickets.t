@@ -97,6 +97,9 @@ my ($ticket_url, $ticket_id);
     is($links->[0]{type}, 'ticket');
     like($links->[0]{_url}, qr[$rest_base_path/ticket/$ticket_id$]);
 
+    is($links->[1]{ref}, 'history');
+    like($links->[1]{_url}, qr[$rest_base_path/ticket/$ticket_id/history$]);
+
     my $queue = $content->{Queue};
     is($queue->{id}, 1);
     is($queue->{type}, 'queue');
