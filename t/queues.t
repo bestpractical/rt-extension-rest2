@@ -69,11 +69,8 @@ my $queue_url;
     is_deeply($content->{Cc}, [], 'no Ccs set');
     is_deeply($content->{AdminCc}, [], 'no AdminCcs set');
 
-    TODO: {
-        local $TODO = "need to filter out ticket-level roles";
-        ok(!exists($content->{Owner}), 'no Owner at the queue level');
-        ok(!exists($content->{Requestor}), 'no Requestor at the queue level');
-    }
+    ok(!exists($content->{Owner}), 'no Owner at the queue level');
+    ok(!exists($content->{Requestor}), 'no Requestor at the queue level');
 }
 
 # Queue update
@@ -201,11 +198,8 @@ my ($features_url, $features_id);
     is_deeply($content->{Cc}, [], 'no Ccs set');
     is_deeply($content->{AdminCc}, [], 'no AdminCcs set');
 
-    TODO: {
-        local $TODO = "need to filter out ticket-level roles";
-        ok(!exists($content->{Owner}), 'no Owner at the queue level');
-        ok(!exists($content->{Requestor}), 'no Requestor at the queue level');
-    }
+    ok(!exists($content->{Owner}), 'no Owner at the queue level');
+    ok(!exists($content->{Requestor}), 'no Requestor at the queue level');
 }
 
 # id > 0 (finds new Features queue but not disabled Bugs queue)

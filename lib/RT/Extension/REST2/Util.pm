@@ -76,7 +76,7 @@ sub serialize_record {
 
     # Include role members, if applicable
     if ($record->DOES("RT::Record::Role::Roles")) {
-        for my $role ($record->Roles) {
+        for my $role ($record->Roles(ACLOnly => 0)) {
             my $members = $data{$role} = [];
             my $group = $record->RoleGroup($role);
             my $gm = $group->MembersObj;
