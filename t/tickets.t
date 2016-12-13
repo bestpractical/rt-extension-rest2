@@ -86,10 +86,16 @@ my ($ticket_url, $ticket_id);
     is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
     is($content->{Subject}, 'Ticket creation using REST');
-    like($content->{_url}, qr[$rest_base_path/ticket/$ticket_id$]);
+
     ok(exists $content->{$_}) for qw(AdminCc TimeEstimated Started Cc
                                      LastUpdated TimeWorked Resolved
                                      Created Due Priority EffectiveId);
+
+    my $links = $content->{_hyperlinks};
+    is($links->[0]{ref}, 'self');
+    is($links->[0]{id}, 1);
+    is($links->[0]{type}, 'ticket');
+    like($links->[0]{_url}, qr[$rest_base_path/ticket/$ticket_id$]);
 
     my $queue = $content->{Queue};
     is($queue->{id}, 1);
