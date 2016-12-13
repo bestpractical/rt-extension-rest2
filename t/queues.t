@@ -1,0 +1,233 @@
+use strict;
+use warnings;
+use lib 't/lib';
+use RT::Extension::REST2::Test tests => undef;
+
+my $mech = RT::Extension::REST2::Test->mech;
+my $auth = RT::Extension::REST2::Test->authorization_header;
+my $rest_base_path = '/REST/2.0';
+my $user = RT::Extension::REST2::Test->user;
+
+$user->PrincipalObj->GrantRight( Right => 'SuperUser' );
+
+my $queue_url;
+# search Name = General
+{
+    my $res = $mech->post_json("$rest_base_path/queues",
+        [{ field => 'Name', value => 'General' }],
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is($content->{count}, 1);
+    is($content->{page}, 1);
+    is($content->{per_page}, 20);
+    is($content->{total}, 1);
+    is(scalar @{$content->{items}}, 1);
+
+    my $queue = $content->{items}->[0];
+    is($queue->{type}, 'queue');
+    is($queue->{id}, 1);
+    like($queue->{_url}, qr{$rest_base_path/queue/1$});
+    $queue_url = $queue->{_url};
+}
+
+# Queue display
+{
+    my $res = $mech->get($queue_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is($content->{id}, 1);
+    is($content->{Name}, 'General');
+    is($content->{Description}, 'The default queue');
+    is($content->{Lifecycle}, 'default');
+    is($content->{Disabled}, 0);
+
+    ok(exists $content->{$_}) for qw(LastUpdated Created SortOrder SLADisabled
+                                     CorrespondAddress CommentAddress);
+
+    my $links = $content->{_hyperlinks};
+    is($links->[0]{ref}, 'self');
+    is($links->[0]{id}, 1);
+    is($links->[0]{type}, 'queue');
+    like($links->[0]{_url}, qr[$rest_base_path/queue/1$]);
+
+    my $creator = $content->{Creator};
+    is($creator->{id}, 'RT_System');
+    is($creator->{type}, 'user');
+    like($creator->{_url}, qr{$rest_base_path/user/RT_System$});
+
+    my $updated_by = $content->{LastUpdatedBy};
+    is($updated_by->{id}, 'RT_System');
+    is($updated_by->{type}, 'user');
+    like($updated_by->{_url}, qr{$rest_base_path/user/RT_System$});
+
+    is_deeply($content->{Cc}, [], 'no Ccs set');
+    is_deeply($content->{AdminCc}, [], 'no AdminCcs set');
+
+    TODO: {
+        local $TODO = "need to filter out ticket-level roles";
+        ok(!exists($content->{Owner}), 'no Owner at the queue level');
+        ok(!exists($content->{Requestor}), 'no Requestor at the queue level');
+    }
+}
+
+# Queue update
+{
+    my $payload = {
+        Name => 'Bugs',
+        Description => 'gotta squash em all',
+    };
+
+    my $res = $mech->put_json($queue_url,
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    is_deeply($mech->json_response, ['Queue General: Description changed from "The default queue" to "gotta squash em all"', 'Queue Bugs: Name changed from "General" to "Bugs"']);
+
+    $res = $mech->get($queue_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is($content->{Name}, 'Bugs');
+    is($content->{Description}, 'gotta squash em all');
+
+    my $updated_by = $content->{LastUpdatedBy};
+    is($updated_by->{id}, 'test');
+    is($updated_by->{type}, 'user');
+    like($updated_by->{_url}, qr{$rest_base_path/user/test$});
+}
+
+# search Name = Bugs
+{
+    my $res = $mech->post_json("$rest_base_path/queues",
+        [{ field => 'Name', value => 'Bugs' }],
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is($content->{count}, 1);
+    is($content->{page}, 1);
+    is($content->{per_page}, 20);
+    is($content->{total}, 1);
+    is(scalar @{$content->{items}}, 1);
+
+    my $queue = $content->{items}->[0];
+    is($queue->{type}, 'queue');
+    is($queue->{id}, 1);
+    like($queue->{_url}, qr{$rest_base_path/queue/1$});
+}
+
+# Queue delete
+{
+    my $res = $mech->delete($queue_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 204);
+
+    my $queue = RT::Queue->new(RT->SystemUser);
+    $queue->Load(1);
+    is($queue->Id, 1, '"deleted" queue still in the database');
+    ok($queue->Disabled, '"deleted" queue disabled');
+
+    $res = $mech->get($queue_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is($content->{Name}, 'Bugs');
+    is($content->{Disabled}, 1);
+}
+
+# Queue create
+my ($features_url, $features_id);
+{
+    my $payload = {
+        Name => 'Features',
+        CorrespondAddress => 'features@example.com',
+        CommentAddress => 'comment@example.com',
+    };
+
+    my $res = $mech->post_json("$rest_base_path/queue",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    ok($features_url = $res->header('location'));
+    ok(($features_id) = $features_url =~ qr[/queue/(\d+)]);
+}
+
+# Queue display
+{
+    my $res = $mech->get($features_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is($content->{id}, $features_id);
+    is($content->{Name}, 'Features');
+    is($content->{Lifecycle}, 'default');
+    is($content->{Disabled}, 0);
+
+    ok(exists $content->{$_}) for qw(LastUpdated Created SortOrder SLADisabled
+                                     CorrespondAddress CommentAddress Description);
+
+    my $links = $content->{_hyperlinks};
+    is($links->[0]{ref}, 'self');
+    is($links->[0]{id}, $features_id);
+    is($links->[0]{type}, 'queue');
+    like($links->[0]{_url}, qr[$rest_base_path/queue/$features_id$]);
+
+    my $creator = $content->{Creator};
+    is($creator->{id}, 'test');
+    is($creator->{type}, 'user');
+    like($creator->{_url}, qr{$rest_base_path/user/test$});
+
+    my $updated_by = $content->{LastUpdatedBy};
+    is($updated_by->{id}, 'test');
+    is($updated_by->{type}, 'user');
+    like($updated_by->{_url}, qr{$rest_base_path/user/test$});
+
+    is_deeply($content->{Cc}, [], 'no Ccs set');
+    is_deeply($content->{AdminCc}, [], 'no AdminCcs set');
+
+    TODO: {
+        local $TODO = "need to filter out ticket-level roles";
+        ok(!exists($content->{Owner}), 'no Owner at the queue level');
+        ok(!exists($content->{Requestor}), 'no Requestor at the queue level');
+    }
+}
+
+# id > 0 (finds new Features queue but not disabled Bugs queue)
+{
+    my $res = $mech->post_json("$rest_base_path/queues",
+        [{ field => 'id', operator => '>', value => 0 }],
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is($content->{count}, 1);
+    is($content->{page}, 1);
+    is($content->{per_page}, 20);
+    is($content->{total}, 1);
+    is(scalar @{$content->{items}}, 1);
+
+    my $queue = $content->{items}->[0];
+    is($queue->{type}, 'queue');
+    is($queue->{id}, $features_id);
+    like($queue->{_url}, qr{$rest_base_path/queue/$features_id$});
+}
+
+done_testing;
+
