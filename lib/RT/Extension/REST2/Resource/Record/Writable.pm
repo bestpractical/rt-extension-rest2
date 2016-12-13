@@ -35,15 +35,9 @@ sub from_json {
                                                         \501 ;
 }
 
-sub update_resource {
+sub update_record {
     my $self = shift;
     my $data = shift;
-
-    if (not $self->resource_exists) {
-        return error_as_json(
-            $self->response,
-            \404, "Resource does not exist; use POST to create");
-    }
 
     # XXX TODO: ->Update doesn't handle roles
     my @results = $self->record->Update(
@@ -54,6 +48,19 @@ sub update_resource {
     # ->Update will need to be replaced or improved.
     $self->response->body( JSON::encode_json(\@results) );
     return;
+}
+
+sub update_resource {
+    my $self = shift;
+    my $data = shift;
+
+    if (not $self->resource_exists) {
+        return error_as_json(
+            $self->response,
+            \404, "Resource does not exist; use POST to create");
+    }
+
+    return $self->update_record($data);
 }
 
 sub create_record {
