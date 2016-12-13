@@ -7,9 +7,11 @@ use namespace::autoclean;
 
 use JSON ();
 
-with 'RT::Extension::REST2::Resource::Collection::ProcessPOSTasGET';
-with 'RT::Extension::REST2::Resource::Role::RequestBodyIsJSON'
-     => { type => 'ARRAY' };
+with (
+    'RT::Extension::REST2::Resource::Collection::ProcessPOSTasGET',
+    'RT::Extension::REST2::Resource::Role::RequestBodyIsJSON'
+         => { type => 'ARRAY' },
+);
 
 requires 'collection';
 

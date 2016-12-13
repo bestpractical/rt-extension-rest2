@@ -6,9 +6,11 @@ use Moose;
 use namespace::autoclean;
 
 extends 'RT::Extension::REST2::Resource::Record';
-with 'RT::Extension::REST2::Resource::Record::Readable';
-with 'RT::Extension::REST2::Resource::Record::Deletable';
-with 'RT::Extension::REST2::Resource::Record::Writable';
+with (
+    'RT::Extension::REST2::Resource::Record::Readable'
+    'RT::Extension::REST2::Resource::Record::Deletable',
+    'RT::Extension::REST2::Resource::Record::Writable',
+);
 
 sub create_record {
     my $self = shift;

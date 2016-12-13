@@ -6,9 +6,11 @@ use Moose;
 use namespace::autoclean;
 
 extends 'RT::Extension::REST2::Resource::Record';
-with 'RT::Extension::REST2::Resource::Record::Readable';
-with 'RT::Extension::REST2::Resource::Record::DeletableByDisabling';
-with 'RT::Extension::REST2::Resource::Record::Writable';
+with (
+    'RT::Extension::REST2::Resource::Record::Readable',
+    'RT::Extension::REST2::Resource::Record::DeletableByDisabling',
+    'RT::Extension::REST2::Resource::Record::Writable',
+);
 
 around 'serialize' => sub {
     my $orig = shift;
