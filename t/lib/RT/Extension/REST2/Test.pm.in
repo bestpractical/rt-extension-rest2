@@ -12,11 +12,7 @@ use RT::Extension::REST2;
 use Test::WWW::Mechanize::PSGI;
 use RT::User;
 
-sub mech {
-    my $mech = Test::WWW::Mechanize::PSGI->new(
-        app => RT::Extension::REST2->to_app,
-    );
-}
+sub mech { RT::Extension::REST2::Test::Mechanize->new }
 
 {
     my $u;
@@ -39,6 +35,20 @@ sub mech {
             Privileged => 1,
         );
         return $u;
+    }
+}
+
+{
+    package RT::Extension::REST2::Test::Mechanize;
+    use parent 'Test::WWW::Mechanize::PSGI';
+
+    sub new {
+        my $class = shift;
+        my %args = (
+            app => RT::Extension::REST2->to_app,
+            @_,
+        );
+        return $class->SUPER::new(%args);
     }
 }
 
