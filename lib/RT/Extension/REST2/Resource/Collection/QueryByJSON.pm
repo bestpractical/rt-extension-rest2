@@ -53,6 +53,7 @@ sub limit_collection {
             ( $limit->{operator}
                 ? (OPERATOR => $limit->{operator})
                 : () ),
+            CASESENSITIVE => ($limit->{case_sensitive} || 0),
         );
     }
     return 1;
