@@ -17,6 +17,12 @@ sub create_record {
     return ($ok, $msg);
 }
 
+sub forbidden {
+    my $self = shift;
+    return 0 unless $self->record->id;
+    return !$self->record->CurrentUserHasRight('ShowTicket');
+}
+
 __PACKAGE__->meta->make_immutable;
 
 1;
