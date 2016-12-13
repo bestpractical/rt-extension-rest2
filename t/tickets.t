@@ -7,7 +7,6 @@ my $mech = RT::Extension::REST2::Test->mech;
 
 my $auth = RT::Extension::REST2::Test->authorization_header;
 my $rest_base_path = '/REST/2.0';
-my $json = JSON->new->utf8;
 my $user = RT::Extension::REST2::Test->user;
 
 # Empty DB
@@ -21,13 +20,11 @@ my $user = RT::Extension::REST2::Test->user;
 
 # Missing Queue
 {
-    my $payload = $json->encode({
-        Subject => 'Ticket creation using REST',
-        From    => 'test@bestpractical.com',
-    });
-    my $res = $mech->post("$rest_base_path/ticket",
-        Content         => $payload,
-        'Content-Type'  => 'application/json; charset=utf-8',
+    my $res = $mech->post_json("$rest_base_path/ticket",
+        {
+            Subject => 'Ticket creation using REST',
+            From    => 'test@bestpractical.com',
+        },
         'Authorization' => $auth,
     );
     is($res->code, 400);
@@ -37,18 +34,17 @@ my $user = RT::Extension::REST2::Test->user;
 # Ticket Creation
 my ($ticket_url, $ticket_id);
 {
-    my $payload = $json->encode({
+    my $payload = {
         Subject => 'Ticket creation using REST',
         From    => 'test@bestpractical.com',
         To      => 'rt@localhost',
         Queue   => 'General',
         Content => 'Testing ticket creation using REST API.',
-    });
+    };
 
     # Rights Test - No CreateTicket
-    my $res = $mech->post("$rest_base_path/ticket",
-        'Content'       => $payload,
-        'Content-Type'  => 'application/json; charset=utf-8',
+    my $res = $mech->post_json("$rest_base_path/ticket",
+        $payload,
         'Authorization' => $auth,
     );
     TODO: {
@@ -58,9 +54,8 @@ my ($ticket_url, $ticket_id);
 
     # Rights Test - With CreateTicket
     $user->PrincipalObj->GrantRight( Right => 'CreateTicket' );
-    $res = $mech->post("$rest_base_path/ticket",
-        'Content'       => $payload,
-        'Content-Type'  => 'application/json; charset=utf-8',
+    $res = $mech->post_json("$rest_base_path/ticket",
+        $payload,
         'Authorization' => $auth,
     );
     is($res->code, 201);
@@ -138,15 +133,14 @@ my ($ticket_url, $ticket_id);
 
 # Ticket Update
 {
-    my $payload = $json->encode({
+    my $payload = {
         Subject  => 'Ticket update using REST',
         Priority => 42,
-    });
+    };
 
     # Rights Test - No ModifyTicket
-    my $res = $mech->put($ticket_url,
-        'Content'       => $payload,
-        'Content-Type'  => 'application/json; charset=utf-8',
+    my $res = $mech->put_json($ticket_url,
+        $payload,
         'Authorization' => $auth,
     );
     TODO: {
@@ -157,9 +151,8 @@ my ($ticket_url, $ticket_id);
 
     $user->PrincipalObj->GrantRight( Right => 'ModifyTicket' );
 
-    $res = $mech->put($ticket_url,
-        'Content'       => $payload,
-        'Content-Type'  => 'application/json; charset=utf-8',
+    $res = $mech->put_json($ticket_url,
+        $payload,
         'Authorization' => $auth,
     );
     is($res->code, 200);

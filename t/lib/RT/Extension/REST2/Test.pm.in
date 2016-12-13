@@ -54,6 +54,26 @@ sub mech { RT::Extension::REST2::Test::Mechanize->new }
         return $class->SUPER::new(%args);
     }
 
+    sub post_json {
+        my ($self, $url, $payload, %headers) = @_;
+        $self->post(
+            $url,
+            Content => $json->encode($payload),
+            'Content-Type' => 'application/json; charset=utf-8',
+            %headers,
+        );
+    }
+
+    sub put_json {
+        my ($self, $url, $payload, %headers) = @_;
+        $self->put(
+            $url,
+            Content => $json->encode($payload),
+            'Content-Type' => 'application/json; charset=utf-8',
+            %headers,
+        );
+    }
+
     sub json_response {
         local $Test::Builder::Level = $Test::Builder::Level + 1;
         my $self = shift;
