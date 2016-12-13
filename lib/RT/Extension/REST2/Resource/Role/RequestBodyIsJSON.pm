@@ -24,7 +24,7 @@ role {
         return $malformed if $malformed;
 
         my $request = $self->request;
-        return 0 unless $request->method =~ /^(PUT|POST)$/;
+        return 0 unless $request->method =~ /^(PUT|POST|PATCH)$/;
 
         my $json = eval {
             JSON::from_json($request->content)

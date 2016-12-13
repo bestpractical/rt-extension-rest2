@@ -50,17 +50,17 @@ Add this line:
 Currently provided endpoints under C</REST/2.0/> are:
 
     GET /ticket/:id
-    PUT /ticket/:id <JSON body>
+    PATCH /ticket/:id <JSON body>
     DELETE /ticket/:id
         Sets ticket status to "deleted".
 
     GET /queue/:id
-    PUT /queue/:id <JSON body>
+    PATCH /queue/:id <JSON body>
     DELETE /queue/:id
         Disables the queue.
 
     GET /user/:id
-    PUT /user/:id <JSON body>
+    PATCH /user/:id <JSON body>
     DELETE /user/:id
         Disables the user.
 
@@ -69,7 +69,7 @@ For queues and users, C<:id> may be the numeric id or the unique name.
 When a GET request is made, each endpoint returns a JSON representation of the
 specified resource, or a 404 if not found.
 
-When a PUT request is made, the request body should be a modified copy (or
+When a PATCH request is made, the request body should be a modified copy (or
 partial copy) of the JSON representation of the specified resource, and the
 record will be updated.
 

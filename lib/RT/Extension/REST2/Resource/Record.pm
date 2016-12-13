@@ -68,12 +68,17 @@ sub last_modified {
     return create_date($updated);
 }
 
+sub known_methods {
+    my $self = shift;
+    return [@{$self->SUPER::known_methods(@_)}, 'PATCH'];
+}
+
 sub allowed_methods {
     my $self = shift;
     my @ok;
-    push @ok, 'GET', 'HEAD' if $self->DOES("RT::Extension::REST2::Resource::Record::Readable");
-    push @ok, 'DELETE'      if $self->DOES("RT::Extension::REST2::Resource::Record::Deletable");
-    push @ok, 'PUT', 'POST' if $self->DOES("RT::Extension::REST2::Resource::Record::Writable");
+    push @ok, 'GET', 'HEAD'   if $self->DOES("RT::Extension::REST2::Resource::Record::Readable");
+    push @ok, 'DELETE'        if $self->DOES("RT::Extension::REST2::Resource::Record::Deletable");
+    push @ok, 'PATCH', 'POST' if $self->DOES("RT::Extension::REST2::Resource::Record::Writable");
     return \@ok;
 }
 

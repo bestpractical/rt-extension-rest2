@@ -66,6 +66,14 @@ sub mech { RT::Extension::REST2::Test::Mechanize->new }
 
         return $json->decode($res->content);
     }
+
+    # modeled off of LWP::UserAgent::put
+    sub patch {
+        require HTTP::Request::Common;
+        my($self, @parameters) = @_;
+        my @suff = $self->_process_colonic_headers(\@parameters, (ref($parameters[1]) ? 2 : 1));
+        return $self->request( HTTP::Request::Common::_simple_req( 'PATCH', @parameters ), @suff );
+    }
 }
 
 1;
