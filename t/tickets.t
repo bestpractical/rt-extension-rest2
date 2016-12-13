@@ -60,7 +60,7 @@ my ($ticket_url, $ticket_id);
     );
     is($res->code, 201);
     ok($ticket_url = $res->header('location'));
-    ok($ticket_id = $ticket_url =~ qr[/ticket/(\d+)]);
+    ok(($ticket_id) = $ticket_url =~ qr[/ticket/(\d+)]);
 }
 
 # Ticket Display
