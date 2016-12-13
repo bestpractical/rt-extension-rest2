@@ -30,9 +30,9 @@ sub from_json {
     );
 
     my $method = $self->request->method;
-    return $method eq 'PATCH' ? $self->update_resource($data) :
-           $method eq 'POST'  ? $self->create_resource($data) :
-                                                         \501 ;
+    return $method eq 'PUT'  ? $self->update_resource($data) :
+           $method eq 'POST' ? $self->create_resource($data) :
+                                                        \501 ;
 }
 
 sub update_resource {
@@ -69,7 +69,7 @@ sub create_resource {
     if ($self->resource_exists) {
         return error_as_json(
             $self->response,
-            \409, "Resource already exists; use PATCH to update");
+            \409, "Resource already exists; use PUT to update");
     }
 
     my ($ok, $msg) = $self->create_record($data);
