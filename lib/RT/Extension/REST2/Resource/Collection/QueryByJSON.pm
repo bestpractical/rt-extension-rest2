@@ -24,11 +24,14 @@ has 'query' => (
 
 sub _build_query {
     my $self = shift;
-    return JSON::decode_json( $self->request->content );
+    my $content = $self->request->method eq 'GET'
+                ? $self->request->param('query')
+                : $self->request->content;
+    return JSON::decode_json($content);
 }
 
 sub allowed_methods {
-    [ 'POST' ]
+    [ 'GET', 'POST' ]
 }
 
 sub searchable_fields {
