@@ -100,7 +100,7 @@ my ($ticket_url, $ticket_id);
     like($links->[0]{_url}, qr[$rest_base_path/ticket/$ticket_id$]);
 
     is($links->[1]{ref}, 'history');
-    like($links->[1]{_url}, qr[$rest_base_path/ticket/$ticket_id/history$]);
+    like($links->[1]{_url}, qr[$rest_base_path/transactions\?query=]);
 
     my $queue = $content->{Queue};
     is($queue->{id}, 1);

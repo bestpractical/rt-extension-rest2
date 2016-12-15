@@ -30,14 +30,7 @@ sub forbidden {
 sub hypermedia_links {
     my $self = shift;
     my $links = $self->_default_hypermedia_links(@_);
-
-    my $class = 'ticket';
-    my $id = $self->record->id;
-
-    push @$links, {
-        ref  => 'history',
-        _url => RT::Extension::REST2->base_uri . "/$class/$id/history",
-    };
+    push @$links, $self->_transaction_history_link;
     return $links;
 }
 
