@@ -86,6 +86,19 @@ sub mech { RT::Extension::REST2::Test::Mechanize->new }
 
         return $json->decode($res->content);
     }
+
+    sub get_hypermedia {
+        my $self = shift;
+        my $ref = shift;
+        my %args = @_;
+
+        my $json = $self->json_response;
+        my @matches = grep { $_->{ref} eq $ref } @{ $json->{_hyperlinks} };
+        Test::More::is(@matches, 1, "got one match for hypermedia with ref '$ref'") or return;
+
+        my $url = $matches[0]{_url};
+        return $self->get($url, %args);
+    }
 }
 
 1;

@@ -179,4 +179,29 @@ my ($ticket_url, $ticket_id);
     is($content->{Priority}, 42);
 }
 
+# Transactions
+{
+    my $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    $res = $mech->get_hypermedia('history',
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is($content->{count}, 3);
+    is($content->{page}, 1);
+    is($content->{per_page}, 20);
+    is($content->{total}, 3);
+    is(scalar @{$content->{items}}, 3);
+
+    for my $txn (@{ $content->{items} }) {
+        is($txn->{type}, 'transaction');
+        like($txn->{_url}, qr{$rest_base_path/transaction/\d+$});
+    }
+}
+
 done_testing;
