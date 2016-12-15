@@ -14,6 +14,8 @@ use Sub::Exporter -setup => {
         error_as_json
         record_type
         record_class
+        escape_uri
+        query_string
     ]]
 };
 
@@ -174,6 +176,32 @@ sub record_type {
 sub record_class {
     my $type = record_type(shift);
     return "RT::$type";
+}
+
+sub escape_uri {
+    my $uri = shift;
+    RT::Interface::Web::EscapeURI(\$uri);
+    return $uri;
+}
+
+sub query_string {
+    my %args = @_;
+    my @params;
+    for my $key (sort keys %args) {
+        my $value = $args{$key};
+        next unless defined $value;
+        $key = escape_uri($key);
+        if (UNIVERSAL::isa($value, 'ARRAY')) {
+            push @params,
+                map $key ."=". escape_uri($_),
+                    map defined $_ ? $_ : '',
+                        @$value;
+        } else {
+            push @params, $key . "=" . escape_uri($value);
+        }
+    }
+
+    return join '&', @params;
 }
 
 1;
