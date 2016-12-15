@@ -186,7 +186,7 @@ my ($ticket_url, $ticket_id);
     );
     is($res->code, 200);
 
-    $res = $mech->get_hypermedia('history',
+    $res = $mech->get($mech->url_for_hypermedia('history'),
         'Authorization' => $auth,
     );
     is($res->code, 200);

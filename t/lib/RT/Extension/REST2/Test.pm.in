@@ -54,6 +54,21 @@ sub mech { RT::Extension::REST2::Test::Mechanize->new }
         return $class->SUPER::new(%args);
     }
 
+    sub hypermedia_ref {
+        my ($self, $ref) = @_;
+
+        my $json = $self->json_response;
+        my @matches = grep { $_->{ref} eq $ref } @{ $json->{_hyperlinks} };
+        Test::More::is(@matches, 1, "got one match for hypermedia with ref '$ref'") or return;
+        return $matches[0];
+
+    }
+
+    sub url_for_hypermedia {
+        my ($self, $ref) = @_;
+        return $self->hypermedia_ref($ref)->{_url};
+    }
+
     sub post_json {
         my ($self, $url, $payload, %headers) = @_;
         $self->post(
@@ -85,19 +100,6 @@ sub mech { RT::Extension::REST2::Test::Mechanize->new }
             qr{^application/json(?:; charset="?utf-8"?)?$});
 
         return $json->decode($res->content);
-    }
-
-    sub get_hypermedia {
-        my $self = shift;
-        my $ref = shift;
-        my %args = @_;
-
-        my $json = $self->json_response;
-        my @matches = grep { $_->{ref} eq $ref } @{ $json->{_hyperlinks} };
-        Test::More::is(@matches, 1, "got one match for hypermedia with ref '$ref'") or return;
-
-        my $url = $matches[0]{_url};
-        return $self->get($url, %args);
     }
 }
 
