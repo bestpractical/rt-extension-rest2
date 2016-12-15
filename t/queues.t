@@ -51,6 +51,8 @@ my $queue_url;
                                      CorrespondAddress CommentAddress);
 
     my $links = $content->{_hyperlinks};
+    is(scalar @$links, 1);
+
     is($links->[0]{ref}, 'self');
     is($links->[0]{id}, 1);
     is($links->[0]{type}, 'queue');
@@ -180,6 +182,8 @@ my ($features_url, $features_id);
                                      CorrespondAddress CommentAddress Description);
 
     my $links = $content->{_hyperlinks};
+    is(scalar @$links, 1);
+
     is($links->[0]{ref}, 'self');
     is($links->[0]{id}, $features_id);
     is($links->[0]{type}, 'queue');

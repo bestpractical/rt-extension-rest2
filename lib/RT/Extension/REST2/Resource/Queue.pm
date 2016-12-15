@@ -8,6 +8,7 @@ use namespace::autoclean;
 extends 'RT::Extension::REST2::Resource::Record';
 with (
     'RT::Extension::REST2::Resource::Record::Readable',
+    'RT::Extension::REST2::Resource::Record::Hypermedia',
     'RT::Extension::REST2::Resource::Record::DeletableByDisabling',
     'RT::Extension::REST2::Resource::Record::Writable',
 );

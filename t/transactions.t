@@ -63,6 +63,8 @@ my ($create_txn_url, $create_txn_id);
     ok(exists $content->{$_}) for qw(Created);
 
     my $links = $content->{_hyperlinks};
+    is(scalar(@$links), 1);
+
     is($links->[0]{ref}, 'self');
     is($links->[0]{id}, $create_txn_id);
     is($links->[0]{type}, 'transaction');

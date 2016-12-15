@@ -7,7 +7,8 @@ use namespace::autoclean;
 
 extends 'RT::Extension::REST2::Resource::Record';
 with (
-    'RT::Extension::REST2::Resource::Record::Readable'
+    'RT::Extension::REST2::Resource::Record::Readable',
+    'RT::Extension::REST2::Resource::Record::Hypermedia'
         => { -alias => { hypermedia_links => '_default_hypermedia_links' } },
     'RT::Extension::REST2::Resource::Record::Deletable',
     'RT::Extension::REST2::Resource::Record::Writable',

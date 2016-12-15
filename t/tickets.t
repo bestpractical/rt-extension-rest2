@@ -92,6 +92,8 @@ my ($ticket_url, $ticket_id);
                                      Created Due Priority EffectiveId);
 
     my $links = $content->{_hyperlinks};
+    is(scalar @$links, 2);
+
     is($links->[0]{ref}, 'self');
     is($links->[0]{id}, 1);
     is($links->[0]{type}, 'ticket');
