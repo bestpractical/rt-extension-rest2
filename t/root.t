@@ -22,7 +22,7 @@ my $auth = RT::Extension::REST2::Test->authorization_header;
     for my $path ($rest_base_path, "$rest_base_path/") {
         my $res = $mech->get($path, 'Authorization' => $auth);
         is($res->code, 200);
-        is($res->header('content-type'), 'text/html; charset=utf-8');
+        is($res->header('content-type'), 'text/html; charset="utf-8"');
 
         # this is a temp solution as for main doc
         # TODO: write an end user aimed documentation
@@ -33,7 +33,7 @@ my $auth = RT::Extension::REST2::Test->authorization_header;
 
         $res = $mech->head($path, 'Authorization' => $auth);
         is($res->code, 200);
-        is($res->header('content-type'), 'text/html; charset=utf-8');
+        is($res->header('content-type'), 'text/html; charset="utf-8"');
     }
 }
 
