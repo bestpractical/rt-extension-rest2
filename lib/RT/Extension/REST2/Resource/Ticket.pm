@@ -40,8 +40,21 @@ sub forbidden {
 
 sub hypermedia_links {
     my $self = shift;
+    my $self_link = $self->_self_link;
     my $links = $self->_default_hypermedia_links(@_);
+
     push @$links, $self->_transaction_history_link;
+
+    push @$links, {
+            ref     => 'correspond',
+            _url    => $self_link->{_url} . '/correspond',
+    } if $self->record->CurrentUserHasRight('ReplyToTicket');
+
+    push @$links, {
+        ref     => 'comment',
+        _url    => $self_link->{_url} . '/comment',
+    } if $self->record->CurrentUserHasRight('CommentOnTicket');
+
     return $links;
 }
 

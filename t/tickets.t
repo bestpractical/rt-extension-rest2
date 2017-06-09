@@ -204,4 +204,49 @@ my ($ticket_url, $ticket_id);
     }
 }
 
+# Ticket Reply
+{
+    # we know from earlier tests that look at hypermedia without ReplyToTicket
+    # that correspond wasn't available, so we don't need to check again here
+
+    $user->PrincipalObj->GrantRight( Right => 'ReplyToTicket' );
+
+    my $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+
+    my ($hypermedia) = grep { $_->{ref} eq 'correspond' } @{ $content->{_hyperlinks} };
+    ok($hypermedia, 'got correspond hypermedia');
+    like($hypermedia->{_url}, qr[$rest_base_path/ticket/$ticket_id/correspond$]);
+
+    $res = $mech->post($mech->url_for_hypermedia('correspond'),
+        'Authorization' => $auth,
+        'Content-Type' => 'text/plain',
+        'Content' => 'Hello from hypermedia!',
+    );
+    is($res->code, 201);
+    is_deeply($mech->json_response, ["Correspondence added"]);
+
+    like($res->header('Location'), qr{$rest_base_path/transaction/\d+$});
+    $res = $mech->get($res->header('Location'),
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    $content = $mech->json_response;
+    is($content->{Type}, 'Correspond');
+    is($content->{TimeTaken}, 0);
+    is($content->{Object}{type}, 'ticket');
+    is($content->{Object}{id}, $ticket_id);
+
+    $res = $mech->get($mech->url_for_hypermedia('attachment'),
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    $content = $mech->json_response;
+    is($content->{Content}, 'Hello from hypermedia!');
+    is($content->{ContentType}, 'text/plain');
+}
+
 done_testing;
