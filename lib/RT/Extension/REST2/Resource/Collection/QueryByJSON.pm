@@ -27,7 +27,7 @@ sub _build_query {
     my $content = $self->request->method eq 'GET'
                 ? $self->request->param('query')
                 : $self->request->content;
-    return JSON::decode_json($content);
+    return $content ? JSON::decode_json($content) : [];
 }
 
 sub allowed_methods {
