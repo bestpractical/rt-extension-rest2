@@ -31,16 +31,10 @@ sub _self_link {
 
 sub _transaction_history_link {
     my $self = shift;
-    my $record = $self->record;
-
-    my $query = query_string(query => to_json [
-        { field => 'ObjectType', value => blessed($record) },
-        { field => 'ObjectId', value => $record->Id },
-    ]);
-
+    my $self_link = $self->_self_link;
     return {
         ref     => 'history',
-        _url    => RT::Extension::REST2->base_uri . "/transactions?$query",
+        _url    => $self_link->{_url} . '/history',
     };
 }
 
