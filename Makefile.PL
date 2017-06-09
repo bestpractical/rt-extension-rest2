@@ -18,12 +18,12 @@ requires 'Plack::Builder';
 requires 'Scalar::Util';
 requires 'Sub::Exporter';
 requires 'Web::Machine' => '0.12';
-requires 'Web::Simple';
 requires 'Class::Method::Modifiers';
 requires 'Plack::Middleware::RequestHeaders';
 requires 'Plack::Middleware::ReverseProxyPath';
 requires 'Module::Path';
 requires 'Pod::POM';
+requires 'Path::Dispatcher';
 
 recommends 'JSON::XS';
 

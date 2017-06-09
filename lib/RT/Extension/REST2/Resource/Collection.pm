@@ -13,10 +13,8 @@ use Module::Runtime qw( require_module );
 use RT::Extension::REST2::Util qw( serialize_record expand_uid );
 
 has 'collection_class' => (
-    is          => 'ro',
-    isa         => 'ClassName',
-    required    => 1,
-    lazy_build  => 1,
+    is  => 'ro',
+    isa => 'ClassName',
 );
 
 has 'collection' => (
@@ -25,14 +23,6 @@ has 'collection' => (
     required    => 1,
     lazy_build  => 1,
 );
-
-sub _build_collection_class {
-    my $self   = shift;
-    my ($type) = blessed($self) =~ /::(\w+)$/;
-    my $class  = "RT::$type";
-    require_module($class);
-    return $class;
-}
 
 sub _build_collection {
     my $self = shift;

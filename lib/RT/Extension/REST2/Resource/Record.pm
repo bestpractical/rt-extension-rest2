@@ -7,15 +7,17 @@ use namespace::autoclean;
 
 extends 'RT::Extension::REST2::Resource';
 
-use Web::Machine::Util qw( bind_path create_date );
-use Module::Runtime qw( require_module );
-use RT::Extension::REST2::Util qw(record_class record_type);
+use Web::Machine::Util qw( create_date );
+use RT::Extension::REST2::Util qw( record_type );
 
 has 'record_class' => (
-    is          => 'ro',
-    isa         => 'ClassName',
-    required    => 1,
-    lazy_build  => 1,
+    is  => 'ro',
+    isa => 'ClassName',
+);
+
+has 'record_id' => (
+    is  => 'ro',
+    isa => 'Int',
 );
 
 has 'record' => (
@@ -25,17 +27,14 @@ has 'record' => (
     lazy_build  => 1,
 );
 
-sub _build_record_class {
-    my $self = shift;
-    my $class = record_class($self);
-    require_module($class);
-    return $class;
-}
-
 sub _build_record {
     my $self = shift;
-    my $record = $self->record_class->new( $self->current_user );
-    my ($type, $id) = bind_path('/:type/:id', $self->request->path_info);
+    my $class = $self->record_class;
+    my $id = $self->record_id;
+
+    $class->require;
+
+    my $record = $class->new( $self->current_user );
     $record->Load($id) if $id;
     return $record;
 }

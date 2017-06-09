@@ -45,7 +45,7 @@ my $auth = RT::Extension::REST2::Test->authorization_header;
         'Authorization' => $auth,
     );
     is($res->code, 405);
-    is($res->header('allow'), 'GET,HEAD,OPTIONS');
+    is($res->header('allow'), 'GET, HEAD, OPTIONS');
     is($mech->json_response->{message}, 'Method Not Allowed');
 }
 

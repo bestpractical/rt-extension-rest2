@@ -8,6 +8,13 @@ use namespace::autoclean;
 extends 'RT::Extension::REST2::Resource::Collection';
 with 'RT::Extension::REST2::Resource::Collection::ProcessPOSTasGET';
 
+sub dispatch_rules {
+    Path::Dispatcher::Rule::Regex->new(
+        regex => qr{^/tickets/?$},
+        block => sub { { collection_class => 'RT::Tickets' } },
+    )
+}
+
 use Encode qw( decode_utf8 );
 use RT::Extension::REST2::Util qw( error_as_json );
 use RT::Search::Simple;

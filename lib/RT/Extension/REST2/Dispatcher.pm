@@ -1,35 +1,69 @@
 package RT::Extension::REST2::Dispatcher;
-
 use strict;
 use warnings;
-use Web::Simple;
+use Moose;
 use Web::Machine;
-use Web::Dispatch::HTTPMethods;
+use Path::Dispatcher;
+use Plack::Request;
 
-sub dispatch_request {
-    my ($self, $env) = @_;
-    sub (/**) {
-        my ($resource_name) = ucfirst(lc $_[1]) =~ /([^\/]+)\/?/;
-        my $resource = "RT::Extension::REST2::Resource::${resource_name}";
-        if ( $resource->require ) {
-            return Web::Machine->new(
-                resource => $resource,
-            )->to_app;
-        }
-        else {
-            return undef;
-        }
-    },
-    sub () {
-        my $resource = "RT::Extension::REST2::Resource::Root";
-        $resource->require;
-        my $root = Web::Machine->new(
-            resource => $resource,
-        )->to_app;
+use Module::Pluggable (
+    search_path => ['RT::Extension::REST2::Resource'],
+    sub_name    => '_resource_classes',
+    require     => 1,
+    max_depth   => 5,
+);
 
-        sub (~) { GET { $root->($env) } },
-        sub (/) { GET { $root->($env) } },
+has _dispatcher => (
+    is         => 'ro',
+    isa        => 'Path::Dispatcher',
+    builder    => '_build_dispatcher',
+);
+
+sub _build_dispatcher {
+    my $self = shift;
+    my $dispatcher = Path::Dispatcher->new;
+
+    for my $resource_class ($self->_resource_classes) {
+        if ($resource_class->can('dispatch_rules')) {
+            my @rules = $resource_class->dispatch_rules;
+            for my $rule (@rules) {
+                $rule->{_rest2_resource} = $resource_class;
+                $dispatcher->add_rule($rule);
+            }
+        }
     }
+
+    return $dispatcher;
+}
+
+sub to_psgi_app {
+    my $class = shift;
+    my $self = $class->new;
+
+    return sub {
+        my $env = shift;
+        my $dispatch = $self->_dispatcher->dispatch($env->{PATH_INFO});
+
+        return [404, ['Content-Type' => 'text/plain'], 'Not Found']
+            if !$dispatch->has_matches;
+
+        my @matches = $dispatch->matches;
+        if (@matches > 1) {
+            RT->Logger->error("Path $env->{PATH_INFO} erroneously matched " . scalar(@matches) . " resources: " . (join ', ', map { $_->rule->{_rest2_resource} } @matches) . ". Refusing to dispatch.");
+            return [500, ['Content-Type' => 'text/plain'], 'Internal Server Error']
+        }
+
+        my $match = shift @matches;
+
+        my $rule = $match->rule;
+        my $resource = $rule->{_rest2_resource};
+        my $args = $rule->block ? $match->run(Plack::Request->new($env)) : {};
+        my $machine = Web::Machine->new(
+            resource      => $resource,
+            resource_args => [%$args],
+        );
+        return $machine->call($env);
+    };
 }
 
 1;

@@ -7,7 +7,6 @@ package RT::Extension::REST2;
 our $VERSION = '0.10';
 our $REST_PATH = '/REST/2.0';
 
-use UNIVERSAL::require;
 use Plack::Builder;
 use RT::Extension::REST2::Dispatcher;
 

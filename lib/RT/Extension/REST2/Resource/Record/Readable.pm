@@ -11,7 +11,7 @@ requires 'current_user';
 requires 'base_uri';
 
 use JSON ();
-use RT::Extension::REST2::Util qw( serialize_record record_type );
+use RT::Extension::REST2::Util qw( serialize_record );
 use Scalar::Util qw( blessed );
 
 sub serialize {

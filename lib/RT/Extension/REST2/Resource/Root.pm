@@ -8,6 +8,12 @@ use RT::Extension::REST2::PodViewer 'podview_as_html';
 
 extends 'RT::Extension::REST2::Resource';
 
+sub dispatch_rules {
+    Path::Dispatcher::Rule::Regex->new(
+        regex => qr{^/?$},
+    );
+}
+
 sub content_types_provided { [{ 'text/html' => 'to_html' }] }
 sub charsets_provided      { [ 'utf-8' ] }
 sub default_charset        {   'utf-8'   }

@@ -14,6 +14,17 @@ with (
     'RT::Extension::REST2::Resource::Record::Writable',
 );
 
+sub dispatch_rules {
+    Path::Dispatcher::Rule::Regex->new(
+        regex => qr{^/ticket/?$},
+        block => sub { { record_class => 'RT::Ticket' } },
+    ),
+    Path::Dispatcher::Rule::Regex->new(
+        regex => qr{^/ticket/(\d+)$},
+        block => sub { { record_class => 'RT::Ticket', record_id => shift->pos(1) } },
+    )
+}
+
 sub create_record {
     my $self = shift;
     my $data = shift;
