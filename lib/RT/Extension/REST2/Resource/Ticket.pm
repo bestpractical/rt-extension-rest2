@@ -38,22 +38,63 @@ sub forbidden {
     return !$self->record->CurrentUserHasRight('ShowTicket');
 }
 
+sub lifecycle_hypermedia_links {
+    my $self = shift;
+    my $self_link = $self->_self_link;
+    my $ticket = $self->record;
+    my @links;
+
+    # lifecycle actions
+    my $lifecycle = $ticket->LifecycleObj;
+    my $current = $ticket->Status;
+    my $hide_resolve_with_deps = RT->Config->Get('HideResolveActionsWithDependencies')
+        && $ticket->HasUnresolvedDependencies;
+
+    for my $info ( $lifecycle->Actions($current) ) {
+        my $next = $info->{'to'};
+        next unless $lifecycle->IsTransition( $current => $next );
+
+        my $check = $lifecycle->CheckRight( $current => $next );
+        next unless $ticket->CurrentUserHasRight($check);
+
+        next if $hide_resolve_with_deps
+            && $lifecycle->IsInactive($next)
+            && !$lifecycle->IsInactive($current);
+
+        my $url = $self_link->{_url};
+        $url .= '/correspond' if ($info->{update}||'') eq 'Respond';
+        $url .= '/comment' if ($info->{update}||'') eq 'Comment';
+
+        push @links, {
+            %$info,
+            label => $self->current_user->loc($info->{'label'} || ucfirst($next)),
+            ref   => 'lifecycle',
+            _url  => $url,
+        };
+    }
+
+    return @links;
+}
+
 sub hypermedia_links {
     my $self = shift;
     my $self_link = $self->_self_link;
     my $links = $self->_default_hypermedia_links(@_);
+    my $ticket = $self->record;
 
     push @$links, $self->_transaction_history_link;
 
     push @$links, {
             ref     => 'correspond',
             _url    => $self_link->{_url} . '/correspond',
-    } if $self->record->CurrentUserHasRight('ReplyToTicket');
+    } if $ticket->CurrentUserHasRight('ReplyToTicket');
 
     push @$links, {
         ref     => 'comment',
         _url    => $self_link->{_url} . '/comment',
-    } if $self->record->CurrentUserHasRight('CommentOnTicket');
+    } if $ticket->CurrentUserHasRight('CommentOnTicket');
+
+    push @$links, $self->lifecycle_hypermedia_links;
 
     return $links;
 }

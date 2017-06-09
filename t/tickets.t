@@ -177,6 +177,39 @@ my ($ticket_url, $ticket_id);
     my $content = $mech->json_response;
     is($content->{Subject}, 'Ticket update using REST');
     is($content->{Priority}, 42);
+
+    # now that we have ModifyTicket, we should have additional hypermedia
+    my $links = $content->{_hyperlinks};
+    is(scalar @$links, 5);
+
+    is($links->[0]{ref}, 'self');
+    is($links->[0]{id}, 1);
+    is($links->[0]{type}, 'ticket');
+    like($links->[0]{_url}, qr[$rest_base_path/ticket/$ticket_id$]);
+
+    is($links->[1]{ref}, 'history');
+    like($links->[1]{_url}, qr[$rest_base_path/ticket/$ticket_id/history$]);
+
+    is($links->[2]{ref}, 'lifecycle');
+    like($links->[2]{_url}, qr[$rest_base_path/ticket/$ticket_id/correspond$]);
+    is($links->[2]{label}, 'Open It');
+    is($links->[2]{update}, 'Respond');
+    is($links->[2]{from}, 'new');
+    is($links->[2]{to}, 'open');
+
+    is($links->[3]{ref}, 'lifecycle');
+    like($links->[3]{_url}, qr[$rest_base_path/ticket/$ticket_id/comment$]);
+    is($links->[3]{label}, 'Resolve');
+    is($links->[3]{update}, 'Comment');
+    is($links->[3]{from}, 'new');
+    is($links->[3]{to}, 'resolved');
+
+    is($links->[4]{ref}, 'lifecycle');
+    like($links->[4]{_url}, qr[$rest_base_path/ticket/$ticket_id/correspond$]);
+    is($links->[4]{label}, 'Reject');
+    is($links->[4]{update}, 'Respond');
+    is($links->[4]{from}, 'new');
+    is($links->[4]{to}, 'rejected');
 }
 
 # Transactions
