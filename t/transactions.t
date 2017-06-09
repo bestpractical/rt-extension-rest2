@@ -152,8 +152,8 @@ my ($comment_txn_url, $comment_txn_id);
     is($links->[0]{type}, 'transaction');
     is($links->[0]{_url}, $comment_txn_url);
 
-    is($links->[1]{ref}, 'attachments');
-    is($links->[1]{_url}, $comment_txn_url . '/attachments');
+    is($links->[1]{ref}, 'attachment');
+    like($links->[1]{_url}, qr{$rest_base_path/attachment/\d+$});
 
     my $creator = $content->{Creator};
     is($creator->{id}, 'test');

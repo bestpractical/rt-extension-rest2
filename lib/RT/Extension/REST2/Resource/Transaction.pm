@@ -25,14 +25,12 @@ sub hypermedia_links {
     my $self = shift;
     my $links = $self->_default_hypermedia_links(@_);
 
-    my $class = 'transaction';
-    my $id = $self->record->id;
-
     my $attachments = $self->record->Attachments;
-    if ($attachments->Count) {
+    while (my $attachment = $attachments->Next) {
+        my $id = $attachment->Id;
         push @$links, {
-            ref  => 'attachments',
-            _url => RT::Extension::REST2->base_uri . "/$class/$id/attachments",
+            ref  => 'attachment',
+            _url => RT::Extension::REST2->base_uri . "/attachment/$id",
         };
     }
 
