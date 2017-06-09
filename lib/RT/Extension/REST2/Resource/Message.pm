@@ -42,25 +42,45 @@ sub allowed_methods           { ['POST'] }
 sub charsets_provided         { [ 'utf-8' ] }
 sub default_charset           { 'utf-8' }
 sub content_types_provided    { [ { 'application/json' => sub {} } ] }
-sub content_types_accepted    { [ { 'text/plain' => 'add_message' }, { 'text/html' => 'add_message' } ] }
+sub content_types_accepted    { [ { 'text/plain' => 'add_message' }, { 'text/html' => 'add_message' }, { 'application/json' => 'from_json' } ] }
+
+sub from_json {
+    my $self = shift;
+    my $body = JSON::decode_json( $self->request->content );
+
+    if (!$body->{ContentType}) {
+        return error_as_json(
+            $self->response,
+            \400, "ContentType is a required field for application/json");
+    }
+
+    $self->add_message(%$body);
+}
 
 sub add_message {
     my $self = shift;
+    my %args = @_;
 
     my $MIME = HTML::Mason::Commands::MakeMIMEEntity(
         Interface => 'REST',
-        Body => $self->request->content,
-        Type => $self->request->content_type,
-        @_,
+        Body      => $args{Content}     || $self->request->content,
+        Type      => $args{ContentType} || $self->request->content_type,
+        Subject   => $args{Subject},
     );
 
     my ( $Trans, $msg, $TransObj ) ;
 
     if ($self->type eq 'correspond') {
-        ( $Trans, $msg, $TransObj ) = $self->record->Correspond(MIMEObj => $MIME);
+        ( $Trans, $msg, $TransObj ) = $self->record->Correspond(
+            MIMEObj   => $MIME,
+            TimeTaken => ($args{TimeTaken} || 0),
+        );
     }
     elsif ($self->type eq 'comment') {
-        ( $Trans, $msg, $TransObj ) = $self->record->Comment(MIMEObj => $MIME);
+        ( $Trans, $msg, $TransObj ) = $self->record->Comment(
+            MIMEObj   => $MIME,
+            TimeTaken => ($args{TimeTaken} || 0),
+        );
     }
     else {
         return \400;

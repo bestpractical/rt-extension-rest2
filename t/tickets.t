@@ -249,4 +249,64 @@ my ($ticket_url, $ticket_id);
     is($content->{ContentType}, 'text/plain');
 }
 
+# Ticket Comment
+{
+    my $payload = {
+        Content     => '<i>(hello secret camera)</i>',
+        ContentType => 'text/html',
+        Subject     => 'shh',
+        TimeTaken   => 129,
+    };
+
+    # we know from earlier tests that look at hypermedia without ReplyToTicket
+    # that correspond wasn't available, so we don't need to check again here
+
+    $user->PrincipalObj->GrantRight( Right => 'CommentOnTicket' );
+
+    my $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+
+    my ($hypermedia) = grep { $_->{ref} eq 'comment' } @{ $content->{_hyperlinks} };
+    ok($hypermedia, 'got comment hypermedia');
+    like($hypermedia->{_url}, qr[$rest_base_path/ticket/$ticket_id/comment$]);
+
+    $res = $mech->post_json($mech->url_for_hypermedia('comment'),
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    is_deeply($mech->json_response, ["Comments added"]);
+
+    my $txn_url = $res->header('Location');
+    like($txn_url, qr{$rest_base_path/transaction/\d+$});
+    $res = $mech->get($txn_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 403);
+
+    $user->PrincipalObj->GrantRight( Right => 'ShowTicketComments' );
+
+    $res = $mech->get($txn_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    $content = $mech->json_response;
+    is($content->{Type}, 'Comment');
+    is($content->{TimeTaken}, 129);
+    is($content->{Object}{type}, 'ticket');
+    is($content->{Object}{id}, $ticket_id);
+
+    $res = $mech->get($mech->url_for_hypermedia('attachment'),
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    $content = $mech->json_response;
+    is($content->{Subject}, 'shh');
+    is($content->{Content}, '<i>(hello secret camera)</i>');
+    is($content->{ContentType}, 'text/html');
+}
+
 done_testing;
