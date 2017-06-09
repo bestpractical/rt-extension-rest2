@@ -16,7 +16,16 @@ sub is_404 {
 
 # Proper 404 Response
 {
-    for (qw[/foobar /foo /index.html /ticket.do/1 /1/1]) {
+    for (qw[
+        /foobar
+        /foo
+        /index.html
+        /ticket.do/1
+        /ticket/foo
+        /1/1
+        /record
+        /collection
+    ]) {
         my $path = $rest_base_path . $_;
         is_404($mech->get($path, 'Authorization' => $auth));
         is_404($mech->post($path, { param => 'value' }, 'Authorization' => $auth));
