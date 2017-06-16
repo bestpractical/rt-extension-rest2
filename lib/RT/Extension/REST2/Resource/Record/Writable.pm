@@ -44,10 +44,48 @@ sub update_record {
         ARGSRef       => $data,
         AttributesRef => [ $self->record->WritableAttributes ],
     );
+
+    push @results, $self->_update_custom_fields($data);
+
     # XXX TODO: Figure out how to return success/failure?  Core RT::Record's
     # ->Update will need to be replaced or improved.
     $self->response->body( JSON::encode_json(\@results) );
     return;
+}
+
+sub _update_custom_fields {
+    my $self = shift;
+    my $data = shift;
+
+    my $record = $self->record;
+    my @results;
+
+    foreach my $arg ( keys %$data ) {
+        next unless $arg =~ /^CustomField-(\d+)$/i;
+        my $cfid = $1;
+        my $cf = $record->LoadCustomFieldByIdentifier($cfid);
+        next unless $cf->ObjectTypeFromLookupType($cf->__Value('LookupType'))->isa(ref $record);
+
+        if ($cf->SingleValue) {
+            my $val = $data->{$arg};
+            if (ref($val) eq 'ARRAY') {
+                $val = $val->[0];
+            }
+            elsif (ref($val)) {
+                die "Invalid value type for $arg";
+            }
+
+            my ($ok, $msg) = $record->AddCustomFieldValue(
+                Field => $cf,
+                Value => $val,
+            );
+            push @results, $msg;
+        }
+        else {
+        }
+    }
+
+    return @results;
 }
 
 sub update_resource {
