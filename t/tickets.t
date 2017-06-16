@@ -210,6 +210,23 @@ my ($ticket_url, $ticket_id);
     is($links->[4]{update}, 'Respond');
     is($links->[4]{from}, 'new');
     is($links->[4]{to}, 'rejected');
+
+    # update again with no changes
+    $res = $mech->put_json($ticket_url,
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    is_deeply($mech->json_response, []);
+
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    $content = $mech->json_response;
+    is($content->{Subject}, 'Ticket update using REST');
+    is($content->{Priority}, 42);
 }
 
 # Transactions
