@@ -60,19 +60,20 @@ sub _update_custom_fields {
     my $record = $self->record;
     my @results;
 
-    foreach my $arg ( keys %$data ) {
-        next unless $arg =~ /^CustomField-(\d+)$/i;
-        my $cfid = $1;
+    return unless $data->{CustomFields};
+
+    foreach my $cfid (keys %{ $data->{CustomFields} }) {
+        my $val = $data->{CustomFields}{$cfid};
+
         my $cf = $record->LoadCustomFieldByIdentifier($cfid);
         next unless $cf->ObjectTypeFromLookupType($cf->__Value('LookupType'))->isa(ref $record);
 
         if ($cf->SingleValue) {
-            my $val = $data->{$arg};
             if (ref($val) eq 'ARRAY') {
                 $val = $val->[0];
             }
             elsif (ref($val)) {
-                die "Invalid value type for $arg";
+                die "Invalid value type for CustomField $cfid";
             }
 
             my ($ok, $msg) = $record->AddCustomFieldValue(
@@ -104,7 +105,23 @@ sub update_resource {
 sub create_record {
     my $self = shift;
     my $data = shift;
-    return $self->record->Create( %$data );
+
+    my $record = $self->record;
+    my %args = %$data;
+
+    # if a record class handles CFs in ->Create, use it (so it doesn't generate
+    # spurious transactions and interfere with default values, etc). Otherwise,
+    # add OCFVs after ->Create
+    if ($record->isa('RT::Ticket')) {
+        if (my $cfs = delete $args{CustomFields}) {
+            while (my ($id, $value) = each(%$cfs)) {
+                $args{"CustomField-$id"} = $value;
+            }
+        }
+    }
+
+    my ($ok, @rest) = $record->Create(%args);
+    return ($ok, @rest);
 }
 
 sub create_resource {

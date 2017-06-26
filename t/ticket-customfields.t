@@ -28,7 +28,9 @@ my ($ticket_url, $ticket_id);
         To      => 'rt@localhost',
         Queue   => 'General',
         Content => 'Testing ticket creation using REST API.',
-        'CustomField-' . $single_cf->Id => 'Hello world!',
+        CustomFields => {
+            $single_cf->Id => 'Hello world!',
+        },
     };
 
     # Rights Test - No CreateTicket
@@ -85,7 +87,7 @@ my ($ticket_url, $ticket_id);
     is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
     is($content->{Subject}, 'Ticket creation using REST');
-    is_deeply($content->{'CF.Freeform'}, undef, 'Ticket custom field not present');
+    is_deeply($content->{'CustomFields'}, {}, 'Ticket custom field not present');
 }
 
 # Rights Test - With ShowTicket and SeeCustomField
@@ -102,7 +104,7 @@ my ($ticket_url, $ticket_id);
     is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
     is($content->{Subject}, 'Ticket creation using REST');
-    is_deeply($content->{'CF.Freeform'}, [], 'Ticket custom field');
+    is_deeply($content->{CustomFields}, { $single_cf->Id => [], $multi_cf->Id => [] }, 'No ticket custom field values');
 }
 
 # Ticket Update without ModifyCustomField
@@ -110,7 +112,9 @@ my ($ticket_url, $ticket_id);
     my $payload = {
         Subject  => 'Ticket update using REST',
         Priority => 42,
-        'CustomField-'.$single_cf->Id => 'Modified CF',
+        CustomFields => {
+            $single_cf->Id => 'Modified CF',
+        },
     };
 
     # Rights Test - No ModifyTicket
@@ -141,7 +145,7 @@ my ($ticket_url, $ticket_id);
     my $content = $mech->json_response;
     is($content->{Subject}, 'Ticket update using REST');
     is($content->{Priority}, 42);
-    is_deeply($content->{'CF.Freeform'}, [], 'No update to CF');
+    is_deeply($content->{CustomFields}, { $single_cf->Id => [], $multi_cf->Id => [] }, 'No update to CF');
 }
 
 # Ticket Update with ModifyCustomField
@@ -150,7 +154,9 @@ my ($ticket_url, $ticket_id);
     my $payload = {
         Subject  => 'More updates using REST',
         Priority => 43,
-        'CustomField-'.$single_cf->Id => 'Modified CF',
+        CustomFields => {
+            $single_cf->Id => 'Modified CF',
+        },
     };
     my $res = $mech->put_json($ticket_url,
         $payload,
@@ -167,10 +173,10 @@ my ($ticket_url, $ticket_id);
     my $content = $mech->json_response;
     is($content->{Subject}, 'More updates using REST');
     is($content->{Priority}, 43);
-    is_deeply($content->{'CF.Freeform'}, ['Modified CF'], 'New CF value');
+    is_deeply($content->{CustomFields}, { $single_cf->Id => ['Modified CF'], $multi_cf->Id => [] }, 'New CF value');
 
     # make sure changing the CF doesn't add a second OCFV
-    $payload->{'CustomField-'.$single_cf->Id} = 'Modified Again';
+    $payload->{CustomFields}{$single_cf->Id} = 'Modified Again';
     $res = $mech->put_json($ticket_url,
         $payload,
         'Authorization' => $auth,
@@ -184,10 +190,10 @@ my ($ticket_url, $ticket_id);
     is($res->code, 200);
 
     $content = $mech->json_response;
-    is_deeply($content->{'CF.Freeform'}, ['Modified Again'], 'New CF value');
+    is_deeply($content->{CustomFields}, { $single_cf->Id => ['Modified Again'], $multi_cf->Id => [] }, 'New CF value');
 
     # stop changing the CF, change something else, make sure CF sticks around
-    delete $payload->{'CustomField-'.$single_cf->Id};
+    delete $payload->{CustomFields}{$single_cf->Id};
     $payload->{Subject} = 'No CF change';
     $res = $mech->put_json($ticket_url,
         $payload,
@@ -202,7 +208,7 @@ my ($ticket_url, $ticket_id);
     is($res->code, 200);
 
     $content = $mech->json_response;
-    is_deeply($content->{'CF.Freeform'}, ['Modified Again'], 'Same CF value');
+    is_deeply($content->{CustomFields}, { $single_cf->Id => ['Modified Again'], $multi_cf->Id => [] }, 'Same CF value');
 }
 
 # Ticket Creation with ModifyCustomField
@@ -213,7 +219,9 @@ my ($ticket_url, $ticket_id);
         To      => 'rt@localhost',
         Queue   => 'General',
         Content => 'Testing ticket creation using REST API.',
-        'CustomField-' . $single_cf->Id => 'Hello world!',
+        CustomFields => {
+            $single_cf->Id => 'Hello world!',
+        },
     };
 
     my $res = $mech->post_json("$rest_base_path/ticket",
@@ -237,7 +245,7 @@ my ($ticket_url, $ticket_id);
     is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
     is($content->{Subject}, 'Ticket creation using REST');
-    is_deeply($content->{'CF.Freeform'}, ['Hello world!'], 'Ticket custom field');
+    is_deeply($content->{'CustomFields'}{$single_cf->Id}, ['Hello world!'], 'Ticket custom field');
 }
 
 done_testing;

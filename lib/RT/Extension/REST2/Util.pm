@@ -95,11 +95,12 @@ sub serialize_record {
     # Custom fields; no role yet, but we have registered lookup types
     my %registered_type = map {; $_ => 1 } RT::CustomField->LookupTypes;
     if ($registered_type{$record->CustomFieldLookupType}) {
+        my %values;
+
         my $cfs = $record->CustomFields;
         while (my $cf = $cfs->Next) {
-            # Multiple CFs with the same name will use the same key
-            my $key = "CF." . $cf->Name;
-            my $values = $data{$key} ||= [];
+            my $key    = $cf->Id;
+            my $values = $values{$key} ||= [];
             my $ocfvs  = $cf->ValuesForObject( $record );
             my $type   = $cf->Type;
             while (my $ocfv = $ocfvs->Next) {
@@ -117,6 +118,8 @@ sub serialize_record {
                 push @$values, $content;
             }
         }
+
+        $data{CustomFields} = \%values;
     }
     return \%data;
 }
@@ -129,6 +132,8 @@ sub deserialize_record {
 
     # Sanitize input for the Perl API
     for my $field (sort keys %$data) {
+        next if $field eq 'CustomFields';
+
         my $value = $data->{$field};
         next unless ref $value;
         if (looks_like_uid($value)) {

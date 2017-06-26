@@ -11,7 +11,8 @@ with (
     'RT::Extension::REST2::Resource::Record::Hypermedia'
         => { -alias => { hypermedia_links => '_default_hypermedia_links' } },
     'RT::Extension::REST2::Resource::Record::Deletable',
-    'RT::Extension::REST2::Resource::Record::Writable',
+    'RT::Extension::REST2::Resource::Record::Writable'
+        => { -alias => { create_record => '_create_record' } },
 );
 
 sub dispatch_rules {
@@ -28,7 +29,7 @@ sub dispatch_rules {
 sub create_record {
     my $self = shift;
     my $data = shift;
-    my ($ok, $txn, $msg) = $self->record->Create(%$data);
+    my ($ok, $txn, $msg) = $self->_create_record($data);
     return ($ok, $msg);
 }
 
