@@ -6,6 +6,7 @@ use Moose::Role;
 use namespace::autoclean;
 use JSON ();
 use RT::Extension::REST2::Util qw( deserialize_record error_as_json );
+use List::MoreUtils 'uniq';
 
 with 'RT::Extension::REST2::Resource::Role::RequestBodyIsJSON'
      => { type => 'HASH' };
@@ -83,6 +84,50 @@ sub _update_custom_fields {
             push @results, $msg;
         }
         else {
+            my %count;
+            my @vals = ref($val) eq 'ARRAY' ? @$val : $val;
+            for (@vals) {
+                $count{$_}++;
+            }
+
+            my $ocfvs = $cf->ValuesForObject( $record );
+            my %ocfv_id;
+            while (my $ocfv = $ocfvs->Next) {
+                my $content = $ocfv->Content;
+                $count{$content}--;
+                push @{ $ocfv_id{$content} }, $ocfv->Id;
+            }
+
+            # we want to provide a stable order, so first go by the order
+            # provided in the argument list, and then for any custom fields
+            # that are being removed, remove in sorted order
+            for my $key (uniq(@vals, sort keys %count)) {
+                my $count = $count{$key};
+                if ($count == 0) {
+                    # new == old, no change needed
+                }
+                elsif ($count > 0) {
+                    # new > old, need to add new
+                    while ($count-- > 0) {
+                        my ($ok, $msg) = $record->AddCustomFieldValue(
+                            Field => $cf,
+                            Value => $key,
+                        );
+                        push @results, $msg;
+                    }
+                }
+                elsif ($count < 0) {
+                    # old > new, need to remove old
+                    while ($count++ < 0) {
+                        my $id = shift @{ $ocfv_id{$key} };
+                        my ($ok, $msg) = $record->DeleteCustomFieldValue(
+                            Field   => $cf,
+                            ValueId => $id,
+                        );
+                        push @results, $msg;
+                    }
+                }
+            }
         }
     }
 
