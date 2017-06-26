@@ -12,6 +12,17 @@ with (
     'RT::Extension::REST2::Resource::Record::Writable',
 );
 
+sub dispatch_rules {
+    Path::Dispatcher::Rule::Regex->new(
+        regex => qr{^/user/?$},
+        block => sub { { record_class => 'RT::User' } },
+    ),
+    Path::Dispatcher::Rule::Regex->new(
+        regex => qr{^/user/(\d+)/?$},
+        block => sub { { record_class => 'RT::User', record_id => shift->pos(1) } },
+    ),
+}
+
 around 'serialize' => sub {
     my $orig = shift;
     my $self = shift;

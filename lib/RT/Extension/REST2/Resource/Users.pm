@@ -8,6 +8,13 @@ use namespace::autoclean;
 extends 'RT::Extension::REST2::Resource::Collection';
 with 'RT::Extension::REST2::Resource::Collection::QueryByJSON';
 
+sub dispatch_rules {
+    Path::Dispatcher::Rule::Regex->new(
+        regex => qr{^/users/?$},
+        block => sub { { collection_class => 'RT::Users' } },
+    ),
+}
+
 sub searchable_fields {
     my $class = $_[0]->collection->RecordClass;
     grep {
