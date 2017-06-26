@@ -21,6 +21,15 @@ sub dispatch_rules {
         regex => qr{^/user/(\d+)/?$},
         block => sub { { record_class => 'RT::User', record_id => shift->pos(1) } },
     ),
+    Path::Dispatcher::Rule::Regex->new(
+        regex => qr{^/user/(.*?)/?$},
+        block => sub {
+            my ($match, $req) = @_;
+            my $user = RT::User->new($req->env->{"rt.current_user"});
+            $user->Load($match->pos(1));
+            return { record => $user };
+        },
+    ),
 }
 
 around 'serialize' => sub {

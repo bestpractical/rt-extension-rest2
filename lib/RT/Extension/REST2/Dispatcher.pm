@@ -5,6 +5,7 @@ use Moose;
 use Web::Machine;
 use Path::Dispatcher;
 use Plack::Request;
+use List::MoreUtils 'uniq';
 
 use Module::Pluggable (
     search_path => ['RT::Extension::REST2::Resource'],
@@ -48,8 +49,9 @@ sub to_psgi_app {
             if !$dispatch->has_matches;
 
         my @matches = $dispatch->matches;
-        if (@matches > 1) {
-            RT->Logger->error("Path $env->{PATH_INFO} erroneously matched " . scalar(@matches) . " resources: " . (join ', ', map { $_->rule->{_rest2_resource} } @matches) . ". Refusing to dispatch.");
+        my @matched_resources = uniq map { $_->rule->{_rest2_resource} } @matches;
+        if (@matched_resources > 1) {
+            RT->Logger->error("Path $env->{PATH_INFO} erroneously matched " . scalar(@matched_resources) . " resources: " . (join ', ', @matched_resources) . ". Refusing to dispatch.");
             return [500, ['Content-Type' => 'text/plain'], 'Internal Server Error']
         }
 

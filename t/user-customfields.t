@@ -67,6 +67,14 @@ my ($user_url, $user_id);
     is($content->{EmailAddress}, 'user1@example.com');
     is($content->{Name}, 'user1');
     is_deeply($content->{'CustomFields'}, {}, 'User custom field not present');
+
+    # can fetch user by name too
+    $res = $mech->get("$rest_base_path/user/user1",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    is_deeply($mech->json_response, $content, 'requesting user by name is same as user by id');
 }
 
 # Rights Test - With SeeCustomField
