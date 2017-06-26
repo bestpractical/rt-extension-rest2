@@ -46,7 +46,7 @@ sub update_record {
         AttributesRef => [ $self->record->WritableAttributes ],
     );
 
-    push @results, $self->_update_custom_fields($data);
+    push @results, $self->_update_custom_fields($data->{CustomFields});
 
     # XXX TODO: Figure out how to return success/failure?  Core RT::Record's
     # ->Update will need to be replaced or improved.
@@ -61,10 +61,8 @@ sub _update_custom_fields {
     my $record = $self->record;
     my @results;
 
-    return unless $data->{CustomFields};
-
-    foreach my $cfid (keys %{ $data->{CustomFields} }) {
-        my $val = $data->{CustomFields}{$cfid};
+    foreach my $cfid (keys %{ $data }) {
+        my $val = $data->{$cfid};
 
         my $cf = $record->LoadCustomFieldByIdentifier($cfid);
         next unless $cf->ObjectTypeFromLookupType($cf->__Value('LookupType'))->isa(ref $record);
@@ -154,18 +152,26 @@ sub create_record {
     my $record = $self->record;
     my %args = %$data;
 
+    my $cfs = delete $args{CustomFields};
+
     # if a record class handles CFs in ->Create, use it (so it doesn't generate
     # spurious transactions and interfere with default values, etc). Otherwise,
     # add OCFVs after ->Create
     if ($record->isa('RT::Ticket')) {
-        if (my $cfs = delete $args{CustomFields}) {
+        if ($cfs) {
             while (my ($id, $value) = each(%$cfs)) {
+                delete $cfs->{id};
                 $args{"CustomField-$id"} = $value;
             }
         }
     }
 
     my ($ok, @rest) = $record->Create(%args);
+
+    if ($ok && $cfs) {
+        $self->_update_custom_fields($cfs);
+    }
+
     return ($ok, @rest);
 }
 
