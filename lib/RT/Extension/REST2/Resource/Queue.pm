@@ -19,7 +19,7 @@ sub dispatch_rules {
         block => sub { { record_class => 'RT::Queue' } },
     ),
     Path::Dispatcher::Rule::Regex->new(
-        regex => qr{^/queue/(\d+)$},
+        regex => qr{^/queue/(\d+)/?$},
         block => sub { { record_class => 'RT::Queue', record_id => shift->pos(1) } },
     )
 }

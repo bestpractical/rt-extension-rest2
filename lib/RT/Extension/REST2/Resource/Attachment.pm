@@ -15,7 +15,7 @@ sub dispatch_rules {
         block => sub { { record_class => 'RT::Attachment' } },
     ),
     Path::Dispatcher::Rule::Regex->new(
-        regex => qr{^/attachment/(\d+)$},
+        regex => qr{^/attachment/(\d+)/?$},
         block => sub { { record_class => 'RT::Attachment', record_id => shift->pos(1) } },
     )
 }

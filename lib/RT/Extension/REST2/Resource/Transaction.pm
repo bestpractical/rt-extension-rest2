@@ -16,7 +16,7 @@ sub dispatch_rules {
         block => sub { { record_class => 'RT::Transaction' } },
     ),
     Path::Dispatcher::Rule::Regex->new(
-        regex => qr{^/transaction/(\d+)$},
+        regex => qr{^/transaction/(\d+)/?$},
         block => sub { { record_class => 'RT::Transaction', record_id => shift->pos(1) } },
     )
 }
