@@ -4,12 +4,12 @@ use warnings;
 
 use Moose::Role;
 use namespace::autoclean;
-use RT::Extension::REST2::Util qw(query_string);
+use RT::Extension::REST2::Util qw(expand_uid);
 use JSON qw(to_json);
 
 sub hypermedia_links {
     my $self = shift;
-    return [ $self->_self_link ];
+    return [ $self->_self_link, $self->_rtlink_links ];
 }
 
 sub _self_link {
@@ -36,6 +36,40 @@ sub _transaction_history_link {
         ref     => 'history',
         _url    => $self_link->{_url} . '/history',
     };
+}
+
+my %link_refs = (
+    DependsOn => 'depends-on',
+    DependedOnBy => 'depended-on-by',
+    MemberOf => 'parent',
+    Members => 'child',
+    RefersTo => 'refers-to',
+    ReferredToBy => 'referred-to-by',
+);
+
+sub _rtlink_links {
+    my $self = shift;
+    my $record = $self->record;
+    my @links;
+
+    for my $relation (keys %link_refs) {
+        my $ref = $link_refs{$relation};
+        my $mode = $RT::Link::TYPEMAP{$relation}{Mode};
+        my $type = $RT::Link::TYPEMAP{$relation}{Type};
+        my $method = $mode . "Obj";
+
+        my $links = $record->$relation;
+
+        while (my $link = $links->Next) {
+            my $entry = expand_uid($link->$method->UID);
+            push @links, {
+                %$entry,
+                ref => $ref,
+            };
+        }
+    }
+
+    return @links;
 }
 
 1;

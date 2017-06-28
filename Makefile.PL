@@ -28,6 +28,7 @@ requires 'Path::Dispatcher';
 recommends 'JSON::XS';
 
 test_requires 'Try::Tiny';
+test_requires 'Test::Deep';
 
 my ($lp) = ($INC{'RT.pm'} =~ /^(.*)[\\\/]/);
 my $lib_path = join( ' ', "$RT::LocalPath/lib", $lp );
