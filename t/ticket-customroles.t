@@ -485,6 +485,27 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         type => 'group',
         _url => re(qr{$rest_base_path/group/$group_id$}),
     }], 'Multi Member user and group');
+
+    $res = $mech->get($content->{$multi->GroupType}[1]{_url},
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    cmp_deeply($mech->json_response, superhashof({
+        id           => $group->Id,
+        Name         => 'Watcher Group',
+        Domain       => 'UserDefined',
+        CustomFields => {},
+        Members      => [{
+            type => 'user',
+            id   => 'multi@example.com',
+            _url => re(qr{$rest_base_path/user/multi\@example\.com$}),
+        },
+        {
+            type => 'user',
+            id   => 'multi2@example.com',
+            _url => re(qr{$rest_base_path/user/multi2\@example\.com$}),
+        }],
+    }), 'fetched group');
 }
 
 done_testing;
