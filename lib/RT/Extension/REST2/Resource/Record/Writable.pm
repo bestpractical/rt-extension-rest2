@@ -40,13 +40,13 @@ sub update_record {
     my $self = shift;
     my $data = shift;
 
-    # XXX TODO: ->Update doesn't handle roles
     my @results = $self->record->Update(
         ARGSRef       => $data,
         AttributesRef => [ $self->record->WritableAttributes ],
     );
 
     push @results, $self->_update_custom_fields($data->{CustomFields});
+    push @results, $self->_update_role_members($data);
 
     # XXX TODO: Figure out how to return success/failure?  Core RT::Record's
     # ->Update will need to be replaced or improved.
@@ -121,6 +121,100 @@ sub _update_custom_fields {
                         my ($ok, $msg) = $record->DeleteCustomFieldValue(
                             Field   => $cf,
                             ValueId => $id,
+                        );
+                        push @results, $msg;
+                    }
+                }
+            }
+        }
+    }
+
+    return @results;
+}
+
+sub _update_role_members {
+    my $self = shift;
+    my $data = shift;
+
+    my $record = $self->record;
+
+    return unless $record->DOES('RT::Record::Role::Roles');
+
+    my @results;
+
+    foreach my $role ($record->Roles) {
+        next unless exists $data->{$role};
+
+        # special case: RT::Ticket->Update already handles Owner for us
+        next if $role eq 'Owner' && $record->isa('RT::Ticket');
+
+        my $val = $data->{$role};
+
+        if ($record->Role($role)->{Single}) {
+            if (ref($val) eq 'ARRAY') {
+                $val = $val->[0];
+            }
+            elsif (ref($val)) {
+                die "Invalid value type for role $role";
+            }
+
+            my ($ok, $msg) = $record->AddWatcher(
+                Type => $role,
+                User => $val,
+            );
+            push @results, $msg;
+        }
+        else {
+            my %count;
+            my @vals;
+
+            for (ref($val) eq 'ARRAY' ? @$val : $val) {
+                my $key = 'User';
+                $key = 'PrincipalId' if /^\d+$/;
+                my ($principal, $msg) = $record->CanonicalizePrincipal($key => $_);
+                if (!$principal) {
+                    push @results, $msg;
+                    next;
+                }
+
+                push @vals, $principal->Id;
+                $count{$principal->Id}++;
+            }
+
+            my $group = $record->RoleGroup($role);
+            my $members = $group->MembersObj;
+            while (my $member = $members->Next) {
+                $count{$member->MemberId}--;
+            }
+
+            # RT::Ticket has specialized methods
+            my $add_method = $record->can('AddWatcher') ? 'AddWatcher' : 'AddRoleMember';
+            my $del_method = $record->can('DeleteWatcher') ? 'DeleteWatcher' : 'DeleteRoleMember';
+
+            # we want to provide a stable order, so first go by the order
+            # provided in the argument list, and then for any role members
+            # that are being removed, remove in sorted order
+            for my $id (uniq(@vals, sort keys %count)) {
+                my $count = $count{$id};
+                if ($count == 0) {
+                    # new == old, no change needed
+                }
+                elsif ($count > 0) {
+                    # new > old, need to add new
+                    while ($count-- > 0) {
+                        my ($ok, $msg) = $record->$add_method(
+                            Type        => $role,
+                            PrincipalId => $id,
+                        );
+                        push @results, $msg;
+                    }
+                }
+                elsif ($count < 0) {
+                    # old > new, need to remove old
+                    while ($count++ < 0) {
+                        my ($ok, $msg) = $record->$del_method(
+                            Type        => $role,
+                            PrincipalId => $id,
                         );
                         push @results, $msg;
                     }
