@@ -400,5 +400,92 @@ $user->PrincipalObj->GrantRight( Right => $_ )
     }
 }
 
+# groups as members
+{
+    my $group = RT::Group->new(RT->SystemUser);
+    my ($ok, $msg) = $group->CreateUserDefinedGroup(Name => 'Watcher Group');
+    ok($ok, $msg);
+    my $group_id = $group->Id;
+
+    for my $email ('multi@example.com', 'multi2@example.com') {
+        my $user = RT::User->new(RT->SystemUser);
+        $user->LoadByEmail($email);
+        $group->AddMember($user->PrincipalId);
+    }
+
+    my $payload = {
+        Subject           => 'Ticket for modifying watchers',
+        Queue             => 'General',
+        $multi->GroupType => $group->PrincipalId,
+    };
+
+    my $res = $mech->post_json("$rest_base_path/ticket",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    ok(my $ticket_url = $res->header('location'));
+    ok((my $ticket_id) = $ticket_url =~ qr[/ticket/(\d+)]);
+
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    cmp_deeply($content->{$multi->GroupType}, [{
+        id   => $group_id,
+        type => 'group',
+        _url => re(qr{$rest_base_path/group/$group_id$}),
+    }], 'group Multi Member');
+
+    $payload = {
+        $multi->GroupType => 'multi@example.com',
+    };
+
+    $res = $mech->put_json($ticket_url,
+        $payload,
+        'Authorization' => $auth,
+    );
+    is_deeply($mech->json_response, ['Added multi@example.com as Multi Member for this ticket', 'Watcher Group is no longer Multi Member for this ticket'], "updated ticket watchers");
+
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    $content = $mech->json_response;
+    cmp_deeply($content->{$multi->GroupType}, [{
+        type => 'user',
+        id   => 'multi@example.com',
+        _url => re(qr{$rest_base_path/user/multi\@example\.com$}),
+    }], 'one Multi Member user');
+
+    $payload = {
+        $multi->GroupType => [$group_id, 'multi@example.com'],
+    };
+
+    $res = $mech->put_json($ticket_url,
+        $payload,
+        'Authorization' => $auth,
+    );
+    is_deeply($mech->json_response, ['Added Watcher Group as Multi Member for this ticket'], "updated ticket watchers");
+
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    $content = $mech->json_response;
+    cmp_deeply($content->{$multi->GroupType}, [{
+        type => 'user',
+        id   => 'multi@example.com',
+        _url => re(qr{$rest_base_path/user/multi\@example\.com$}),
+    },
+    {
+        id   => $group_id,
+        type => 'group',
+        _url => re(qr{$rest_base_path/group/$group_id$}),
+    }], 'Multi Member user and group');
+}
+
 done_testing;
 

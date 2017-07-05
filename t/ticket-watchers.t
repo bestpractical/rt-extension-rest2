@@ -457,5 +457,92 @@ $user->PrincipalObj->GrantRight( Right => $_ )
     }
 }
 
+# groups as members
+{
+    my $group = RT::Group->new(RT->SystemUser);
+    my ($ok, $msg) = $group->CreateUserDefinedGroup(Name => 'Watcher Group');
+    ok($ok, $msg);
+    my $group_id = $group->Id;
+
+    for my $email ('admincc@example.com', 'admincc2@example.com') {
+        my $user = RT::User->new(RT->SystemUser);
+        $user->LoadByEmail($email);
+        $group->AddMember($user->PrincipalId);
+    }
+
+    my $payload = {
+        Subject   => 'Ticket for modifying watchers',
+        Queue     => 'General',
+        AdminCc   => $group->PrincipalId,
+    };
+
+    my $res = $mech->post_json("$rest_base_path/ticket",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    ok(my $ticket_url = $res->header('location'));
+    ok((my $ticket_id) = $ticket_url =~ qr[/ticket/(\d+)]);
+
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    cmp_deeply($content->{AdminCc}, [{
+        id   => $group_id,
+        type => 'group',
+        _url => re(qr{$rest_base_path/group/$group_id$}),
+    }], 'group AdminCc');
+
+    $payload = {
+        AdminCc => 'admincc@example.com',
+    };
+
+    $res = $mech->put_json($ticket_url,
+        $payload,
+        'Authorization' => $auth,
+    );
+    is_deeply($mech->json_response, ['Added admincc@example.com as AdminCc for this ticket', 'Watcher Group is no longer AdminCc for this ticket'], "updated ticket watchers");
+
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    $content = $mech->json_response;
+    cmp_deeply($content->{AdminCc}, [{
+        type => 'user',
+        id   => 'admincc@example.com',
+        _url => re(qr{$rest_base_path/user/admincc\@example\.com$}),
+    }], 'one AdminCc user');
+
+    $payload = {
+        AdminCc => [$group_id, 'admincc@example.com'],
+    };
+
+    $res = $mech->put_json($ticket_url,
+        $payload,
+        'Authorization' => $auth,
+    );
+    is_deeply($mech->json_response, ['Added Watcher Group as AdminCc for this ticket'], "updated ticket watchers");
+
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    $content = $mech->json_response;
+    cmp_deeply($content->{AdminCc}, [{
+        type => 'user',
+        id   => 'admincc@example.com',
+        _url => re(qr{$rest_base_path/user/admincc\@example\.com$}),
+    },
+    {
+        id   => $group_id,
+        type => 'group',
+        _url => re(qr{$rest_base_path/group/$group_id$}),
+    }], 'AdminCc user and group');
+}
+
 done_testing;
 
