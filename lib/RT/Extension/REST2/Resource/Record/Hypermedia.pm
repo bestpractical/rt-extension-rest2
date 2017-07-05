@@ -9,7 +9,7 @@ use JSON qw(to_json);
 
 sub hypermedia_links {
     my $self = shift;
-    return [ $self->_self_link, $self->_rtlink_links ];
+    return [ $self->_self_link, $self->_rtlink_links, $self->_customfield_links ];
 }
 
 sub _self_link {
@@ -67,6 +67,23 @@ sub _rtlink_links {
                 ref => $ref,
             };
         }
+    }
+
+    return @links;
+}
+
+sub _customfield_links {
+    my $self = shift;
+    my $record = $self->record;
+    my @links;
+
+    my $cfs = $record->CustomFields;
+    while (my $cf = $cfs->Next) {
+        my $entry = expand_uid($cf->UID);
+        push @links, {
+            %$entry,
+            ref => 'customfield',
+        };
     }
 
     return @links;

@@ -2,6 +2,7 @@ use strict;
 use warnings;
 use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
+use Test::Deep;
 
 my $mech = RT::Extension::REST2::Test->mech;
 
@@ -12,7 +13,7 @@ my $user = RT::Extension::REST2::Test->user;
 my $queue = RT::Test->load_or_create_queue( Name => "General" );
 
 my $single_cf = RT::CustomField->new( RT->SystemUser );
-my ($ok, $msg) = $single_cf->Create( Name => 'Freeform', Type => 'FreeformSingle', Queue => $queue->Id );
+my ($ok, $msg) = $single_cf->Create( Name => 'Single', Type => 'FreeformSingle', Queue => $queue->Id );
 ok($ok, $msg);
 my $single_cf_id = $single_cf->Id;
 
@@ -90,6 +91,7 @@ my ($ticket_url, $ticket_id);
     is($content->{Status}, 'new');
     is($content->{Subject}, 'Ticket creation using REST');
     is_deeply($content->{'CustomFields'}, {}, 'Ticket custom field not present');
+    is_deeply([grep { $_->{ref} eq 'customfield' } @{ $content->{'_hyperlinks'} }], [], 'No CF hypermedia');
 }
 
 # Rights Test - With ShowTicket and SeeCustomField
@@ -107,6 +109,50 @@ my ($ticket_url, $ticket_id);
     is($content->{Status}, 'new');
     is($content->{Subject}, 'Ticket creation using REST');
     is_deeply($content->{CustomFields}, { $single_cf_id => [], $multi_cf_id => [] }, 'No ticket custom field values');
+    cmp_deeply(
+        [grep { $_->{ref} eq 'customfield' } @{ $content->{'_hyperlinks'} }],
+        [{
+            ref => 'customfield',
+            id  => $single_cf_id,
+            type => 'customfield',
+            _url => re(qr[$rest_base_path/customfield/$single_cf_id$]),
+        }, {
+            ref => 'customfield',
+            id  => $multi_cf_id,
+            type => 'customfield',
+            _url => re(qr[$rest_base_path/customfield/$multi_cf_id$]),
+        }],
+        'Two CF hypermedia',
+    );
+
+    my ($single_url) = map { $_->{_url} } grep { $_->{ref} eq 'customfield' && $_->{id} == $single_cf_id } @{ $content->{'_hyperlinks'} };
+    my ($multi_url) = map { $_->{_url} } grep { $_->{ref} eq 'customfield' && $_->{id} == $multi_cf_id } @{ $content->{'_hyperlinks'} };
+
+    $res = $mech->get($single_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    cmp_deeply($mech->json_response, superhashof({
+        id         => $single_cf_id,
+        Disabled   => 0,
+        LookupType => RT::Ticket->CustomFieldLookupType,
+        MaxValues  => 1,
+	Name       => 'Single',
+	Type       => 'Freeform',
+    }), 'single cf');
+
+    $res = $mech->get($multi_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    cmp_deeply($mech->json_response, superhashof({
+        id         => $multi_cf_id,
+        Disabled   => 0,
+        LookupType => RT::Ticket->CustomFieldLookupType,
+        MaxValues  => 0,
+	Name       => 'Multi',
+	Type       => 'Freeform',
+    }), 'multi cf');
 }
 
 # Ticket Update without ModifyCustomField
@@ -165,7 +211,7 @@ my ($ticket_url, $ticket_id);
         'Authorization' => $auth,
     );
     is($res->code, 200);
-    is_deeply($mech->json_response, ["Ticket 1: Priority changed from '42' to '43'", "Ticket 1: Subject changed from 'Ticket update using REST' to 'More updates using REST'", 'Freeform Modified CF added']);
+    is_deeply($mech->json_response, ["Ticket 1: Priority changed from '42' to '43'", "Ticket 1: Subject changed from 'Ticket update using REST' to 'More updates using REST'", 'Single Modified CF added']);
 
     $res = $mech->get($ticket_url,
         'Authorization' => $auth,
@@ -184,7 +230,7 @@ my ($ticket_url, $ticket_id);
         'Authorization' => $auth,
     );
     is($res->code, 200);
-    is_deeply($mech->json_response, ['Freeform Modified CF changed to Modified Again']);
+    is_deeply($mech->json_response, ['Single Modified CF changed to Modified Again']);
 
     $res = $mech->get($ticket_url,
         'Authorization' => $auth,
