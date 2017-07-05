@@ -141,7 +141,7 @@ sub deserialize_record {
             # points to the same record type (class).
             $data->{$field} = $value->{id} || 0;
         }
-        elsif ($does_roles and $record->HasRole($field)) {
+        elsif ($does_roles and ($field =~ /^RT::CustomRole-\d+$/ or $record->HasRole($field))) {
             my @members = ref $value eq 'ARRAY'
                 ? @$value : $value;
 
