@@ -9,7 +9,7 @@ use JSON qw(to_json);
 
 sub hypermedia_links {
     my $self = shift;
-    return [ $self->_self_link, $self->_rtlink_links, $self->_customfield_links ];
+    return [ $self->_self_link, $self->_rtlink_links, $self->_customfield_links, $self->_customrole_links ];
 }
 
 sub _self_link {
@@ -84,6 +84,31 @@ sub _customfield_links {
             %$entry,
             ref => 'customfield',
         };
+    }
+
+    return @links;
+}
+
+sub _customrole_links {
+    my $self = shift;
+    my $record = $self->record;
+    my @links;
+
+    return unless $record->DOES('RT::Record::Role::Roles');
+
+    for my $role ($record->Roles(UserDefined => 1)) {
+        if ($role =~ /^RT::CustomRole-(\d+)$/) {
+            my $cr = RT::CustomRole->new($record->CurrentUser);
+            $cr->Load($1);
+            if ($cr->Id) {
+                my $entry = expand_uid($cr->UID);
+                push @links, {
+                    %$entry,
+                    group_type => $cr->GroupType,
+                    ref => 'customrole',
+                };
+            }
+        }
     }
 
     return @links;
