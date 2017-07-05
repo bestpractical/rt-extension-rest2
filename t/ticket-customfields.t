@@ -14,10 +14,12 @@ my $queue = RT::Test->load_or_create_queue( Name => "General" );
 my $single_cf = RT::CustomField->new( RT->SystemUser );
 my ($ok, $msg) = $single_cf->Create( Name => 'Freeform', Type => 'FreeformSingle', Queue => $queue->Id );
 ok($ok, $msg);
+my $single_cf_id = $single_cf->Id;
 
 my $multi_cf = RT::CustomField->new( RT->SystemUser );
 ($ok, $msg) = $multi_cf->Create( Name => 'Multi', Type => 'FreeformMultiple', Queue => $queue->Id );
 ok($ok, $msg);
+my $multi_cf_id = $multi_cf->Id;
 
 # Ticket Creation with no ModifyCustomField
 my ($ticket_url, $ticket_id);
@@ -29,7 +31,7 @@ my ($ticket_url, $ticket_id);
         Queue   => 'General',
         Content => 'Testing ticket creation using REST API.',
         CustomFields => {
-            $single_cf->Id => 'Hello world!',
+            $single_cf_id => 'Hello world!',
         },
     };
 
@@ -104,7 +106,7 @@ my ($ticket_url, $ticket_id);
     is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
     is($content->{Subject}, 'Ticket creation using REST');
-    is_deeply($content->{CustomFields}, { $single_cf->Id => [], $multi_cf->Id => [] }, 'No ticket custom field values');
+    is_deeply($content->{CustomFields}, { $single_cf_id => [], $multi_cf_id => [] }, 'No ticket custom field values');
 }
 
 # Ticket Update without ModifyCustomField
@@ -113,7 +115,7 @@ my ($ticket_url, $ticket_id);
         Subject  => 'Ticket update using REST',
         Priority => 42,
         CustomFields => {
-            $single_cf->Id => 'Modified CF',
+            $single_cf_id => 'Modified CF',
         },
     };
 
@@ -145,7 +147,7 @@ my ($ticket_url, $ticket_id);
     my $content = $mech->json_response;
     is($content->{Subject}, 'Ticket update using REST');
     is($content->{Priority}, 42);
-    is_deeply($content->{CustomFields}, { $single_cf->Id => [], $multi_cf->Id => [] }, 'No update to CF');
+    is_deeply($content->{CustomFields}, { $single_cf_id => [], $multi_cf_id => [] }, 'No update to CF');
 }
 
 # Ticket Update with ModifyCustomField
@@ -155,7 +157,7 @@ my ($ticket_url, $ticket_id);
         Subject  => 'More updates using REST',
         Priority => 43,
         CustomFields => {
-            $single_cf->Id => 'Modified CF',
+            $single_cf_id => 'Modified CF',
         },
     };
     my $res = $mech->put_json($ticket_url,
@@ -173,10 +175,10 @@ my ($ticket_url, $ticket_id);
     my $content = $mech->json_response;
     is($content->{Subject}, 'More updates using REST');
     is($content->{Priority}, 43);
-    is_deeply($content->{CustomFields}, { $single_cf->Id => ['Modified CF'], $multi_cf->Id => [] }, 'New CF value');
+    is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified CF'], $multi_cf_id => [] }, 'New CF value');
 
     # make sure changing the CF doesn't add a second OCFV
-    $payload->{CustomFields}{$single_cf->Id} = 'Modified Again';
+    $payload->{CustomFields}{$single_cf_id} = 'Modified Again';
     $res = $mech->put_json($ticket_url,
         $payload,
         'Authorization' => $auth,
@@ -190,10 +192,10 @@ my ($ticket_url, $ticket_id);
     is($res->code, 200);
 
     $content = $mech->json_response;
-    is_deeply($content->{CustomFields}, { $single_cf->Id => ['Modified Again'], $multi_cf->Id => [] }, 'New CF value');
+    is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified Again'], $multi_cf_id => [] }, 'New CF value');
 
     # stop changing the CF, change something else, make sure CF sticks around
-    delete $payload->{CustomFields}{$single_cf->Id};
+    delete $payload->{CustomFields}{$single_cf_id};
     $payload->{Subject} = 'No CF change';
     $res = $mech->put_json($ticket_url,
         $payload,
@@ -208,7 +210,7 @@ my ($ticket_url, $ticket_id);
     is($res->code, 200);
 
     $content = $mech->json_response;
-    is_deeply($content->{CustomFields}, { $single_cf->Id => ['Modified Again'], $multi_cf->Id => [] }, 'Same CF value');
+    is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified Again'], $multi_cf_id => [] }, 'Same CF value');
 }
 
 # Ticket Creation with ModifyCustomField
@@ -220,7 +222,7 @@ my ($ticket_url, $ticket_id);
         Queue   => 'General',
         Content => 'Testing ticket creation using REST API.',
         CustomFields => {
-            $single_cf->Id => 'Hello world!',
+            $single_cf_id => 'Hello world!',
         },
     };
 
@@ -245,7 +247,7 @@ my ($ticket_url, $ticket_id);
     is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
     is($content->{Subject}, 'Ticket creation using REST');
-    is_deeply($content->{'CustomFields'}{$single_cf->Id}, ['Hello world!'], 'Ticket custom field');
+    is_deeply($content->{'CustomFields'}{$single_cf_id}, ['Hello world!'], 'Ticket custom field');
 }
 
 # Ticket Creation for multi-value CF
@@ -258,7 +260,7 @@ for my $value (
         Subject => 'Multi-value CF',
         Queue   => 'General',
         CustomFields => {
-            $multi_cf->Id => $value,
+            $multi_cf_id => $value,
         },
     };
 
@@ -282,7 +284,7 @@ for my $value (
     is($content->{Subject}, 'Multi-value CF');
 
     my $output = ref($value) ? $value : [$value]; # scalar input comes out as array reference
-    is_deeply($content->{'CustomFields'}, { $multi_cf->Id => $output, $single_cf->Id => [] }, 'Ticket custom field');
+    is_deeply($content->{'CustomFields'}, { $multi_cf_id => $output, $single_cf_id => [] }, 'Ticket custom field');
 }
 
 {
@@ -295,7 +297,7 @@ for my $value (
 
         my $payload = {
             CustomFields => {
-                $multi_cf->Id => $input,
+                $multi_cf_id => $input,
             },
         };
         my $res = $mech->put_json($ticket_url,
@@ -311,7 +313,7 @@ for my $value (
         is($res->code, 200);
 
         my $content = $mech->json_response;
-        my @values = sort @{ $content->{CustomFields}{$multi_cf->Id} };
+        my @values = sort @{ $content->{CustomFields}{$multi_cf_id} };
         is_deeply(\@values, $output, $name || 'New CF value');
     }
 
