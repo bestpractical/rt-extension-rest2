@@ -1,23 +1,12 @@
 Find TODOs in the code via `ag TODO`.
 
-* Testing
 * Implement main endpoints:
-  - /tickets
-  - /users
-  - /groups
-  - /queues
   - /articles
-  - /customfields
   - /scrips
-  - /roles
   - /templates
 * Remove any session mocking
 * Add ETag and handle If-Match to support 409 Conflict responses leading
   to more robust client applications
 
-XXX TODO: Include Links in record serializations
-XXX TODO: Serialized resources for CFs, Links, Groups
-XXX TODO: History + attachments
 XXX TODO: Articles, Classes, Topics
-XXX TODO: Updating of roles and CFs (and links, etc)
-XXX TODO: Adding comments/replies
+XXX TODO: Updating of links
