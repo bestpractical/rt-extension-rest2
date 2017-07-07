@@ -11,7 +11,6 @@ my $rest_base_path = '/REST/2.0';
 {
     my $res = $mech->get($rest_base_path);
     is($res->code, 401, 'Unauthorized');
-    is($res->header('www-authenticate'), 'Basic realm="example.com REST API"');
     is($mech->json_response->{message}, 'Unauthorized');
 }
 
