@@ -10,6 +10,8 @@ requires 'record_class';
 requires 'current_user';
 requires 'base_uri';
 
+with 'RT::Extension::REST2::Resource::Record::WithETag';
+
 use JSON ();
 use RT::Extension::REST2::Util qw( serialize_record );
 use Scalar::Util qw( blessed );
