@@ -56,8 +56,14 @@ sub login_from_authtoken {
     # needs RT::Authen::Token extension
     return unless RT::AuthToken->can('Create');
 
-    if (($env->{HTTP_AUTHORIZATION}||'') =~ /^token (.*)$/i) {
-        my ($user_obj, $token) = RT::Authen::Token->UserForAuthString($1);
+    # Authorization: token 1-14-abcdef header
+    my ($authstring) = ($env->{HTTP_AUTHORIZATION}||'') =~ /^token (.*)$/i;
+
+    # or ?token=1-14-abcdef query parameter
+    $authstring ||= Plack::Request->new($env)->parameters->{token};
+
+    if ($authstring) {
+        my ($user_obj, $token) = RT::Authen::Token->UserForAuthString($authstring);
         return $user_obj;
     }
 
