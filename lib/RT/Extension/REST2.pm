@@ -158,14 +158,38 @@ numbers start at 1.
 
 =head2 Authentication
 
-Authentication is limited to internal RT usernames and passwords, provided via
+Authentication should B<always> be done over HTTPS/SSL for
+security. You should only serve up the C</REST/2.0/> endpoint over SSL.
+
+=head3 Basic Auth
+
+Authentication may use internal RT usernames and passwords, provided via
 HTTP Basic auth. Most HTTP libraries already have a way of providing basic
 auth credentials when making requests.  Using curl, for example:
 
-    curl -u username:password …
+    curl -u 'username:password' /path/to/REST/2.0
 
-This sort of authentication should B<always> be done over HTTPS/SSL for
-security.  You should only serve up the C</REST/2.0/> endpoint over SSL.
+=head3 Token Auth
+
+You may use the L<RT::Authen::Token> extension to authenticate to the
+REST 2 API. Once you've acquired an authentication token in the web
+interface, specify the C<Authorization> header with a value of "token"
+like so:
+
+    curl -H 'Authorization: token …' /path/to/REST/2.0
+
+If the library or application you're using does not support specifying
+additional HTTP headers, you may also pass the authentication token as a
+query parameter like so:
+
+    curl /path/to/REST/2.0?token=…
+
+=head3 Cookie Auth
+
+Finally, you may reuse an existing cookie from an ordinary web session
+to authenticate against REST2. This is primarily intended for
+interacting with REST2 via JavaScript in the browser. Other REST
+consumers are advised to use the alternatives above.
 
 =head2 Conditional requests (If-Modified-Since)
 
