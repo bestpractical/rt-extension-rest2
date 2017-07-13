@@ -9,6 +9,7 @@ requires 'record';
 
 sub last_modified {
     my $self = shift;
+    return unless $self->record->_Accessible("LastUpdated" => "read");
     return $self->record->LastUpdatedObj->W3CDTF( Timezone => 'UTC' );
 }
 
