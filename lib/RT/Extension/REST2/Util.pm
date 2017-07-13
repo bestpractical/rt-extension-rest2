@@ -212,7 +212,17 @@ sub custom_fields_for {
     # no role yet, but we have registered lookup types
     my %registered_type = map {; $_ => 1 } RT::CustomField->LookupTypes;
     if ($registered_type{$record->CustomFieldLookupType}) {
-        return $record->CustomFields;
+        # see $HasTxnCFs in /Elements/ShowHistoryPage; seems like it's working
+        # around a bug in RT::Transaction->CustomFieldLookupId
+        if ($record->isa('RT::Transaction')) {
+            my $object = $record->Object;
+            if ($object->can('TransactionCustomFields') && $object->TransactionCustomFields->Count) {
+                return $object->TransactionCustomFields;
+            }
+        }
+        else {
+            return $record->CustomFields;
+        }
     }
 
     return;
