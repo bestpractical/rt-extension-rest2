@@ -32,6 +32,12 @@ sub hypermedia_links {
 
     push @$links, $self->_transaction_history_link;
 
+    push @$links, {
+        ref  => 'create',
+        type => 'ticket',
+        _url => RT::Extension::REST2->base_uri . '/ticket?Queue=' . $queue->Id,
+    } if $queue->CurrentUserHasRight('CreateTicket');
+
     return $links;
 }
 

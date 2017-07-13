@@ -51,7 +51,7 @@ my $queue_url;
                                      CorrespondAddress CommentAddress);
 
     my $links = $content->{_hyperlinks};
-    is(scalar @$links, 2);
+    is(scalar @$links, 3);
 
     is($links->[0]{ref}, 'self');
     is($links->[0]{id}, 1);
@@ -60,6 +60,10 @@ my $queue_url;
 
     is($links->[1]{ref}, 'history');
     like($links->[1]{_url}, qr[$rest_base_path/queue/1/history$]);
+
+    is($links->[2]{ref}, 'create');
+    is($links->[2]{type}, 'ticket');
+    like($links->[2]{_url}, qr[$rest_base_path/ticket\?Queue=1$]);
 
     my $creator = $content->{Creator};
     is($creator->{id}, 'RT_System');
@@ -185,7 +189,7 @@ my ($features_url, $features_id);
                                      CorrespondAddress CommentAddress Description);
 
     my $links = $content->{_hyperlinks};
-    is(scalar @$links, 2);
+    is(scalar @$links, 3);
 
     is($links->[0]{ref}, 'self');
     is($links->[0]{id}, $features_id);
@@ -194,6 +198,10 @@ my ($features_url, $features_id);
 
     is($links->[1]{ref}, 'history');
     like($links->[1]{_url}, qr[$rest_base_path/queue/$features_id/history$]);
+
+    is($links->[2]{ref}, 'create');
+    is($links->[2]{type}, 'ticket');
+    like($links->[2]{_url}, qr[$rest_base_path/ticket\?Queue=$features_id$]);
 
     my $creator = $content->{Creator};
     is($creator->{id}, 'test');
