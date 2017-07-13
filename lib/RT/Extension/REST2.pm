@@ -44,7 +44,147 @@ Add this line:
 
 =head1 USAGE
 
-=head2 Summary
+=head2 Tutorial
+
+To make it easier to authenticate to REST2, we recommend installing
+L<RT::Authen::Token>. Visit "Logged in as ___" -> Settings -> Auth
+Tokens. Create an Auth Token, give it any description (such as "REST2
+with curl"). Make note of the authentication token it provides to you.
+
+=head3 Authentication
+
+Run the following in a terminal, filling in XX_TOKEN_XX from the auth
+token above and XX_RT_URL_XX with the URL for your RT instance.
+
+    curl -H 'Authorization: token XX_TOKEN_XX' 'XX_RT_URL_XX/REST/2.0/queues/all'
+
+This does an authenticated request (using the C<Authorization> HTTP
+header) for all of the queues you can see. You should see a response,
+typical of search results, like this:
+
+    {
+       "total" : 1,
+       "count" : 1,
+       "page" : 1,
+       "per_page" : 20,
+       "items" : [
+          {
+             "type" : "queue",
+             "id" : "1",
+             "_url" : "XX_RT_URL_XX/REST/2.0/queue/1"
+          }
+       ]
+    }
+
+(If you instead see a response like C<{"message":"Unauthorized"}> that
+indicates RT couldn't process your authentication token successfully;
+make sure the word "token" appears between "Authorization:" and the auth
+token that RT provided to you)
+
+=head3 Following Links
+
+You can request the provided C<_url> to get more information about that
+resource.
+
+    curl -H 'Authorization: token XX_TOKEN_XX' 'XX_RT_URL_XX/REST/2.0/queue/1'
+
+This will give a lot of information about that queue, such as its Name,
+Description, Creator, and so on.
+
+Of particular note is the C<_hyperlinks> key, which gives you additional
+resources to examine (following the
+L<https://en.wikipedia.org/wiki/HATEOAS> principle). For example an
+entry with a C<ref> of C<history> lets you examine the transaction log
+for a record. You can implement your REST API client knowing that any
+other hypermedia link with a C<ref> of C<history> has the same meaning,
+regardless of whether it's the history of a queue, ticket, asset, etc.
+
+Another C<ref> you'll see in C<_hyperlinks> is C<create>, with a C<type>
+of C<ticket>. This of course gives you the URL to create tickets I<in
+this queue>. Importantly, if you did I<not> have the C<CreateTicket>
+permission in this queue, then REST2 would not include this hyperlink in
+its response to your request. So you can dynamically adapt your client's
+behavior to its presence or absence, just like the web version of RT
+does.
+
+=head3 Creating Tickets
+
+To create a ticket is a bit more involved, since it requires providing a
+different HTTP verb (C<POST> instead of C<GET>), a C<Content-Type>
+header (to tell REST2 that your content is JSON instead of, say, XML),
+and the fields for your new ticket such as Subject. Here is the curl
+invocation, wrapped to multiple lines for readability.
+
+    curl -X POST
+         -H "Content-Type: application/json"
+         -d '{ "Subject": "hello world" }'
+         -H 'Authorization: token XX_TOKEN_XX'
+            'XX_RT_URL_XX/REST/2.0/ticket?Queue=1'
+
+That will give us the URL of the new ticket, and so we can fetch that
+URL to continue working with this ticket. Request the ticket like so
+(make sure to include the C<-i> flag to see response's HTTP
+headers).
+
+    curl -i -H 'Authorization: token XX_TOKEN_XX' 'TICKET_URL'
+
+You'll first see that there are many hyperlinks for tickets, including
+one for each Lifecycle action you can perform. Additionally you'll see
+an C<ETag> header for this record, which can be used for conflict
+avoidance (L<https://en.wikipedia.org/wiki/HTTP_ETag>). Let's try
+updating this ticket with an I<invalid> C<ETag> to see what happens.
+
+=head3 Updating Tickets
+
+    curl -X PUT
+         -H "Content-Type: application/json"
+         -H "If-Match: invalid-etag"
+         -d '{ "Subject": "cannot update" }'
+         -H 'Authorization: token XX_TOKEN_XX'
+            'TICKET_URL'
+
+You'll get an error response like C<{"message":"Precondition Failed"}>
+and a status code of 412. If you examine the ticket, you'll also see
+that its Subject was not changed. This is because the C<If-Match> header
+advises the server to make changes I<if and only if> the ticket's
+C<ETag> matches what you provide. Since it differed, the server rejected
+the request.
+
+Now, try the same request by replacing the value "invalid-etag" with
+the real C<ETag> you received when you requested the ticket previously.
+You'll then get a JSON response like:
+
+    ["Ticket 1: Subject changed from 'hello world' to 'cannot update'"]
+
+And if you C<GET> the ticket again, you'll observe that the C<ETag>
+header now has a different value, indicating that it has changed. This
+means if you were to retry the C<PUT> update with the previous (at the
+time, expected) C<ETag> you would instead be rejected by the server with
+Precondition Failed. With these tools you can use C<ETag> and
+C<If-Match> headers to avoid race conditions such as two people updating
+a ticket at the same time. Depending on the sophistication of your
+client,
+
+You may of course choose to ignore the C<ETag> header and not provide
+C<If-Match> in your requests; RT doesn't require its use.
+
+=head3 Summary
+
+RT's REST2 API provides the tools you need to build robust and dynamic
+integrations. Tools like C<ETag>/C<If-Match> allow you to avoid
+conflicts such as two people taking a ticket at the same time. Using
+JSON for all data interchange avoids problems caused by parsing text.
+Hypermedia links inform your client application of what the user has the
+ability to do.
+
+Careful readers will see that, other than our initial entry into the
+system, we did not I<generate> any URLs. We only I<followed> URLs, just
+like you do when browsing a website on your computer. We've better
+decoupled the client's implementation from the server's REST API.
+Additionally, this system lets you be informed of new capabilities in
+the form of additional hyperlinks.
+
+=head2 Endpoints
 
 Currently provided endpoints under C</REST/2.0/> are:
 
