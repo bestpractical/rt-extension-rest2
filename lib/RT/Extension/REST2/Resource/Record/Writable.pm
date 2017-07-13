@@ -5,7 +5,7 @@ use warnings;
 use Moose::Role;
 use namespace::autoclean;
 use JSON ();
-use RT::Extension::REST2::Util qw( deserialize_record error_as_json );
+use RT::Extension::REST2::Util qw( deserialize_record error_as_json expand_uid );
 use List::MoreUtils 'uniq';
 
 with 'RT::Extension::REST2::Resource::Role::RequestBodyIsJSON'
@@ -281,6 +281,11 @@ sub create_resource {
 
     my ($ok, $msg) = $self->create_record($data);
     if ($ok) {
+        my $response = $self->response;
+        my $body = JSON::encode_json(expand_uid($self->record->UID));
+        $response->content_type( "application/json; charset=utf-8" );
+        $response->content_length( length $body );
+        $response->body( $body );
         return;
     } else {
         return error_as_json(
