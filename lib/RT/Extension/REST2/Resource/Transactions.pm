@@ -14,12 +14,21 @@ sub dispatch_rules {
         block => sub { { collection_class => 'RT::Transactions' } },
     ),
     Path::Dispatcher::Rule::Regex->new(
-        regex => qr{^/ticket/(\d+)/history/?$},
+        regex => qr{^/(ticket|queue)/(\d+)/history/?$},
         block => sub {
             my ($match, $req) = @_;
-            my $ticket = RT::Ticket->new($req->env->{"rt.current_user"});
-            $ticket->Load($match->pos(1));
-            return { collection => $ticket->Transactions };
+            my ($class, $id) = ($match->pos(1), $match->pos(2));
+
+            my $record;
+            if ($class eq 'ticket') {
+                $record = RT::Ticket->new($req->env->{"rt.current_user"});
+            }
+            elsif ($class eq 'queue') {
+                $record = RT::Queue->new($req->env->{"rt.current_user"});
+            }
+
+            $record->Load($id);
+            return { collection => $record->Transactions };
         },
     )
 }
