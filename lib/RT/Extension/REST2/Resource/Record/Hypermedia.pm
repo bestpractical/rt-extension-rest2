@@ -4,7 +4,7 @@ use warnings;
 
 use Moose::Role;
 use namespace::autoclean;
-use RT::Extension::REST2::Util qw(expand_uid);
+use RT::Extension::REST2::Util qw(expand_uid custom_fields_for);
 use JSON qw(to_json);
 
 sub hypermedia_links {
@@ -77,13 +77,14 @@ sub _customfield_links {
     my $record = $self->record;
     my @links;
 
-    my $cfs = $record->CustomFields;
-    while (my $cf = $cfs->Next) {
-        my $entry = expand_uid($cf->UID);
-        push @links, {
-            %$entry,
-            ref => 'customfield',
-        };
+    if (my $cfs = custom_fields_for($record)) {
+        while (my $cf = $cfs->Next) {
+            my $entry = expand_uid($cf->UID);
+            push @links, {
+                %$entry,
+                ref => 'customfield',
+            };
+        }
     }
 
     return @links;

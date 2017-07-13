@@ -16,6 +16,7 @@ use Sub::Exporter -setup => {
         record_class
         escape_uri
         query_string
+        custom_fields_for
     ]]
 };
 
@@ -92,12 +93,8 @@ sub serialize_record {
         }
     }
 
-    # Custom fields; no role yet, but we have registered lookup types
-    my %registered_type = map {; $_ => 1 } RT::CustomField->LookupTypes;
-    if ($registered_type{$record->CustomFieldLookupType}) {
+    if (my $cfs = custom_fields_for($record)) {
         my %values;
-
-        my $cfs = $record->CustomFields;
         while (my $cf = $cfs->Next) {
             my $key    = $cf->Id;
             my $values = $values{$key} ||= [];
@@ -207,6 +204,18 @@ sub query_string {
     }
 
     return join '&', @params;
+}
+
+sub custom_fields_for {
+    my $record = shift;
+
+    # no role yet, but we have registered lookup types
+    my %registered_type = map {; $_ => 1 } RT::CustomField->LookupTypes;
+    if ($registered_type{$record->CustomFieldLookupType}) {
+        return $record->CustomFields;
+    }
+
+    return;
 }
 
 1;
