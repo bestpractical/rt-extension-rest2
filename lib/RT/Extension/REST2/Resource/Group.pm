@@ -9,7 +9,8 @@ use RT::Extension::REST2::Util qw(expand_uid);
 extends 'RT::Extension::REST2::Resource::Record';
 with 'RT::Extension::REST2::Resource::Record::Readable'
         => { -alias => { serialize => '_default_serialize' } },
-     'RT::Extension::REST2::Resource::Record::Hypermedia';
+    'RT::Extension::REST2::Resource::Record::Hypermedia'
+        => { -alias => { hypermedia_links => '_default_hypermedia_links' } };
 
 sub dispatch_rules {
     Path::Dispatcher::Rule::Regex->new(
@@ -32,6 +33,13 @@ sub serialize {
     ];
 
     return $data;
+}
+
+sub hypermedia_links {
+    my $self = shift;
+    my $links = $self->_default_hypermedia_links(@_);
+    push @$links, $self->_transaction_history_link;
+    return $links;
 }
 
 __PACKAGE__->meta->make_immutable;

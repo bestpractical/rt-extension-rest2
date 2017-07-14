@@ -10,6 +10,8 @@ with (
     'RT::Extension::REST2::Resource::Record::Readable',
     'RT::Extension::REST2::Resource::Record::DeletableByDisabling',
     'RT::Extension::REST2::Resource::Record::Writable',
+    'RT::Extension::REST2::Resource::Record::Hypermedia'
+        => { -alias => { hypermedia_links => '_default_hypermedia_links' } },
 );
 
 sub dispatch_rules {
@@ -47,6 +49,13 @@ sub forbidden {
     return 0 if $self->record->id == $self->current_user->id;
     return 0 if $self->record->CurrentUserHasRight("AdminUsers");
     return 1;
+}
+
+sub hypermedia_links {
+    my $self = shift;
+    my $links = $self->_default_hypermedia_links(@_);
+    push @$links, $self->_transaction_history_link;
+    return $links;
 }
 
 __PACKAGE__->meta->make_immutable;

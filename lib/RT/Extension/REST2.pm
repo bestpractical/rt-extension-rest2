@@ -282,6 +282,9 @@ controls available in response bodies rather than hardcoding URLs.
     GET /queue/:id/history
     GET /queue/:name/history
     GET /asset/:id/history
+    GET /user/:id/history
+    GET /user/:name/history
+    GET /group/:id/history
         get transactions for record
 
     GET /transaction/:id
@@ -393,6 +396,10 @@ controls available in response bodies rather than hardcoding URLs.
     DELETE /user/:name
         disable user
 
+    GET /user/:id/history
+    GET /user/:name/history
+        retrieve list of transactions for user
+
 =head3 Groups
 
     GET /groups?query=<JSON>
@@ -401,6 +408,9 @@ controls available in response bodies rather than hardcoding URLs.
 
     GET /group/:id
         retrieve a group (including its members)
+
+    GET /group/:id/history
+        retrieve list of transactions for group
 
 =head3 Custom Fields
 
