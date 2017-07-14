@@ -176,16 +176,32 @@ sub _update_role_members {
             my @vals;
 
             for (ref($val) eq 'ARRAY' ? @$val : $val) {
-                my $key = 'User';
-                $key = 'PrincipalId' if /^\d+$/;
-                my ($principal, $msg) = $record->CanonicalizePrincipal($key => $_);
-                if (!$principal) {
+                my ($principal_id, $msg);
+
+                if (/^\d+$/) {
+                    $principal_id = $_;
+                }
+                elsif ($record->can('CanonicalizePrincipal')) {
+                    ((my $principal), $msg) = $record->CanonicalizePrincipal(User => $_);
+                    $principal_id = $principal->Id;
+                }
+                else {
+                    my $user = RT::User->new($record->CurrentUser);
+                    if (/@/) {
+                        ((my $ok), $msg) = $user->LoadOrCreateByEmail( $_ );
+                    } else {
+                        ((my $ok), $msg) = $user->Load( $_ );
+                    }
+                    $principal_id = $user->PrincipalId;
+                }
+
+                if (!$principal_id) {
                     push @results, $msg;
                     next;
                 }
 
-                push @vals, $principal->Id;
-                $count{$principal->Id}++;
+                push @vals, $principal_id;
+                $count{$principal_id}++;
             }
 
             my $group = $record->RoleGroup($role);
