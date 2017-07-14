@@ -47,8 +47,9 @@ my $queue_url;
     is($content->{Lifecycle}, 'default');
     is($content->{Disabled}, 0);
 
-    ok(exists $content->{$_}) for qw(LastUpdated Created SortOrder SLADisabled
-                                     CorrespondAddress CommentAddress);
+    my @fields = qw(LastUpdated Created CorrespondAddress CommentAddress);
+    push @fields, qw(SortOrder SLADisabled) if RT::Handle::cmp_version($RT::VERSION, '4.4.0') >= 0;
+    ok(exists $content->{$_}, "got $_") for @fields;
 
     my $links = $content->{_hyperlinks};
     is(scalar @$links, 3);
@@ -185,8 +186,9 @@ my ($features_url, $features_id);
     is($content->{Lifecycle}, 'default');
     is($content->{Disabled}, 0);
 
-    ok(exists $content->{$_}) for qw(LastUpdated Created SortOrder SLADisabled
-                                     CorrespondAddress CommentAddress Description);
+    my @fields = qw(LastUpdated Created CorrespondAddress CommentAddress);
+    push @fields, qw(SortOrder SLADisabled) if RT::Handle::cmp_version($RT::VERSION, '4.4.0') >= 0;
+    ok(exists $content->{$_}, "got $_") for @fields;
 
     my $links = $content->{_hyperlinks};
     is(scalar @$links, 3);
