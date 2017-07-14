@@ -57,6 +57,12 @@ sub serialize_record {
     my $record = shift;
     my %data   = $record->Serialize(@_);
 
+    no warnings 'redefine';
+    local *RT::Deprecated = sub {
+        # don't trigger deprecation warnings for $record->$column below
+        # such as RT::Group->Type on 4.2
+    };
+
     for my $column (grep !ref($data{$_}), keys %data) {
         if ($record->_Accessible($column => "read")) {
             # Replace values via the Perl API for consistency, access control,
