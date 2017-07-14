@@ -303,7 +303,12 @@ sub create_resource {
     }
 
     my ($ok, $msg) = $self->create_record($data);
-    if ($ok) {
+    if (ref($ok)) {
+        return error_as_json(
+            $self->response,
+            $ok, $msg || "Create failed for unknown reason");
+    }
+    elsif ($ok) {
         my $response = $self->response;
         my $body = JSON::encode_json(expand_uid($self->record->UID));
         $response->content_type( "application/json; charset=utf-8" );

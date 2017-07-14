@@ -29,6 +29,20 @@ sub dispatch_rules {
 sub create_record {
     my $self = shift;
     my $data = shift;
+
+    return (\400, "Could not create ticket. Queue not set") if !$data->{Queue};
+
+    my $queue = RT::Queue->new(RT->SystemUser);
+    $queue->Load($data->{Queue});
+
+    return (\400, "Unable to find queue") if !$queue->Id;
+
+    return (\403, $self->record->loc("No permission to create tickets in the queue '[_1]'", $queue->Name))
+    unless $self->record->CurrentUser->HasRight(
+        Right  => 'CreateTicket',
+        Object => $queue,
+    ) and $queue->Disabled != 1;
+
     my ($ok, $txn, $msg) = $self->_create_record($data);
     return ($ok, $msg);
 }

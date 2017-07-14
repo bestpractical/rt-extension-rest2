@@ -41,10 +41,7 @@ my ($ticket_url, $ticket_id);
         $payload,
         'Authorization' => $auth,
     );
-    TODO: {
-        local $TODO = "this should return 403";
-        is($res->code, 403);
-    }
+    is($res->code, 403);
 
     my @warnings;
     local $SIG{__WARN__} = sub {
