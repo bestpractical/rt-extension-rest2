@@ -30,6 +30,21 @@ sub dispatch_rules {
             $record->Load($id);
             return { collection => $record->Transactions };
         },
+    ),
+    Path::Dispatcher::Rule::Regex->new(
+        regex => qr{^/(queue)/([^/]+)/history/?$},
+        block => sub {
+            my ($match, $req) = @_;
+            my ($class, $id) = ($match->pos(1), $match->pos(2));
+
+            my $record;
+            if ($class eq 'queue') {
+                $record = RT::Queue->new($req->env->{"rt.current_user"});
+            }
+
+            $record->Load($id);
+            return { collection => $record->Transactions };
+        },
     )
 }
 

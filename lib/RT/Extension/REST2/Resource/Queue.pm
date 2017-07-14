@@ -22,7 +22,16 @@ sub dispatch_rules {
     Path::Dispatcher::Rule::Regex->new(
         regex => qr{^/queue/(\d+)/?$},
         block => sub { { record_class => 'RT::Queue', record_id => shift->pos(1) } },
-    )
+    ),
+    Path::Dispatcher::Rule::Regex->new(
+        regex => qr{^/queue/([^/]+)/?$},
+        block => sub {
+            my ($match, $req) = @_;
+            my $queue = RT::Queue->new($req->env->{"rt.current_user"});
+            $queue->Load($match->pos(1));
+            return { record => $queue };
+        },
+    ),
 }
 
 sub hypermedia_links {
