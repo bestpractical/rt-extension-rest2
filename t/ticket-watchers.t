@@ -64,7 +64,7 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         Requestor => 'requestor@example.com',
         Cc        => 'cc@example.com',
         AdminCc   => 'admincc@example.com',
-        Owner     => $user->EmailAddress,
+        Owner     => $user->PrincipalId,
     };
 
     my $res = $mech->post_json("$rest_base_path/ticket",
@@ -114,7 +114,7 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         Requestor => ['requestor@example.com', 'requestor2@example.com'],
         Cc        => ['cc@example.com', 'cc2@example.com'],
         AdminCc   => ['admincc@example.com', 'admincc2@example.com'],
-        Owner     => $user->EmailAddress,
+        Owner     => $user->PrincipalId,
     };
 
     my $res = $mech->post_json("$rest_base_path/ticket",

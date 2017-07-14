@@ -28,6 +28,12 @@ my $multi_id = $multi->Id;
 ($ok, $msg) = $multi->AddToObject($queue->id);
 ok($ok, $msg);
 
+for my $email (qw/multi@example.com test@localhost multi2@example.com single2@example.com/) {
+    my $user = RT::User->new(RT->SystemUser);
+    my ($ok, $msg) = $user->Create(Name => $email, EmailAddress => $email);
+    ok($ok, $msg);
+}
+
 $user->PrincipalObj->GrantRight( Right => $_ )
     for qw/CreateTicket ShowTicket ModifyTicket OwnTicket AdminUsers/;
 
@@ -144,8 +150,8 @@ $user->PrincipalObj->GrantRight( Right => $_ )
 
     cmp_deeply($content->{$single->GroupType}, {
         type => 'user',
-        id   => 'test',
-        _url => re(qr{$rest_base_path/user/test$}),
+        id   => 'test@localhost',
+        _url => re(qr{$rest_base_path/user/test\@localhost$}),
     }, 'one Single Member');
 }
 
@@ -184,8 +190,8 @@ $user->PrincipalObj->GrantRight( Right => $_ )
 
     cmp_deeply($content->{$single->GroupType}, {
         type => 'user',
-        id   => 'test',
-        _url => re(qr{$rest_base_path/user/test$}),
+        id   => 'test@localhost',
+        _url => re(qr{$rest_base_path/user/test\@localhost}),
     }, 'one Single Member');
 }
 
