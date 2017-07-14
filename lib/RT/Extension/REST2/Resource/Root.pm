@@ -14,13 +14,22 @@ sub dispatch_rules {
     );
 }
 
-sub content_types_provided { [{ 'text/html' => 'to_html' }] }
+sub content_types_provided {[
+    { 'text/plain' => 'to_text' },
+    { 'text/html'  => 'to_html' }
+]}
+
 sub charsets_provided      { [ 'utf-8' ] }
 sub default_charset        {   'utf-8'   }
 sub allowed_methods        { ['GET', 'HEAD', 'OPTIONS'] }
 
+sub to_text {
+    my $html = shift->to_html;
+    return RT::Interface::Email::ConvertHTMLToText($html);
+}
+
 sub to_html {
-    return podview_as_html('RT::Extension::REST2') 
+    return podview_as_html('RT::Extension::REST2');
 }
 
 __PACKAGE__->meta->make_immutable;

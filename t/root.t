@@ -19,7 +19,7 @@ my $auth = RT::Extension::REST2::Test->authorization_header;
 # Documentation on Root Path
 {
     for my $path ($rest_base_path, "$rest_base_path/") {
-        my $res = $mech->get($path, 'Authorization' => $auth);
+        my $res = $mech->get($path, 'Authorization' => $auth, 'Accept' => 'text/html');
         is($res->code, 200);
         is($res->header('content-type'), 'text/html; charset="utf-8"');
 
@@ -30,7 +30,7 @@ my $auth = RT::Extension::REST2::Test->authorization_header;
         $mech->content_like(qr/INSTALLATION/);
         $mech->content_like(qr/USAGE/);
 
-        $res = $mech->head($path, 'Authorization' => $auth);
+        $res = $mech->head($path, 'Authorization' => $auth, Accept => 'text/html');
         is($res->code, 200);
         is($res->header('content-type'), 'text/html; charset="utf-8"');
     }
