@@ -36,6 +36,11 @@ my ($ticket_url, $ticket_id);
         },
     };
 
+    # 4.2.3 introduced a bug (e092e23) in CFs fixed in 4.2.9 (ab7ea15)
+    delete $payload->{CustomFields}
+        if RT::Handle::cmp_version($RT::VERSION, '4.2.3') >= 0
+        && RT::Handle::cmp_version($RT::VERSION, '4.2.8') <= 0;
+
     # Rights Test - No CreateTicket
     my $res = $mech->post_json("$rest_base_path/ticket",
         $payload,
