@@ -62,7 +62,7 @@ my ($ticket_url, $ticket_id);
     ok(($ticket_id) = $ticket_url =~ qr[/ticket/(\d+)]);
 
    TODO: {
-       local $TODO = "this warns due to specifying a CF with no permission to see";
+       local $TODO = "this warns due to specifying a CF with no permission to see" if RT::Handle::cmp_version($RT::VERSION, '4.4.0') >= 0;
        is(@warnings, 0, "no warnings");
    }
 }
@@ -370,10 +370,17 @@ for my $value (
     modify_multi_ok('replace all', ['replace all added as a value for Multi', 'multiple is no longer a value for custom field Multi', 'new is no longer a value for custom field Multi'], ['replace all'], 'replaced all values');
     modify_multi_ok([], ['replace all is no longer a value for custom field Multi'], [], 'removed all values');
 
-    modify_multi_ok(['foo', 'foo', 'bar'], ['foo added as a value for Multi', undef, 'bar added as a value for Multi'], ['bar', 'foo'], 'multiple values with the same name');
-    modify_multi_ok(['foo', 'bar'], [], ['bar', 'foo'], 'multiple values with the same name');
-    modify_multi_ok(['bar'], ['foo is no longer a value for custom field Multi'], ['bar'], 'multiple values with the same name');
-    modify_multi_ok(['bar', 'bar', 'bar'], [undef, undef], ['bar'], 'multiple values with the same name');
+    if (RT::Handle::cmp_version($RT::VERSION, '4.2.5') >= 0) {
+        modify_multi_ok(['foo', 'foo', 'bar'], ['foo added as a value for Multi', undef, 'bar added as a value for Multi'], ['bar', 'foo'], 'multiple values with the same name');
+        modify_multi_ok(['foo', 'bar'], [], ['bar', 'foo'], 'multiple values with the same name');
+        modify_multi_ok(['bar'], ['foo is no longer a value for custom field Multi'], ['bar'], 'multiple values with the same name');
+        modify_multi_ok(['bar', 'bar', 'bar'], [undef, undef], ['bar'], 'multiple values with the same name');
+    } else {
+        modify_multi_ok(['foo', 'foo', 'bar'], ['foo added as a value for Multi', 'foo added as a value for Multi', 'bar added as a value for Multi'], ['bar', 'foo', 'foo'], 'multiple values with the same name');
+        modify_multi_ok(['foo', 'bar'], ['foo is no longer a value for custom field Multi'], ['bar', 'foo'], 'multiple values with the same name');
+        modify_multi_ok(['bar'], ['foo is no longer a value for custom field Multi'], ['bar'], 'multiple values with the same name');
+        modify_multi_ok(['bar', 'bar', 'bar'], ['bar added as a value for Multi', 'bar added as a value for Multi'], ['bar', 'bar', 'bar'], 'multiple values with the same name');
+    }
 }
 
 done_testing;
