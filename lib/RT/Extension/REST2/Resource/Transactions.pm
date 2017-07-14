@@ -14,7 +14,7 @@ sub dispatch_rules {
         block => sub { { collection_class => 'RT::Transactions' } },
     ),
     Path::Dispatcher::Rule::Regex->new(
-        regex => qr{^/(ticket|queue)/(\d+)/history/?$},
+        regex => qr{^/(ticket|queue|asset)/(\d+)/history/?$},
         block => sub {
             my ($match, $req) = @_;
             my ($class, $id) = ($match->pos(1), $match->pos(2));
@@ -25,6 +25,9 @@ sub dispatch_rules {
             }
             elsif ($class eq 'queue') {
                 $record = RT::Queue->new($req->env->{"rt.current_user"});
+            }
+            elsif ($class eq 'asset') {
+                $record = RT::Asset->new($req->env->{"rt.current_user"});
             }
 
             $record->Load($id);

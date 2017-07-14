@@ -281,6 +281,7 @@ controls available in response bodies rather than hardcoding URLs.
     GET /ticket/:id/history
     GET /queue/:id/history
     GET /queue/:name/history
+    GET /asset/:id/history
         get transactions for record
 
     GET /transaction/:id
@@ -325,6 +326,51 @@ controls available in response bodies rather than hardcoding URLs.
     GET /queue/:id/history
     GET /queue/:name/history
         retrieve list of transactions for queue
+
+=head3 Assets
+
+    GET /assets?query=<JSON>
+    POST /assets
+        search for assets using L</JSON searches> syntax
+
+    POST /asset
+        create an asset; provide JSON content
+
+    GET /asset/:id
+        retrieve an asset
+
+    PUT /asset/:id
+        update an asset's metadata; provide JSON content
+
+    DELETE /asset/:id
+        set status to deleted
+
+    GET /asset/:id/history
+        retrieve list of transactions for asset
+
+=head3 Catalogs
+
+    GET /catalogs/all
+        retrieve list of all catalogs you can see
+
+    GET /catalogs?query=<JSON>
+    POST /catalogs
+        search for catalogs using L</JSON searches> syntax
+
+    POST /catalog
+        create a catalog; provide JSON content
+
+    GET /catalog/:id
+    GET /catalog/:name
+        retrieve a catalog by numeric id or name
+
+    PUT /catalog/:id
+    PUT /catalog/:name
+        update a catalog's metadata; provide JSON content
+
+    DELETE /catalog/:id
+    DELETE /catalog/:name
+        disable catalog
 
 =head3 Users
 
