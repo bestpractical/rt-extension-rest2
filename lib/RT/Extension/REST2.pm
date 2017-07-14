@@ -467,14 +467,26 @@ to authenticate against REST2. This is primarily intended for
 interacting with REST2 via JavaScript in the browser. Other REST
 consumers are advised to use the alternatives above.
 
-=head2 Conditional requests (If-Modified-Since)
+=head2 Conditional requests (If-Modified-Since, If-Match)
 
-You can take advantage of the C<Last-Modified> headers returned by most single
-resource endpoints.  Add a C<If-Modified-Since> header to your requests for
-the same resource, using the most recent C<Last-Modified> value seen, and the
-API may respond with a 304 Not Modified.  You can also use HEAD requests to
-check for updates without receiving the actual content when there is a newer
-version.
+You can take advantage of the C<Last-Modified> headers returned by most
+single resource endpoints.  Add a C<If-Modified-Since> header to your
+requests for the same resource, using the most recent C<Last-Modified>
+value seen, and the API may respond with a 304 Not Modified.  You can
+also use HEAD requests to check for updates without receiving the actual
+content when there is a newer version. You may also add an
+C<If-Unmodified-Since> header to your updates to tell the server to
+refuse updates if the record had been changed since you last retrieved
+it.
+
+C<ETag>, C<If-Match>, and C<If-None-Match> work similarly to
+C<Last-Modified>, C<If-Modified-Since>, and C<If-Unmodified-Since>,
+except that they don't use a timestamp, which has its own set of
+tradeoffs. C<ETag> is an opaque value, so it has no meaning to consumers
+(unlike timestamps). However, timestamps have the disadvantage of having
+a resolution of seconds, so two updates happening in the same second
+would produce incorrect results, whereas C<ETag> does not suffer from
+that problem.
 
 =head2 Status codes
 
