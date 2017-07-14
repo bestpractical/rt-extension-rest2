@@ -238,69 +238,153 @@ the form of additional hyperlinks.
 
 =head2 Endpoints
 
-Currently provided endpoints under C</REST/2.0/> are:
-
-    GET /ticket/:id
-    PUT /ticket/:id <JSON body>
-    DELETE /ticket/:id
-        Sets ticket status to "deleted".
-
-    GET /queue/:id
-    PUT /queue/:id <JSON body>
-    DELETE /queue/:id
-        Disables the queue.
-
-    GET /user/:id
-    PUT /user/:id <JSON body>
-    DELETE /user/:id
-        Disables the user.
-
-For queues and users, C<:id> may be the numeric id or the unique name.
-
-When a GET request is made, each endpoint returns a JSON representation of the
-specified resource, or a 404 if not found.
-
-When a PUT request is made, the request body should be a modified copy (or
-partial copy) of the JSON representation of the specified resource, and the
-record will be updated.
-
-A DELETE request to a resource will delete or disable the underlying record.
-
-=head2 Creating
-
-    POST /ticket
-    POST /queue
-    POST /user
-
-A POST request to a resource endpoint, without a specific id/name, will create
-a new resource of that type.  The request should have a JSON payload similar to
-the ones returned for existing resources.
-
-On success, the return status is 201 Created and a Location header points to
-the new resource uri.  On failure, the status code indicates the nature of the
-issue, and a descriptive message is in the response body.
-
-=head2 Searching
+Currently provided endpoints under C</REST/2.0/> are described below.
+Wherever possible please consider using C<_hyperlinks> hypermedia
+controls available in response bodies rather than hardcoding URLs.
 
 =head3 Tickets
 
     GET /tickets?query=<TicketSQL>
+        search for tickets using TicketSQL
+
     GET /tickets?simple=1;query=<simple search query>
+        search for tickets using simple search syntax
+
     POST /tickets
-        With the 'query' and optional 'simple' parameters
+        search for tickets with the 'query' and optional 'simple' parameters
 
-The C<query> parameter expects TicketSQL by default unless a true value is sent
-for the C<simple> parameter.
+    POST /ticket
+        create a ticket; provide JSON content
 
-Results are returned in
-L<the format described below|/"Example of plural resources (collections)">.
+    GET /ticket/:id
+        retrieve a ticket
 
-=head3 Queues and users
+    PUT /ticket/:id
+        update a ticket's metadata; provide JSON content
 
+    DELETE /ticket/:id
+        set status to deleted
+
+    POST /ticket/:id/correspond
+    POST /ticket/:id/comment
+        add a reply or comment to the ticket
+
+    GET /ticket/:id/history
+        retrieve list of transactions for ticket
+
+=head3 Transactions
+
+    GET /transactions?query=<JSON>
+    POST /transactions
+        search for transactions using L</JSON searches> syntax
+
+    GET /ticket/:id/history
+    GET /queue/:id/history
+    GET /queue/:name/history
+        get transactions for record
+
+    GET /transaction/:id
+        retrieve a transaction
+
+=head3 Attachments and Messages
+
+    GET /attachments?query=<JSON>
+    POST /attachments
+        search for attachments using L</JSON searches> syntax
+
+    GET /transaction/:id/attachments
+        get attachments for transaction
+
+    GET /attachment/:id
+        retrieve an attachment
+
+=head3 Queues
+
+    GET /queues/all
+        retrieve list of all queues you can see
+
+    GET /queues?query=<JSON>
     POST /queues
-    POST /users
+        search for queues using L</JSON searches> syntax
 
-These resources accept a basic JSON structure as the search conditions which
+    POST /queue
+        create a queue; provide JSON content
+
+    GET /queue/:id
+    GET /queue/:name
+        retrieve a queue by numeric id or name
+
+    PUT /queue/:id
+    PUT /queue/:name
+        update a queue's metadata; provide JSON content
+
+    DELETE /queue/:id
+    DELETE /queue/:name
+        disable queue
+
+    GET /queue/:id/history
+    GET /queue/:name/history
+        retrieve list of transactions for queue
+
+=head3 Users
+
+    GET /users?query=<JSON>
+    POST /users
+        search for users using L</JSON searches> syntax
+
+    POST /user
+        create a user; provide JSON content
+
+    GET /user/:id
+    GET /user/:name
+        retrieve a user by numeric id or username
+
+    PUT /user/:id
+    PUT /user/:name
+        update a user's metadata; provide JSON content
+
+    DELETE /user/:id
+    DELETE /user/:name
+        disable user
+
+=head3 Groups
+
+    GET /groups?query=<JSON>
+    POST /groups
+        search for groups using L</JSON searches> syntax
+
+    GET /group/:id
+        retrieve a group (including its members)
+
+=head3 Custom Fields
+
+    GET /customfields?query=<JSON>
+    POST /customfields
+        search for custom fields using L</JSON searches> syntax
+
+    GET /customfield/:id
+        retrieve a custom field
+
+=head3 Custom Roles
+
+    GET /customroles?query=<JSON>
+    POST /customroles
+        search for custom roles using L</JSON searches> syntax
+
+    GET /customrole/:id
+        retrieve a custom role
+
+=head3 Miscellaneous
+
+    GET /
+        produces this documentation
+
+    GET /rt
+        produces system information
+
+=head2 JSON searches
+
+Some resources accept a basic JSON structure as the search conditions which
 specifies one or more fields to limit on (using specified operators and
 values).  An example:
 
