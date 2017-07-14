@@ -2,6 +2,12 @@ use strict;
 use warnings;
 use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
+
+BEGIN {
+    plan skip_all => 'RT 4.4 required'
+        unless RT::Handle::cmp_version($RT::VERSION, '4.4.0') >= 0;
+}
+
 use Test::Deep;
 
 my $mech = RT::Extension::REST2::Test->mech;
