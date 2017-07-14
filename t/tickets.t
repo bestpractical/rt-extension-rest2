@@ -2,6 +2,7 @@ use strict;
 use warnings;
 use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
+use Test::Deep;
 
 my $mech = RT::Extension::REST2::Test->mech;
 
@@ -277,7 +278,7 @@ my ($ticket_url, $ticket_id);
         'Content' => 'Hello from hypermedia!',
     );
     is($res->code, 201);
-    is_deeply($mech->json_response, ["Correspondence added"]);
+    cmp_deeply($mech->json_response, [re(qr/Correspondence added|Message recorded/)]);
 
     like($res->header('Location'), qr{$rest_base_path/transaction/\d+$});
     $res = $mech->get($res->header('Location'),
@@ -328,7 +329,7 @@ my ($ticket_url, $ticket_id);
         'Authorization' => $auth,
     );
     is($res->code, 201);
-    is_deeply($mech->json_response, ["Comments added"]);
+    cmp_deeply($mech->json_response, [re(qr/Comments added|Message recorded/)]);
 
     my $txn_url = $res->header('Location');
     like($txn_url, qr{$rest_base_path/transaction/\d+$});

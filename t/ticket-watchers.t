@@ -274,7 +274,11 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         $payload,
         'Authorization' => $auth,
     );
-    is_deeply($mech->json_response, ['Added admincc@example.com as AdminCc for this ticket', 'Added cc@example.com as Cc for this ticket', 'Added requestor@example.com as Requestor for this ticket'], "updated ticket watchers");
+    cmp_deeply($mech->json_response, [
+        re(qr/Added admincc\@example.com as( a)? AdminCc for this ticket/),
+        re(qr/Added cc\@example.com as( a)? Cc for this ticket/),
+        re(qr/Added requestor\@example.com as( a)? Requestor for this ticket/)
+    ], "updated ticket watchers");
 
     $res = $mech->get($ticket_url,
         'Authorization' => $auth,
@@ -309,7 +313,14 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         $payload,
         'Authorization' => $auth,
     );
-    is_deeply($mech->json_response, ['Added admincc2@example.com as AdminCc for this ticket', 'admincc@example.com is no longer AdminCc for this ticket', 'Added cc2@example.com as Cc for this ticket', 'cc@example.com is no longer Cc for this ticket', 'Added requestor2@example.com as Requestor for this ticket', 'requestor@example.com is no longer Requestor for this ticket'], "updated ticket watchers");
+    cmp_deeply($mech->json_response, [
+        re(qr/Added admincc2\@example.com as( a)? AdminCc for this ticket/),
+        re(qr/admincc\@example.com is no longer( a)? AdminCc for this ticket/),
+        re(qr/Added cc2\@example.com as( a)? Cc for this ticket/),
+        re(qr/cc\@example.com is no longer( a)? Cc for this ticket/),
+        re(qr/Added requestor2\@example.com as( a)? Requestor for this ticket/),
+        re(qr/requestor\@example.com is no longer( a)? Requestor for this ticket/),
+    ], "updated ticket watchers");
 
     $res = $mech->get($ticket_url,
         'Authorization' => $auth,
@@ -344,7 +355,11 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         $payload,
         'Authorization' => $auth,
     );
-    is_deeply($mech->json_response, ['Added admincc@example.com as AdminCc for this ticket', 'Added cc@example.com as Cc for this ticket', 'Added requestor@example.com as Requestor for this ticket'], "updated ticket watchers");
+    cmp_deeply($mech->json_response, [
+        re(qr/Added admincc\@example.com as( a)? AdminCc for this ticket/),
+        re(qr/Added cc\@example.com as( a)? Cc for this ticket/),
+        re(qr/Added requestor\@example.com as( a)? Requestor for this ticket/)
+    ], "updated ticket watchers");
 
     $res = $mech->get($ticket_url,
         'Authorization' => $auth,
@@ -504,7 +519,10 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         $payload,
         'Authorization' => $auth,
     );
-    is_deeply($mech->json_response, ['Added admincc@example.com as AdminCc for this ticket', 'Watcher Group is no longer AdminCc for this ticket'], "updated ticket watchers");
+    cmp_deeply($mech->json_response, [
+        re(qr/Added admincc\@example.com as( a)? AdminCc for this ticket/),
+        re(qr/Watcher Group is no longer( a)? AdminCc for this ticket/),
+    ], "updated ticket watchers");
 
     $res = $mech->get($ticket_url,
         'Authorization' => $auth,
@@ -525,7 +543,9 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         $payload,
         'Authorization' => $auth,
     );
-    is_deeply($mech->json_response, ['Added Watcher Group as AdminCc for this ticket'], "updated ticket watchers");
+    cmp_deeply($mech->json_response, [
+        re(qr/Added Watcher Group as( a)? AdminCc for this ticket/),
+    ], "updated ticket watchers");
 
     $res = $mech->get($ticket_url,
         'Authorization' => $auth,
