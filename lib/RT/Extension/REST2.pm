@@ -50,6 +50,8 @@ To make it easier to authenticate to REST2, we recommend installing
 L<RT::Authen::Token>. Visit "Logged in as ___" -> Settings -> Auth
 Tokens. Create an Auth Token, give it any description (such as "REST2
 with curl"). Make note of the authentication token it provides to you.
+For other authentication options see the section
+L<Authentication Methods> below.
 
 =head3 Authentication
 
@@ -76,6 +78,9 @@ typical of search results, like this:
        ]
     }
 
+This format is JSON, which is a format for which many programming languages
+provide libraries for parsing and generating.
+
 (If you instead see a response like C<{"message":"Unauthorized"}> that
 indicates RT couldn't process your authentication token successfully;
 make sure the word "token" appears between "Authorization:" and the auth
@@ -83,16 +88,41 @@ token that RT provided to you)
 
 =head3 Following Links
 
-You can request the provided C<_url> to get more information about that
-resource.
+You can request one of the provided C<_url>s to get more information
+about that queue.
 
-    curl -H 'Authorization: token XX_TOKEN_XX' 'XX_RT_URL_XX/REST/2.0/queue/1'
+    curl -H 'Authorization: token XX_TOKEN_XX' 'XX_QUEUE_URL_XX'
 
-This will give a lot of information about that queue, such as its Name,
-Description, Creator, and so on.
+This will give a lot of information, like so:
 
-Of particular note is the C<_hyperlinks> key, which gives you additional
-resources to examine (following the
+    {
+       "id" : 1,
+       "Name" : "General",
+       "Description" : "The default queue",
+       "Lifecycle" : "default",
+       ...
+       "CustomFields" : {},
+       "_hyperlinks" : [
+          {
+             "id" : "1",
+             "ref" : "self",
+             "type" : "queue",
+             "_url" : "XX_RT_URL_XX/REST/2.0/queue/1"
+          },
+          {
+             "ref" : "history",
+             "_url" : "XX_RT_URL_XX/REST/2.0/queue/1/history"
+          },
+          {
+             "type" : "ticket",
+             "ref" : "create",
+             "_url" : "XX_RT_URL_XX/REST/2.0/ticket?Queue=1"
+          }
+       ],
+    }
+
+Of particular note is the C<_hyperlinks> key, which gives you a list of
+related resources to examine (following the
 L<https://en.wikipedia.org/wiki/HATEOAS> principle). For example an
 entry with a C<ref> of C<history> lets you examine the transaction log
 for a record. You can implement your REST API client knowing that any
@@ -100,14 +130,16 @@ other hypermedia link with a C<ref> of C<history> has the same meaning,
 regardless of whether it's the history of a queue, ticket, asset, etc.
 
 Another C<ref> you'll see in C<_hyperlinks> is C<create>, with a C<type>
-of C<ticket>. This of course gives you the URL to create tickets I<in
-this queue>. Importantly, if you did I<not> have the C<CreateTicket>
-permission in this queue, then REST2 would not include this hyperlink in
-its response to your request. So you can dynamically adapt your client's
-behavior to its presence or absence, just like the web version of RT
-does.
+of C<ticket>. This of course gives you the URL to create tickets
+I<in this queue>. Importantly, if your user does I<not> have the
+C<CreateTicket> permission in this queue, then REST2 would simply not
+include this hyperlink in its response to your request. This allows you
+to dynamically adapt your client's behavior to its presence or absence,
+just like the web version of RT does.
 
 =head3 Creating Tickets
+
+Let's use the C<_url> from the C<create> hyperlink with type C<ticket>.
 
 To create a ticket is a bit more involved, since it requires providing a
 different HTTP verb (C<POST> instead of C<GET>), a C<Content-Type>
@@ -119,51 +151,71 @@ invocation, wrapped to multiple lines for readability.
          -H "Content-Type: application/json"
          -d '{ "Subject": "hello world" }'
          -H 'Authorization: token XX_TOKEN_XX'
-            'XX_RT_URL_XX/REST/2.0/ticket?Queue=1'
+            'XX_TICKET_CREATE_URL_XX'
 
-That will give us the URL of the new ticket, and so we can fetch that
-URL to continue working with this ticket. Request the ticket like so
-(make sure to include the C<-i> flag to see response's HTTP
-headers).
+If successful, that will provide us output like so:
 
-    curl -i -H 'Authorization: token XX_TOKEN_XX' 'TICKET_URL'
+    {
+        "_url" : "XX_RT_URL_XX/REST/2.0/ticket/20",
+        "type" : "ticket",
+        "id"   : "20"
+    }
+
+(REST2 also produces the status code of C<201 Created> with a C<Location>
+header of the new ticket, which you may choose to use instead of the
+JSON response)
+
+We can fetch that C<_url?> to continue working with this newly-created
+ticket. Request the ticket like so (make sure to include the C<-i> flag
+to see response's HTTP headers).
+
+    curl -i -H 'Authorization: token XX_TOKEN_XX' 'XX_TICKET_URL_XX'
 
 You'll first see that there are many hyperlinks for tickets, including
-one for each Lifecycle action you can perform. Additionally you'll see
-an C<ETag> header for this record, which can be used for conflict
-avoidance (L<https://en.wikipedia.org/wiki/HTTP_ETag>). Let's try
-updating this ticket with an I<invalid> C<ETag> to see what happens.
+one for each Lifecycle action you can perform, history, comment,
+correspond, etc. Again these adapt to whether you have the appropriate
+permissions to do these actions.
+
+Additionally you'll see an C<ETag> header for this record, which can be
+used for conflict avoidance
+(L<https://en.wikipedia.org/wiki/HTTP_ETag>). Let's try updating this
+ticket with an I<invalid> C<ETag> to see what happens.
 
 =head3 Updating Tickets
 
     curl -X PUT
          -H "Content-Type: application/json"
          -H "If-Match: invalid-etag"
-         -d '{ "Subject": "cannot update" }'
+         -d '{ "Subject": "trial update" }'
          -H 'Authorization: token XX_TOKEN_XX'
-            'TICKET_URL'
+            'XX_TICKET_URL_XX'
 
 You'll get an error response like C<{"message":"Precondition Failed"}>
 and a status code of 412. If you examine the ticket, you'll also see
 that its Subject was not changed. This is because the C<If-Match> header
 advises the server to make changes I<if and only if> the ticket's
-C<ETag> matches what you provide. Since it differed, the server rejected
-the request.
+C<ETag> matches what you provide. Since it differed, the server refused
+the request and made no changes.
 
-Now, try the same request by replacing the value "invalid-etag" with
-the real C<ETag> you received when you requested the ticket previously.
-You'll then get a JSON response like:
+Now, try the same request by replacing the value "invalid-etag" in the
+C<If-Match> request header with the real C<ETag> you'd received when you
+requested the ticket previously. You'll then get a JSON response like:
 
-    ["Ticket 1: Subject changed from 'hello world' to 'cannot update'"]
+    ["Ticket 1: Subject changed from 'hello world' to 'trial update'"]
+
+which is meant for displaying to an end-user.
 
 And if you C<GET> the ticket again, you'll observe that the C<ETag>
-header now has a different value, indicating that it has changed. This
-means if you were to retry the C<PUT> update with the previous (at the
-time, expected) C<ETag> you would instead be rejected by the server with
-Precondition Failed. With these tools you can use C<ETag> and
-C<If-Match> headers to avoid race conditions such as two people updating
-a ticket at the same time. Depending on the sophistication of your
-client,
+header now has a different value, indicating that the ticket itself has
+changed. This means if you were to retry the C<PUT> update with the
+previous (at the time, expected) C<ETag> you would instead be rejected
+by the server with Precondition Failed.
+
+You can use C<ETag> and C<If-Match> headers to avoid race conditions
+such as two people updating a ticket at the same time. Depending on the
+sophistication of your client, you may be able to automatically retry
+the change by incorporating the changes made on the server (for example
+adding time worked can be automatically be recalculated).
 
 You may of course choose to ignore the C<ETag> header and not provide
 C<If-Match> in your requests; RT doesn't require its use.
@@ -296,7 +348,7 @@ the query parameters C<page> and C<per_page>.  The default page size is 20
 items, but it may be increased up to 100 (or decreased if desired).  Page
 numbers start at 1.
 
-=head2 Authentication
+=head2 Authentication Methods
 
 Authentication should B<always> be done over HTTPS/SSL for
 security. You should only serve up the C</REST/2.0/> endpoint over SSL.
