@@ -50,6 +50,7 @@ To make it easier to authenticate to REST2, we recommend installing
 L<RT::Authen::Token>. Visit "Logged in as ___" -> Settings -> Auth
 Tokens. Create an Auth Token, give it any description (such as "REST2
 with curl"). Make note of the authentication token it provides to you.
+
 For other authentication options see the section
 L<Authentication Methods> below.
 
@@ -61,8 +62,8 @@ token above and XX_RT_URL_XX with the URL for your RT instance.
     curl -H 'Authorization: token XX_TOKEN_XX' 'XX_RT_URL_XX/REST/2.0/queues/all'
 
 This does an authenticated request (using the C<Authorization> HTTP
-header) for all of the queues you can see. You should see a response,
-typical of search results, like this:
+header with type C<token>) for all of the queues you can see. You should
+see a response, typical of search results, like this:
 
     {
        "total" : 1,
@@ -114,8 +115,8 @@ This will give a lot of information, like so:
              "_url" : "XX_RT_URL_XX/REST/2.0/queue/1/history"
           },
           {
-             "type" : "ticket",
              "ref" : "create",
+             "type" : "ticket",
              "_url" : "XX_RT_URL_XX/REST/2.0/ticket?Queue=1"
           }
        ],
@@ -153,7 +154,7 @@ invocation, wrapped to multiple lines for readability.
          -H 'Authorization: token XX_TOKEN_XX'
             'XX_TICKET_CREATE_URL_XX'
 
-If successful, that will provide us output like so:
+If successful, that will provide output like so:
 
     {
         "_url" : "XX_RT_URL_XX/REST/2.0/ticket/20",
@@ -165,7 +166,7 @@ If successful, that will provide us output like so:
 header of the new ticket, which you may choose to use instead of the
 JSON response)
 
-We can fetch that C<_url?> to continue working with this newly-created
+We can fetch that C<_url> to continue working with this newly-created
 ticket. Request the ticket like so (make sure to include the C<-i> flag
 to see response's HTTP headers).
 
@@ -178,10 +179,13 @@ permissions to do these actions.
 
 Additionally you'll see an C<ETag> header for this record, which can be
 used for conflict avoidance
-(L<https://en.wikipedia.org/wiki/HTTP_ETag>). Let's try updating this
+(L<https://en.wikipedia.org/wiki/HTTP_ETag>). We'll first try updating this
 ticket with an I<invalid> C<ETag> to see what happens.
 
 =head3 Updating Tickets
+
+For updating tickets we use the C<PUT> verb, but otherwise it looks much
+like a ticket creation.
 
     curl -X PUT
          -H "Content-Type: application/json"
@@ -203,9 +207,9 @@ requested the ticket previously. You'll then get a JSON response like:
 
     ["Ticket 1: Subject changed from 'hello world' to 'trial update'"]
 
-which is meant for displaying to an end-user.
+which is a list of messages meant for displaying to an end-user.
 
-And if you C<GET> the ticket again, you'll observe that the C<ETag>
+If you C<GET> the ticket again, you'll observe that the C<ETag>
 header now has a different value, indicating that the ticket itself has
 changed. This means if you were to retry the C<PUT> update with the
 previous (at the time, expected) C<ETag> you would instead be rejected
@@ -230,7 +234,7 @@ Hypermedia links inform your client application of what the user has the
 ability to do.
 
 Careful readers will see that, other than our initial entry into the
-system, we did not I<generate> any URLs. We only I<followed> URLs, just
+system, we did not I<generate> any URLs. We only I<followed> links, just
 like you do when browsing a website on your computer. We've better
 decoupled the client's implementation from the server's REST API.
 Additionally, this system lets you be informed of new capabilities in
