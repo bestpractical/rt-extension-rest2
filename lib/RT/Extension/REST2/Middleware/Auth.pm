@@ -32,12 +32,17 @@ sub login_from_cookie {
     # allow reusing authentication from the ordinary web UI so that
     # among other things our JS can use REST2
     if ($env->{HTTP_COOKIE}) {
+        no warnings 'redefine';
 
         # this is foul but LoadSessionFromCookie doesn't have a hook for
         # saying "look up cookie in my $env". this beats duplicating
         # LoadSessionFromCookie
-        no warnings 'redefine';
-        local *RT::Interface::Web::RequestENV = sub { return $env->{$_[0]} };
+        local *RT::Interface::Web::RequestENV = sub { return $env->{$_[0]} }
+            if RT::Handle::cmp_version($RT::VERSION, '4.4.0') >= 0;
+
+        # similar but for 4.2
+        local %ENV = %$env
+            if RT::Handle::cmp_version($RT::VERSION, '4.4.0') < 0;
 
         local *HTML::Mason::Commands::session;
 
