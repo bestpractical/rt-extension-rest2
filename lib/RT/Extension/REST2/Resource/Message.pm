@@ -101,7 +101,7 @@ sub add_message {
 sub create_path {
     my $self = shift;
     my $id = $self->created_transaction->Id;
-    return RT::Extension::REST2->base_path . "/transaction/$id";
+    return "/transaction/$id";
 }
 
 __PACKAGE__->meta->make_immutable;
