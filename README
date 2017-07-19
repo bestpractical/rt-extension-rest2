@@ -18,67 +18,387 @@ INSTALLATION
     Restart your webserver
 
 USAGE
-  Summary
-    Currently provided endpoints under /REST/2.0/ are:
+  Tutorial
+    To make it easier to authenticate to REST2, we recommend installing
+    RT::Authen::Token. Visit "Logged in as ___" -> Settings -> Auth Tokens.
+    Create an Auth Token, give it any description (such as "REST2 with
+    curl"). Make note of the authentication token it provides to you.
 
-        GET /ticket/:id
-        PUT /ticket/:id <JSON body>
-        DELETE /ticket/:id
-            Sets ticket status to "deleted".
+    For other authentication options see the section "Authentication
+    Methods" below.
 
-        GET /queue/:id
-        PUT /queue/:id <JSON body>
-        DELETE /queue/:id
-            Disables the queue.
+   Authentication
+    Run the following in a terminal, filling in XX_TOKEN_XX from the auth
+    token above and XX_RT_URL_XX with the URL for your RT instance.
 
-        GET /user/:id
-        PUT /user/:id <JSON body>
-        DELETE /user/:id
-            Disables the user.
+        curl -H 'Authorization: token XX_TOKEN_XX' 'XX_RT_URL_XX/REST/2.0/queues/all'
 
-    For queues and users, :id may be the numeric id or the unique name.
+    This does an authenticated request (using the Authorization HTTP header
+    with type token) for all of the queues you can see. You should see a
+    response, typical of search results, like this:
 
-    When a GET request is made, each endpoint returns a JSON representation
-    of the specified resource, or a 404 if not found.
+        {
+           "total" : 1,
+           "count" : 1,
+           "page" : 1,
+           "per_page" : 20,
+           "items" : [
+              {
+                 "type" : "queue",
+                 "id" : "1",
+                 "_url" : "XX_RT_URL_XX/REST/2.0/queue/1"
+              }
+           ]
+        }
 
-    When a PUT request is made, the request body should be a modified copy
-    (or partial copy) of the JSON representation of the specified resource,
-    and the record will be updated.
+    This format is JSON, which is a format for which many programming
+    languages provide libraries for parsing and generating.
 
-    A DELETE request to a resource will delete or disable the underlying
-    record.
+    (If you instead see a response like {"message":"Unauthorized"} that
+    indicates RT couldn't process your authentication token successfully;
+    make sure the word "token" appears between "Authorization:" and the auth
+    token that RT provided to you)
 
-  Creating
-        POST /ticket
-        POST /queue
-        POST /user
+   Following Links
+    You can request one of the provided _urls to get more information about
+    that queue.
 
-    A POST request to a resource endpoint, without a specific id/name, will
-    create a new resource of that type. The request should have a JSON
-    payload similar to the ones returned for existing resources.
+        curl -H 'Authorization: token XX_TOKEN_XX' 'XX_QUEUE_URL_XX'
 
-    On success, the return status is 201 Created and a Location header
-    points to the new resource uri. On failure, the status code indicates
-    the nature of the issue, and a descriptive message is in the response
-    body.
+    This will give a lot of information, like so:
 
-  Searching
+        {
+           "id" : 1,
+           "Name" : "General",
+           "Description" : "The default queue",
+           "Lifecycle" : "default",
+           ...
+           "CustomFields" : {},
+           "_hyperlinks" : [
+              {
+                 "id" : "1",
+                 "ref" : "self",
+                 "type" : "queue",
+                 "_url" : "XX_RT_URL_XX/REST/2.0/queue/1"
+              },
+              {
+                 "ref" : "history",
+                 "_url" : "XX_RT_URL_XX/REST/2.0/queue/1/history"
+              },
+              {
+                 "ref" : "create",
+                 "type" : "ticket",
+                 "_url" : "XX_RT_URL_XX/REST/2.0/ticket?Queue=1"
+              }
+           ],
+        }
+
+    Of particular note is the _hyperlinks key, which gives you a list of
+    related resources to examine (following the
+    <https://en.wikipedia.org/wiki/HATEOAS> principle). For example an entry
+    with a ref of history lets you examine the transaction log for a record.
+    You can implement your REST API client knowing that any other hypermedia
+    link with a ref of history has the same meaning, regardless of whether
+    it's the history of a queue, ticket, asset, etc.
+
+    Another ref you'll see in _hyperlinks is create, with a type of ticket.
+    This of course gives you the URL to create tickets *in this queue*.
+    Importantly, if your user does *not* have the CreateTicket permission in
+    this queue, then REST2 would simply not include this hyperlink in its
+    response to your request. This allows you to dynamically adapt your
+    client's behavior to its presence or absence, just like the web version
+    of RT does.
+
+   Creating Tickets
+    Let's use the _url from the create hyperlink with type ticket.
+
+    To create a ticket is a bit more involved, since it requires providing a
+    different HTTP verb (POST instead of GET), a Content-Type header (to
+    tell REST2 that your content is JSON instead of, say, XML), and the
+    fields for your new ticket such as Subject. Here is the curl invocation,
+    wrapped to multiple lines for readability.
+
+        curl -X POST
+             -H "Content-Type: application/json"
+             -d '{ "Subject": "hello world" }'
+             -H 'Authorization: token XX_TOKEN_XX'
+                'XX_TICKET_CREATE_URL_XX'
+
+    If successful, that will provide output like so:
+
+        {
+            "_url" : "XX_RT_URL_XX/REST/2.0/ticket/20",
+            "type" : "ticket",
+            "id"   : "20"
+        }
+
+    (REST2 also produces the status code of 201 Created with a Location
+    header of the new ticket, which you may choose to use instead of the
+    JSON response)
+
+    We can fetch that _url to continue working with this newly-created
+    ticket. Request the ticket like so (make sure to include the -i flag to
+    see response's HTTP headers).
+
+        curl -i -H 'Authorization: token XX_TOKEN_XX' 'XX_TICKET_URL_XX'
+
+    You'll first see that there are many hyperlinks for tickets, including
+    one for each Lifecycle action you can perform, history, comment,
+    correspond, etc. Again these adapt to whether you have the appropriate
+    permissions to do these actions.
+
+    Additionally you'll see an ETag header for this record, which can be
+    used for conflict avoidance (<https://en.wikipedia.org/wiki/HTTP_ETag>).
+    We'll first try updating this ticket with an *invalid* ETag to see what
+    happens.
+
+   Updating Tickets
+    For updating tickets we use the PUT verb, but otherwise it looks much
+    like a ticket creation.
+
+        curl -X PUT
+             -H "Content-Type: application/json"
+             -H "If-Match: invalid-etag"
+             -d '{ "Subject": "trial update" }'
+             -H 'Authorization: token XX_TOKEN_XX'
+                'XX_TICKET_URL_XX'
+
+    You'll get an error response like {"message":"Precondition Failed"} and
+    a status code of 412. If you examine the ticket, you'll also see that
+    its Subject was not changed. This is because the If-Match header advises
+    the server to make changes *if and only if* the ticket's ETag matches
+    what you provide. Since it differed, the server refused the request and
+    made no changes.
+
+    Now, try the same request by replacing the value "invalid-etag" in the
+    If-Match request header with the real ETag you'd received when you
+    requested the ticket previously. You'll then get a JSON response like:
+
+        ["Ticket 1: Subject changed from 'hello world' to 'trial update'"]
+
+    which is a list of messages meant for displaying to an end-user.
+
+    If you GET the ticket again, you'll observe that the ETag header now has
+    a different value, indicating that the ticket itself has changed. This
+    means if you were to retry the PUT update with the previous (at the
+    time, expected) ETag you would instead be rejected by the server with
+    Precondition Failed.
+
+    You can use ETag and If-Match headers to avoid race conditions such as
+    two people updating a ticket at the same time. Depending on the
+    sophistication of your client, you may be able to automatically retry
+    the change by incorporating the changes made on the server (for example
+    adding time worked can be automatically be recalculated).
+
+    You may of course choose to ignore the ETag header and not provide
+    If-Match in your requests; RT doesn't require its use.
+
+   Summary
+    RT's REST2 API provides the tools you need to build robust and dynamic
+    integrations. Tools like ETag/If-Match allow you to avoid conflicts such
+    as two people taking a ticket at the same time. Using JSON for all data
+    interchange avoids problems caused by parsing text. Hypermedia links
+    inform your client application of what the user has the ability to do.
+
+    Careful readers will see that, other than our initial entry into the
+    system, we did not *generate* any URLs. We only *followed* links, just
+    like you do when browsing a website on your computer. We've better
+    decoupled the client's implementation from the server's REST API.
+    Additionally, this system lets you be informed of new capabilities in
+    the form of additional hyperlinks.
+
+  Endpoints
+    Currently provided endpoints under /REST/2.0/ are described below.
+    Wherever possible please consider using _hyperlinks hypermedia controls
+    available in response bodies rather than hardcoding URLs.
+
    Tickets
         GET /tickets?query=<TicketSQL>
+            search for tickets using TicketSQL
+
         GET /tickets?simple=1;query=<simple search query>
+            search for tickets using simple search syntax
+
         POST /tickets
-            With the 'query' and optional 'simple' parameters
+            search for tickets with the 'query' and optional 'simple' parameters
 
-    The query parameter expects TicketSQL by default unless a true value is
-    sent for the simple parameter.
+        POST /ticket
+            create a ticket; provide JSON content
 
-    Results are returned in the format described below.
+        GET /ticket/:id
+            retrieve a ticket
 
-   Queues and users
+        PUT /ticket/:id
+            update a ticket's metadata; provide JSON content
+
+        DELETE /ticket/:id
+            set status to deleted
+
+        POST /ticket/:id/correspond
+        POST /ticket/:id/comment
+            add a reply or comment to the ticket
+
+        GET /ticket/:id/history
+            retrieve list of transactions for ticket
+
+   Transactions
+        GET /transactions?query=<JSON>
+        POST /transactions
+            search for transactions using L</JSON searches> syntax
+
+        GET /ticket/:id/history
+        GET /queue/:id/history
+        GET /queue/:name/history
+        GET /asset/:id/history
+        GET /user/:id/history
+        GET /user/:name/history
+        GET /group/:id/history
+            get transactions for record
+
+        GET /transaction/:id
+            retrieve a transaction
+
+   Attachments and Messages
+        GET /attachments?query=<JSON>
+        POST /attachments
+            search for attachments using L</JSON searches> syntax
+
+        GET /transaction/:id/attachments
+            get attachments for transaction
+
+        GET /attachment/:id
+            retrieve an attachment
+
+   Queues
+        GET /queues/all
+            retrieve list of all queues you can see
+
+        GET /queues?query=<JSON>
         POST /queues
-        POST /users
+            search for queues using L</JSON searches> syntax
 
-    These resources accept a basic JSON structure as the search conditions
+        POST /queue
+            create a queue; provide JSON content
+
+        GET /queue/:id
+        GET /queue/:name
+            retrieve a queue by numeric id or name
+
+        PUT /queue/:id
+        PUT /queue/:name
+            update a queue's metadata; provide JSON content
+
+        DELETE /queue/:id
+        DELETE /queue/:name
+            disable queue
+
+        GET /queue/:id/history
+        GET /queue/:name/history
+            retrieve list of transactions for queue
+
+   Assets
+        GET /assets?query=<JSON>
+        POST /assets
+            search for assets using L</JSON searches> syntax
+
+        POST /asset
+            create an asset; provide JSON content
+
+        GET /asset/:id
+            retrieve an asset
+
+        PUT /asset/:id
+            update an asset's metadata; provide JSON content
+
+        DELETE /asset/:id
+            set status to deleted
+
+        GET /asset/:id/history
+            retrieve list of transactions for asset
+
+   Catalogs
+        GET /catalogs/all
+            retrieve list of all catalogs you can see
+
+        GET /catalogs?query=<JSON>
+        POST /catalogs
+            search for catalogs using L</JSON searches> syntax
+
+        POST /catalog
+            create a catalog; provide JSON content
+
+        GET /catalog/:id
+        GET /catalog/:name
+            retrieve a catalog by numeric id or name
+
+        PUT /catalog/:id
+        PUT /catalog/:name
+            update a catalog's metadata; provide JSON content
+
+        DELETE /catalog/:id
+        DELETE /catalog/:name
+            disable catalog
+
+   Users
+        GET /users?query=<JSON>
+        POST /users
+            search for users using L</JSON searches> syntax
+
+        POST /user
+            create a user; provide JSON content
+
+        GET /user/:id
+        GET /user/:name
+            retrieve a user by numeric id or username
+
+        PUT /user/:id
+        PUT /user/:name
+            update a user's metadata; provide JSON content
+
+        DELETE /user/:id
+        DELETE /user/:name
+            disable user
+
+        GET /user/:id/history
+        GET /user/:name/history
+            retrieve list of transactions for user
+
+   Groups
+        GET /groups?query=<JSON>
+        POST /groups
+            search for groups using L</JSON searches> syntax
+
+        GET /group/:id
+            retrieve a group (including its members)
+
+        GET /group/:id/history
+            retrieve list of transactions for group
+
+   Custom Fields
+        GET /customfields?query=<JSON>
+        POST /customfields
+            search for custom fields using L</JSON searches> syntax
+
+        GET /customfield/:id
+            retrieve a custom field
+
+   Custom Roles
+        GET /customroles?query=<JSON>
+        POST /customroles
+            search for custom roles using L</JSON searches> syntax
+
+        GET /customrole/:id
+            retrieve a custom role
+
+   Miscellaneous
+        GET /
+            produces this documentation
+
+        GET /rt
+            produces system information
+
+  JSON searches
+    Some resources accept a basic JSON structure as the search conditions
     which specifies one or more fields to limit on (using specified
     operators and values). An example:
 
@@ -123,24 +443,54 @@ USAGE
     items, but it may be increased up to 100 (or decreased if desired). Page
     numbers start at 1.
 
-  Authentication
-    Authentication is limited to internal RT usernames and passwords,
-    provided via HTTP Basic auth. Most HTTP libraries already have a way of
-    providing basic auth credentials when making requests. Using curl, for
-    example:
+  Authentication Methods
+    Authentication should always be done over HTTPS/SSL for security. You
+    should only serve up the /REST/2.0/ endpoint over SSL.
 
-        curl -u username:password …
+   Basic Auth
+    Authentication may use internal RT usernames and passwords, provided via
+    HTTP Basic auth. Most HTTP libraries already have a way of providing
+    basic auth credentials when making requests. Using curl, for example:
 
-    This sort of authentication should always be done over HTTPS/SSL for
-    security. You should only serve up the /REST/2.0/ endpoint over SSL.
+        curl -u 'username:password' /path/to/REST/2.0
 
-  Conditional requests (If-Modified-Since)
+   Token Auth
+    You may use the RT::Authen::Token extension to authenticate to the REST
+    2 API. Once you've acquired an authentication token in the web
+    interface, specify the Authorization header with a value of "token" like
+    so:
+
+        curl -H 'Authorization: token …' /path/to/REST/2.0
+
+    If the library or application you're using does not support specifying
+    additional HTTP headers, you may also pass the authentication token as a
+    query parameter like so:
+
+        curl /path/to/REST/2.0?token=…
+
+   Cookie Auth
+    Finally, you may reuse an existing cookie from an ordinary web session
+    to authenticate against REST2. This is primarily intended for
+    interacting with REST2 via JavaScript in the browser. Other REST
+    consumers are advised to use the alternatives above.
+
+  Conditional requests (If-Modified-Since, If-Match)
     You can take advantage of the Last-Modified headers returned by most
     single resource endpoints. Add a If-Modified-Since header to your
     requests for the same resource, using the most recent Last-Modified
     value seen, and the API may respond with a 304 Not Modified. You can
     also use HEAD requests to check for updates without receiving the actual
-    content when there is a newer version.
+    content when there is a newer version. You may also add an
+    If-Unmodified-Since header to your updates to tell the server to refuse
+    updates if the record had been changed since you last retrieved it.
+
+    ETag, If-Match, and If-None-Match work similarly to Last-Modified,
+    If-Modified-Since, and If-Unmodified-Since, except that they don't use a
+    timestamp, which has its own set of tradeoffs. ETag is an opaque value,
+    so it has no meaning to consumers (unlike timestamps). However,
+    timestamps have the disadvantage of having a resolution of seconds, so
+    two updates happening in the same second would produce incorrect
+    results, whereas ETag does not suffer from that problem.
 
   Status codes
     The REST API uses the full range of HTTP status codes, and your client
@@ -157,7 +507,8 @@ BUGS
     <http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-REST2>.
 
 LICENSE AND COPYRIGHT
-    This software is Copyright (c) 2015 by Best Practical Solutions, LLC.
+    This software is Copyright (c) 2015-2017 by Best Practical Solutions,
+    LLC.
 
     This is free software, licensed under:
 

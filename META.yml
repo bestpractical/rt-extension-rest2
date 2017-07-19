@@ -4,13 +4,14 @@ author:
   - 'Best Practical Solutions, LLC <modules@bestpractical.com>'
 build_requires:
   ExtUtils::MakeMaker: 6.59
+  Test::Deep: 0
   Try::Tiny: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.59
 distribution_type: module
 dynamic_config: 1
-generated_by: 'Module::Install version 1.16'
-license: gplv2
+generated_by: 'Module::Install version 1.18'
+license: gpl_2
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
@@ -24,7 +25,6 @@ no_index:
 recommends:
   JSON::XS: 0
 requires:
-  Class::Method::Modifiers: 0
   Encode: 0
   JSON: 0
   Module::Path: 0
@@ -32,18 +32,16 @@ requires:
   Moose: 0
   MooseX::NonMoose: 0
   MooseX::Role::Parameterized: 0
+  Path::Dispatcher: 0
   Plack::Builder: 0
-  Plack::Middleware::RequestHeaders: 0
-  Plack::Middleware::ReverseProxyPath: 0
   Pod::POM: 0
   Scalar::Util: 0
   Sub::Exporter: 0
-  Web::Machine: '0.12'
-  Web::Simple: 0
+  Web::Machine: 0.12
   namespace::autoclean: 0
   perl: 5.10.1
 resources:
   license: http://opensource.org/licenses/gpl-license.php
-version: '0.10'
-x_module_install_rtx_version: '0.38'
+version: 0.10
+x_module_install_rtx_version: 0.39
 x_requires_rt: 4.2.4

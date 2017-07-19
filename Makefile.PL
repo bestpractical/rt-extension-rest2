@@ -1,7 +1,7 @@
 use inc::Module::Install;
 
 RTx 'RT-Extension-REST2';
-license  'gplv2';
+license  'gpl_2';
 
 githubmeta('github');
 
