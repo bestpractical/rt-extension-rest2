@@ -48,7 +48,7 @@ sub mech { RT::Extension::REST2::Test::Mechanize->new }
     sub new {
         my $class = shift;
         my %args = (
-            app => RT::Extension::REST2->to_app,
+            app => RT::Extension::REST2->PSGIWrap(sub { die "Requested non-REST path" }),
             @_,
         );
         return $class->SUPER::new(%args);

@@ -564,12 +564,6 @@ sub to_app {
         enable '+RT::Extension::REST2::Middleware::ErrorAsJSON';
         enable '+RT::Extension::REST2::Middleware::Log';
         enable '+RT::Extension::REST2::Middleware::Auth';
-        enable 'RequestHeaders',
-            set => [
-                'X-Forwarded-Script-Name' => '/',
-                'X-Traversal-Path' => $REST_PATH,
-            ];
-        enable 'ReverseProxyPath';
         RT::Extension::REST2::Dispatcher->to_psgi_app;
     };
 }
