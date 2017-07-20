@@ -240,6 +240,10 @@ decoupled the client's implementation from the server's REST API.
 Additionally, this system lets you be informed of new capabilities in
 the form of additional hyperlinks.
 
+Using these tools and principles, REST2 will help you build rich,
+robust, and powerful integrations with the other applications and
+services that your team uses.
+
 =head2 Endpoints
 
 Currently provided endpoints under C</REST/2.0/> are described below.
