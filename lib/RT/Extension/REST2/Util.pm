@@ -33,7 +33,12 @@ sub expand_uid {
 
     return if not defined $uid;
 
-    my ($class, $rtname, $id) = $uid =~ /^([^-]+?)(?:-(.+?))?-(.+)$/;
+    my $Organization = RT->Config->Get('Organization');
+    my ($class, $id);
+    if ($uid =~ /^([\w:]+)-\Q$Organization\E-(.+)$/) {
+        ($class, $id) = ($1, $2);
+    }
+
     return unless $class and $id;
 
     $class =~ s/^RT:://;
