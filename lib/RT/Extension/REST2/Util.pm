@@ -35,8 +35,8 @@ sub expand_uid {
 
     my $Organization = RT->Config->Get('Organization');
     my ($class, $id);
-    if ($uid =~ /^([\w:]+)-\Q$Organization\E-(.+)$/) {
-        ($class, $id) = ($1, $2);
+    if ($uid =~ /^([\w:]+)(-\Q$Organization\E)?-(.+)$/) {
+        ($class, $id) = ($1, $3);
     }
 
     return unless $class and $id;
