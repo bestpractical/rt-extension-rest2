@@ -3,6 +3,22 @@ use warnings;
 use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
 
+use_ok('RT::Extension::REST2::Util', qw(expand_uid));
+
+{
+    my $base_url = RT::Extension::REST2->base_uri;
+    my $uid_parts = expand_uid('RT::User-test');
+
+    is($uid_parts->{'type'}, 'user', 'Got correct class');
+    is($uid_parts->{'id'}, 'test', 'Got correct id');
+    is($uid_parts->{'_url'}, $base_url . '/user/test', 'Got correct url');
+
+    $uid_parts = expand_uid('RT::CustomField-example.com-3');
+    is($uid_parts->{'type'}, 'customfield', 'Got correct class');
+    is($uid_parts->{'id'}, '3', 'Got correct id');
+    is($uid_parts->{'_url'}, $base_url . '/customfield/3', 'Got correct url');
+}
+
 RT->Config->Set('Organization', 'name-with-dashes');
 
 my $mech = RT::Extension::REST2::Test->mech;
