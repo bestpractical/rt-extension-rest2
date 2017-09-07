@@ -7,11 +7,17 @@ use_ok('RT::Extension::REST2::Util', qw(expand_uid));
 
 {
     my $base_url = RT::Extension::REST2->base_uri;
-    my $uid_parts = expand_uid('RT::User-test');
 
+    my $uid_parts = expand_uid('RT::User-test');
     is($uid_parts->{'type'}, 'user', 'Got correct class');
     is($uid_parts->{'id'}, 'test', 'Got correct id');
     is($uid_parts->{'_url'}, $base_url . '/user/test', 'Got correct url');
+
+    # User with dashes in the username
+    $uid_parts = expand_uid('RT::User-test-user');
+    is($uid_parts->{'type'}, 'user', 'Got correct class');
+    is($uid_parts->{'id'}, 'test-user', 'Got correct id');
+    is($uid_parts->{'_url'}, $base_url . '/user/test-user', 'Got correct url');
 
     $uid_parts = expand_uid('RT::CustomField-example.com-3');
     is($uid_parts->{'type'}, 'customfield', 'Got correct class');
