@@ -5,6 +5,7 @@ use RT::Extension::REST2::Test tests => undef;
 
 use_ok('RT::Extension::REST2::Util', qw(expand_uid));
 
+diag "Test expand_uid with default RT Organization of example.com";
 {
     my $base_url = RT::Extension::REST2->base_uri;
 
@@ -26,6 +27,27 @@ use_ok('RT::Extension::REST2::Util', qw(expand_uid));
 }
 
 RT->Config->Set('Organization', 'name-with-dashes');
+
+diag "Test expand_uid with Organization name with dashes";
+{
+    my $base_url = RT::Extension::REST2->base_uri;
+
+    my $uid_parts = expand_uid('RT::User-test');
+    is($uid_parts->{'type'}, 'user', 'Got correct class');
+    is($uid_parts->{'id'}, 'test', 'Got correct id');
+    is($uid_parts->{'_url'}, $base_url . '/user/test', 'Got correct url');
+
+    # User with dashes in the username
+    $uid_parts = expand_uid('RT::User-test-user');
+    is($uid_parts->{'type'}, 'user', 'Got correct class');
+    is($uid_parts->{'id'}, 'test-user', 'Got correct id');
+    is($uid_parts->{'_url'}, $base_url . '/user/test-user', 'Got correct url');
+
+    $uid_parts = expand_uid('RT::CustomField-name-with-dashes-3');
+    is($uid_parts->{'type'}, 'customfield', 'Got correct class');
+    is($uid_parts->{'id'}, '3', 'Got correct id');
+    is($uid_parts->{'_url'}, $base_url . '/customfield/3', 'Got correct url');
+}
 
 my $mech = RT::Extension::REST2::Test->mech;
 my $auth = RT::Extension::REST2::Test->authorization_header;
