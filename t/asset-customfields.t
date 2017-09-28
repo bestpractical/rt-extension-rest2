@@ -47,11 +47,6 @@ my ($asset_url, $asset_id);
         },
     };
 
-    # 4.2.3 introduced a bug (e092e23) in CFs fixed in 4.2.9 (ab7ea15)
-    delete $payload->{CustomFields}
-        if RT::Handle::cmp_version($RT::VERSION, '4.2.3') >= 0
-        && RT::Handle::cmp_version($RT::VERSION, '4.2.8') <= 0;
-
     # Rights Test - No CreateAsset
     my $res = $mech->post_json("$rest_base_path/asset",
         $payload,
@@ -366,17 +361,10 @@ for my $value (
     modify_multi_ok('replace all', ['replace all added as a value for Multi', 'multiple is no longer a value for custom field Multi', 'new is no longer a value for custom field Multi'], ['replace all'], 'replaced all values');
     modify_multi_ok([], ['replace all is no longer a value for custom field Multi'], [], 'removed all values');
 
-    if (RT::Handle::cmp_version($RT::VERSION, '4.2.5') >= 0) {
-        modify_multi_ok(['foo', 'foo', 'bar'], ['foo added as a value for Multi', undef, 'bar added as a value for Multi'], ['bar', 'foo'], 'multiple values with the same name');
-        modify_multi_ok(['foo', 'bar'], [], ['bar', 'foo'], 'multiple values with the same name');
-        modify_multi_ok(['bar'], ['foo is no longer a value for custom field Multi'], ['bar'], 'multiple values with the same name');
-        modify_multi_ok(['bar', 'bar', 'bar'], [undef, undef], ['bar'], 'multiple values with the same name');
-    } else {
-        modify_multi_ok(['foo', 'foo', 'bar'], ['foo added as a value for Multi', 'foo added as a value for Multi', 'bar added as a value for Multi'], ['bar', 'foo', 'foo'], 'multiple values with the same name');
-        modify_multi_ok(['foo', 'bar'], ['foo is no longer a value for custom field Multi'], ['bar', 'foo'], 'multiple values with the same name');
-        modify_multi_ok(['bar'], ['foo is no longer a value for custom field Multi'], ['bar'], 'multiple values with the same name');
-        modify_multi_ok(['bar', 'bar', 'bar'], ['bar added as a value for Multi', 'bar added as a value for Multi'], ['bar', 'bar', 'bar'], 'multiple values with the same name');
-    }
+    modify_multi_ok(['foo', 'foo', 'bar'], ['foo added as a value for Multi', undef, 'bar added as a value for Multi'], ['bar', 'foo'], 'multiple values with the same name');
+    modify_multi_ok(['foo', 'bar'], [], ['bar', 'foo'], 'multiple values with the same name');
+    modify_multi_ok(['bar'], ['foo is no longer a value for custom field Multi'], ['bar'], 'multiple values with the same name');
+    modify_multi_ok(['bar', 'bar', 'bar'], [undef, undef], ['bar'], 'multiple values with the same name');
 }
 
 done_testing;
