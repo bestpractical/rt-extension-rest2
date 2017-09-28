@@ -53,9 +53,19 @@ my ($asset_url, $asset_id);
         'Authorization' => $auth,
     );
     is($res->code, 403);
+    my $content = $mech->json_response;
+    is($content->{message}, 'Permission Denied', "can't create Asset with custom fields you can't set");
 
     # Rights Test - With CreateAsset
     $user->PrincipalObj->GrantRight( Right => 'CreateAsset' );
+    $res = $mech->post_json("$rest_base_path/asset",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 400);
+
+    delete $payload->{CustomFields};
+
     $res = $mech->post_json("$rest_base_path/asset",
         $payload,
         'Authorization' => $auth,
