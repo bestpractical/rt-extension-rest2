@@ -26,6 +26,7 @@ recommends 'JSON::XS';
 
 test_requires 'Try::Tiny';
 test_requires 'Test::Deep';
+test_requires 'Test::WWW::Mechanize::PSGI';
 
 my ($lp) = ($INC{'RT.pm'} =~ /^(.*)[\\\/]/);
 my $lib_path = join( ' ', "$RT::LocalPath/lib", $lp );
