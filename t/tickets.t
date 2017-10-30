@@ -32,6 +32,7 @@ my $user = RT::Extension::REST2::Test->user;
     is($mech->json_response->{message}, 'Could not create ticket. Queue not set');
 }
 
+my $queue = RT::Test->load_or_create_queue( Name => "General" );
 # Ticket Creation
 my ($ticket_url, $ticket_id);
 {
@@ -39,7 +40,7 @@ my ($ticket_url, $ticket_id);
         Subject => 'Ticket creation using REST',
         From    => 'test@bestpractical.com',
         To      => 'rt@localhost',
-        Queue   => 'General',
+        Queue   => $queue->Id,
         Content => 'Testing ticket creation using REST API.',
     };
 
@@ -355,6 +356,108 @@ my ($ticket_url, $ticket_id);
     is($content->{Subject}, 'shh');
     is($content->{Content}, '<i>(hello secret camera)</i>');
     is($content->{ContentType}, 'text/html');
+}
+
+# TicketSQL AND
+diag "Got correct result for  AND TicketSQL";
+{
+    my $res = $mech->get("$rest_base_path/tickets?query=id>0 AND Queue='General'",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    is($content->{count}, 1);
+    is($content->{page}, 1);
+    is($content->{per_page}, 20);
+    is($content->{total}, 1);
+    is(scalar @{$content->{items}}, 1);
+
+    my $ticket = $content->{items}->[0];
+    is($ticket->{type}, 'ticket');
+    is($ticket->{id}, 1);
+    like($ticket->{_url}, qr{$rest_base_path/ticket/1$});
+}
+
+# OR TicketSQL
+# Got correct result for "OR TicketSQL"
+{
+  my $res = $mech->get("$rest_base_path/tickets?query=id<0 OR Queue='General'",
+      'Authorization' => $auth,
+  );
+  is($res->code, 200);
+  my $content = $mech->json_response;
+  is($content->{count}, 1);
+  is($content->{page}, 1);
+  is($content->{per_page}, 20);
+  is($content->{total}, 1);
+  is(scalar @{$content->{items}}, 1);
+
+  my $ticket = $content->{items}->[0];
+  is($ticket->{type}, 'ticket');
+  is($ticket->{id}, 1);
+  like($ticket->{_url}, qr{$rest_base_path/ticket/1$});
+}
+
+# Second Queue
+$queue = RT::Test->load_or_create_queue( Name => "Two" );
+
+# Second ticket
+my ($ticket_url2, $ticket_id2);
+{
+    my $payload = {
+        Subject => 'Ticket creation using REST',
+        From    => 'test@bestpractical.com',
+        To      => 'rt@localhost',
+        Queue   => 'two',
+        Content => 'Testing ticket creation using REST API.',
+    };
+
+    # Rights Test - No CreateTicket
+    my $res = $mech->post_json("$rest_base_path/ticket",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    ok($ticket_url2 = $res->header('location'));
+    ok(($ticket_id2) = $ticket_url2 =~ qr[/ticket/(\d+)]);
+}
+
+# Search with Multiple Tickets and Queues
+diag "Got correct result for two tickets two queues";
+{
+    my $res = $mech->get("$rest_base_path/tickets?query=id>0 AND Queue='General'",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    is($content->{count}, 1);
+    is($content->{page}, 1);
+    is($content->{per_page}, 20);
+    is($content->{total}, 1);
+    is(scalar @{$content->{items}}, 1);
+
+    my $ticket = $content->{items}->[0];
+    is($ticket->{type}, 'ticket');
+    is($ticket->{id}, 1);
+    like($ticket->{_url}, qr{$rest_base_path/ticket/1$});
+}
+
+# Find both queues tickets
+diag "Got correct result for two tickets two queues";
+{
+    my $res = $mech->get("$rest_base_path/tickets?query=Queue='Two' OR Queue='General'",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    is($content->{count}, 2);
+    is($content->{page}, 1);
+    is($content->{per_page}, 20);
+    is($content->{total}, 2);
+    is(scalar @{$content->{items}}, 2);
+
+    my $ticket = $content->{items}->[0];
+    is($ticket->{type}, 'ticket');
 }
 
 done_testing;
