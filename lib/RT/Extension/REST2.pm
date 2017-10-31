@@ -255,8 +255,8 @@ controls available in response bodies rather than hardcoding URLs.
     GET /tickets?query=<TicketSQL>
         search for tickets using TicketSQL
         Ex. /REST/2.0/tickets?query=Status="open"'
-        Ex. /REST/2.0/tickets?query=CF.{MyCustomField}="True"'
-        Ex. curl -G --data-urlencode "query=id=1 AND Status='new'" -u 'root:password' 'myRT...REST/2.0/tickets'
+        Ex. "/REST/2.0/tickets?query=CF.MyCustomField='True'"
+        Ex. curl -G --data-urlencode "query=(Queue='Two' OR Queue='General') AND Subject='Rest2'" -u 'root:password' 'myRT...REST/2.0/tickets'
 
     GET /tickets?simple=1;query=<simple search query>
         search for tickets using simple search syntax
@@ -564,7 +564,15 @@ handle them appropriately.
 
 # XXX TODO: API doc
 
-sub to_psgi_app { shift->to_app(@_) }
+sub to_psgi_app {
+    my $self = shift;
+    my $res = $self->to_app(@_);
+
+    return Plack::Util::response_cb($res, sub {
+        my $res = shift;
+        $self->CleanupRequest;
+    });
+}
 
 sub to_app {
     my $class = shift;
@@ -594,6 +602,24 @@ sub PSGIWrap {
         mount $REST_PATH => $class->to_app;
         mount '/' => $app;
     };
+}
+
+sub CleanupRequest {
+
+    if ( $RT::Handle && $RT::Handle->TransactionDepth ) {
+        $RT::Handle->ForceRollback;
+        $RT::Logger->crit(
+            "Transaction not committed. Usually indicates a software fault."
+            . "Data loss may have occurred" );
+    }
+
+    # Clean out the ACL cache. the performance impact should be marginal.
+    # Consistency is imprived, too.
+    RT::Principal->InvalidateACLCache();
+    DBIx::SearchBuilder::Record::Cachable->FlushCache
+      if ( RT->Config->Get('WebFlushDbCacheEveryRequest')
+        and UNIVERSAL::can(
+            'DBIx::SearchBuilder::Record::Cachable' => 'FlushCache' ) );
 }
 
 =head1 AUTHOR

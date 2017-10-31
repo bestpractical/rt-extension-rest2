@@ -405,7 +405,7 @@ $queue = RT::Test->load_or_create_queue( Name => "Two" );
 my ($ticket_url2, $ticket_id2);
 {
     my $payload = {
-        Subject => 'Ticket creation using REST',
+        Subject => 'Rest2',
         From    => 'test@bestpractical.com',
         To      => 'rt@localhost',
         Queue   => 'two',
@@ -445,19 +445,34 @@ diag "Got correct result for two tickets two queues";
 # Find both queues tickets
 diag "Got correct result for two tickets two queues";
 {
-    my $res = $mech->get("$rest_base_path/tickets?query=Queue='Two' OR Queue='General'",
+    my $res = $mech->get("$rest_base_path/tickets?query=(Queue='Two' OR Queue='General') AND Subject='Rest2'",
         'Authorization' => $auth,
     );
     is($res->code, 200);
     my $content = $mech->json_response;
-    is($content->{count}, 2);
+    is($content->{count}, 1);
     is($content->{page}, 1);
     is($content->{per_page}, 20);
-    is($content->{total}, 2);
-    is(scalar @{$content->{items}}, 2);
+    is($content->{total}, 1);
+    is(scalar @{$content->{items}}, 1);
 
     my $ticket = $content->{items}->[0];
     is($ticket->{type}, 'ticket');
 }
+TODO: {
+    local $TODO = "Have incorrect ticketSQL queries return error or nothing. Currently will return all tickets";
+};
 
+# Malform query error
+diag "Got correct error response for malformed query";
+{
+  my $res = $mech->get("$rest_base_path/tickets?query=Queue=incorrect",
+      'Authorization' => $auth,
+  );
+  my $content = $mech->json_response;
+  is($content->{count}, 0);
+  is($content->{page}, 1);
+  is($content->{total}, 0);
+  is(scalar @{$content->{items}}, 0);
+}
 done_testing;
