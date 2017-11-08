@@ -43,6 +43,8 @@ sub to_psgi_app {
 
     return sub {
         my $env = shift;
+
+        RT::ConnectToDatabase();
         my $dispatch = $self->_dispatcher->dispatch($env->{PATH_INFO});
 
         return [404, ['Content-Type' => 'text/plain'], 'Not Found']
