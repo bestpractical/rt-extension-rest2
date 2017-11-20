@@ -14,6 +14,7 @@ our @auth_priority = qw(
 sub call {
     my ($self, $env) = @_;
 
+    RT::ConnectToDatabase();
     for my $method (@auth_priority) {
         last if $env->{'rt.current_user'} = $self->$method($env);
     }

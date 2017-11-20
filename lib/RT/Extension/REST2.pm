@@ -566,8 +566,6 @@ sub to_psgi_app { shift->to_app(@_) }
 sub to_app {
     my $class = shift;
 
-    RT::ConnectToDatabase();
-
     return builder {
         enable '+RT::Extension::REST2::Middleware::ErrorAsJSON';
         enable '+RT::Extension::REST2::Middleware::Log';
