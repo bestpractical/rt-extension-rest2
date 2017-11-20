@@ -1,0 +1,9 @@
+Revision history for RT-Extension-REST2
+
+1.01 2017-11-20
+ - Relocate REST2 DB connect to occur after PSGI forks
+ - Add cleanup method to resolve DBIx::SearchBuilder processing at request end
+
+1.00 2017-07-20
+ - Initial release
+

@@ -207,6 +207,10 @@ USAGE
     Additionally, this system lets you be informed of new capabilities in
     the form of additional hyperlinks.
 
+    Using these tools and principles, REST2 will help you build rich,
+    robust, and powerful integrations with the other applications and
+    services that your team uses.
+
   Endpoints
     Currently provided endpoints under /REST/2.0/ are described below.
     Wherever possible please consider using _hyperlinks hypermedia controls

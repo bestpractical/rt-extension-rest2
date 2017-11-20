@@ -5,6 +5,7 @@ author:
 build_requires:
   ExtUtils::MakeMaker: 6.59
   Test::Deep: 0
+  Test::WWW::Mechanize::PSGI: 0
   Try::Tiny: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.59
@@ -37,11 +38,11 @@ requires:
   Pod::POM: 0
   Scalar::Util: 0
   Sub::Exporter: 0
-  Web::Machine: 0.12
+  Web::Machine: '0.12'
   namespace::autoclean: 0
   perl: 5.10.1
 resources:
   license: http://opensource.org/licenses/gpl-license.php
-version: 1.00
-x_module_install_rtx_version: 0.39
+version: '1.01'
+x_module_install_rtx_version: '0.39'
 x_requires_rt: 4.2.4
