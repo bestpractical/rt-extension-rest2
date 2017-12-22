@@ -4,7 +4,7 @@ use warnings;
 
 use Moose::Role;
 use namespace::autoclean;
-use RT::Extension::REST2::Util qw(expand_uid custom_fields_for);
+use RT::Extension::REST2::Util qw(expand_uid expand_uri custom_fields_for);
 use JSON qw(to_json);
 
 sub hypermedia_links {
@@ -61,7 +61,15 @@ sub _rtlink_links {
         my $links = $record->$relation;
 
         while (my $link = $links->Next) {
-            my $entry = expand_uid($link->$method->UID);
+            my $entry;
+            if ( $link->LocalTarget and $link->LocalBase ){
+                # Internal links
+                $entry = expand_uid($link->$method->UID);
+            }
+            else {
+                # Links to external URLs
+                $entry = expand_uri($link->$mode);
+            }
             push @links, {
                 %$entry,
                 ref => $ref,

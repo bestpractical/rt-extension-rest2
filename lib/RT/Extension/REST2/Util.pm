@@ -9,6 +9,7 @@ use Sub::Exporter -setup => {
     exports => [qw[
         looks_like_uid
         expand_uid
+        expand_uri
         serialize_record
         deserialize_record
         error_as_json
@@ -45,6 +46,15 @@ sub expand_uid {
         type    => $class,
         id      => $id,
         _url    => RT::Extension::REST2->base_uri . "/$class/$id",
+    };
+}
+
+sub expand_uri {
+    my $uri = shift;
+
+    return {
+        type    => 'external',
+        _url    => $uri,
     };
 }
 
