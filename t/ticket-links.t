@@ -25,6 +25,9 @@ my $child_id = $child->Id;
 ($ok, $msg) = $child->AddLink(Type => 'MemberOf', Target => $parent->id);
 ok($ok, $msg);
 
+($ok, $msg) = $child->AddLink(Type => 'RefersTo', Target => 'https://bestpractical.com');
+ok($ok, $msg);
+
 $user->PrincipalObj->GrantRight( Right => 'ShowTicket' );
 
 # Inspect existing ticket links (parent)
@@ -72,7 +75,6 @@ $user->PrincipalObj->GrantRight( Right => 'ShowTicket' );
     cmp_deeply($links{'depends-on'}, undef, 'no depends-on links');
     cmp_deeply($links{'depended-on-by'}, undef, 'no depended-on-by links');
     cmp_deeply($links{'child'}, undef, 'no child links');
-    cmp_deeply($links{'refers-to'}, undef, 'no refers-to links');
     cmp_deeply($links{'referred-to-by'}, undef, 'no referred-to-by links');
 
     cmp_deeply($links{'parent'}, [{
@@ -81,7 +83,14 @@ $user->PrincipalObj->GrantRight( Right => 'ShowTicket' );
         id   => $parent->Id,
         _url => re(qr{$rest_base_path/ticket/$parent_id$}),
     }], 'one child link');
+
+    cmp_deeply($links{'refers-to'}, [{
+        ref  => 'refers-to',
+        type => 'external',
+        _url => re(qr{https\:\/\/bestpractical\.com}),
+    }], 'one external refers-to link');
 }
+
 
 done_testing;
 
