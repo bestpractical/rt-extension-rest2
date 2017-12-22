@@ -1,5 +1,8 @@
 Revision history for RT-Extension-REST2
 
+1.02 2017-12-22
+ - Add support for external links on tickets
+
 1.01 2017-11-20
  - Relocate REST2 DB connect to occur after PSGI forks
  - Add cleanup method to resolve DBIx::SearchBuilder processing at request end
