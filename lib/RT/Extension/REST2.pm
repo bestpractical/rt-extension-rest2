@@ -254,6 +254,9 @@ controls available in response bodies rather than hardcoding URLs.
 
     GET /tickets?query=<TicketSQL>
         search for tickets using TicketSQL
+         Ex. /REST/2.0/tickets?query=Status="open"'
+         Ex. /REST/2.0/tickets?query=CF.{MyCustomField}="True"'
+         Ex. curl -G --data-urlencode "query=id=1 AND Status='new'" -u 'root:password' 'myRT...REST/2.0/tickets'
 
     GET /tickets?simple=1;query=<simple search query>
         search for tickets using simple search syntax
