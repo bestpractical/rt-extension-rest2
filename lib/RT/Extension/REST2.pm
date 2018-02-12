@@ -138,6 +138,83 @@ include this hyperlink in its response to your request. This allows you
 to dynamically adapt your client's behavior to its presence or absence,
 just like the web version of RT does.
 
+
+=head3 GET Examples
+
+If we need to get information on an endpoints quickly, we can use the GET method.
+
+    curl -X GET -u 'root:password' 'REST/2.0/tickets?query=id=1'
+
+    curl -X GET -u 'root:password' 'REST/2.0/user/root/history'
+
+If successful we can expect a list of transactions from the user like so:
+
+    "per_page" : 20,
+    "page" : 1,
+    "count" : 1,
+    "total" : 1,
+    "items" : [
+        {
+            "id" : "11",
+            "type" : "transaction",
+            "_url" : "REST/2.0/transaction/11"
+        },
+    ]}
+
+Query our Group id = 2:
+
+    curl -X GET -u 'root:password' 'REST/2.0/group/2/'
+
+Here we can get the information on group 2:
+
+     "Members"
+        {
+            "_url" : "http://localhost:8080/REST/2.0/user/RT_System",
+            "type" : "user",
+            "id" : "RT_System"
+        }
+        "LastUpdatedBy" : "0",
+        "Creator" : "0",
+        "Domain" : "ACLEquivalence",
+        "Name" : "UserEquiv",
+        "_hyperlinks",
+        "Description"
+        "id" : 2,
+        "LastUpdated" : "2017-10-24T19:15:35Z",
+        "Created" : "2017-10-24T19:15:35Z",
+        "Instance" : {
+            "type" : "user",
+            "id" : "RT_System",
+            "_url" : "REST/2.0/user/RT_System"
+        },
+        "CustomFields" : {}
+
+=head3 POST Examples
+
+Use POST method to submit JSON data.
+
+Creating a new Asset:
+
+    curl -X POST -H "Content-Type: application/json"
+        -d '{"subject": "Creating a asset from rest2 api"}'
+        -u 'root:password'
+        '/REST/2.0/asset?Catalog=1'
+
+Result:
+
+    {"_url":"/REST/2.0/asset/10","id":"10","type":"asset"}
+
+Creating a new User:
+
+    curl -X POST -H "Content-Type: application/json"
+        -d '{"Name": "TestUser", "Nickname": "Tester"}'
+        -u 'root:password'
+        '/REST/2.0/user'
+
+Name is a mandatory field:
+
+    {"_url":"http://localhost:8080/REST/2.0/user/TestUser","id":"TestUser","type":"user"}
+
 =head3 Creating Tickets
 
 Let's use the C<_url> from the C<create> hyperlink with type C<ticket>.
@@ -161,6 +238,17 @@ If successful, that will provide output like so:
         "type" : "ticket",
         "id"   : "20"
     }
+
+With CustomFields:
+
+    curl -X POST -H "Content-Type: application/json"
+        -d '{"Subject": "Ticket Create using REST", "CustomFields": {"MyCustomField": "value"} }'
+        -u 'root:password'
+        '/REST/2.0/ticket?Queue=1'
+
+Result:
+
+    {"_url":"/REST/2.0/ticket/1","type":"ticket","id":"1"}
 
 (REST2 also produces the status code of C<201 Created> with a C<Location>
 header of the new ticket, which you may choose to use instead of the
@@ -193,6 +281,10 @@ like a ticket creation.
          -d '{ "Subject": "trial update" }'
          -H 'Authorization: token XX_TOKEN_XX'
             'XX_TICKET_URL_XX'
+
+    curl -X PUT -H "Content-Type: application/json" -d
+        '{"Subject": "Ticket update using REST", "Priority": 42}'
+        -u 'root:password' 'REST/2.0/ticket/8'
 
 You'll get an error response like C<{"message":"Precondition Failed"}>
 and a status code of 412. If you examine the ticket, you'll also see
@@ -282,7 +374,6 @@ controls available in response bodies rather than hardcoding URLs.
 
 =head3 Transactions
 
-    GET /transactions?query=<JSON>
     POST /transactions
         search for transactions using L</JSON searches> syntax
 
@@ -300,7 +391,6 @@ controls available in response bodies rather than hardcoding URLs.
 
 =head3 Attachments and Messages
 
-    GET /attachments?query=<JSON>
     POST /attachments
         search for attachments using L</JSON searches> syntax
 
@@ -315,7 +405,6 @@ controls available in response bodies rather than hardcoding URLs.
     GET /queues/all
         retrieve list of all queues you can see
 
-    GET /queues?query=<JSON>
     POST /queues
         search for queues using L</JSON searches> syntax
 
@@ -340,7 +429,6 @@ controls available in response bodies rather than hardcoding URLs.
 
 =head3 Assets
 
-    GET /assets?query=<JSON>
     POST /assets
         search for assets using L</JSON searches> syntax
 
@@ -364,7 +452,6 @@ controls available in response bodies rather than hardcoding URLs.
     GET /catalogs/all
         retrieve list of all catalogs you can see
 
-    GET /catalogs?query=<JSON>
     POST /catalogs
         search for catalogs using L</JSON searches> syntax
 
@@ -385,7 +472,6 @@ controls available in response bodies rather than hardcoding URLs.
 
 =head3 Users
 
-    GET /users?query=<JSON>
     POST /users
         search for users using L</JSON searches> syntax
 
@@ -410,7 +496,6 @@ controls available in response bodies rather than hardcoding URLs.
 
 =head3 Groups
 
-    GET /groups?query=<JSON>
     POST /groups
         search for groups using L</JSON searches> syntax
 
@@ -422,16 +507,17 @@ controls available in response bodies rather than hardcoding URLs.
 
 =head3 Custom Fields
 
-    GET /customfields?query=<JSON>
     POST /customfields
         search for custom fields using L</JSON searches> syntax
 
     GET /customfield/:id
         retrieve a custom field
 
+    POST or PUT with CustomFields
+        JSON { "CustomFields": {"CustomFieldName": "value", "CustomFieldName": "value"} }
+
 =head3 Custom Roles
 
-    GET /customroles?query=<JSON>
     POST /customroles
         search for custom roles using L</JSON searches> syntax
 
