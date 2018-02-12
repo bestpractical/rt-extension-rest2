@@ -501,7 +501,6 @@ Below are some examples using the endpoints above.
 
 =head3 Transactions
 
-    GET /transactions?query=<JSON>
     POST /transactions
         search for transactions using L</JSON searches> syntax
 
@@ -519,7 +518,6 @@ Below are some examples using the endpoints above.
 
 =head3 Attachments and Messages
 
-    GET /attachments?query=<JSON>
     POST /attachments
         search for attachments using L</JSON searches> syntax
 
@@ -539,7 +537,6 @@ Below are some examples using the endpoints above.
     GET /queues/all
         retrieve list of all queues you can see
 
-    GET /queues?query=<JSON>
     POST /queues
         search for queues using L</JSON searches> syntax
 
@@ -564,7 +561,6 @@ Below are some examples using the endpoints above.
 
 =head3 Assets
 
-    GET /assets?query=<JSON>
     POST /assets
         search for assets using L</JSON searches> syntax
 
@@ -602,7 +598,6 @@ Below are some examples using the endpoints above.
     GET /catalogs/all
         retrieve list of all catalogs you can see
 
-    GET /catalogs?query=<JSON>
     POST /catalogs
         search for catalogs using L</JSON searches> syntax
 
@@ -623,7 +618,6 @@ Below are some examples using the endpoints above.
 
 =head3 Users
 
-    GET /users?query=<JSON>
     POST /users
         search for users using L</JSON searches> syntax
 
@@ -648,7 +642,6 @@ Below are some examples using the endpoints above.
 
 =head3 Groups
 
-    GET /groups?query=<JSON>
     POST /groups
         search for groups using L</JSON searches> syntax
 
@@ -716,7 +709,6 @@ Below are some examples using the endpoints above.
 
 =head3 Custom Fields
 
-    GET /customfields?query=<JSON>
     POST /customfields
         search for custom fields using L</JSON searches> syntax
 
@@ -767,7 +759,6 @@ Below are some examples using the endpoints above.
 
 =head3 Custom Roles
 
-    GET /customroles?query=<JSON>
     POST /customroles
         search for custom roles using L</JSON searches> syntax
 
