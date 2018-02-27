@@ -57,8 +57,7 @@ sub update_record {
 
     # XXX TODO: Figure out how to return success/failure?  Core RT::Record's
     # ->Update will need to be replaced or improved.
-    $self->response->body( JSON::encode_json(\@results) );
-    return;
+    return @results;
 }
 
 sub _update_custom_fields {
@@ -259,7 +258,9 @@ sub update_resource {
             \404, "Resource does not exist; use POST to create");
     }
 
-    return $self->update_record($data);
+    my @results = $self->update_record($data);
+    $self->response->body( JSON::encode_json(\@results) );
+    return;
 }
 
 sub create_record {
