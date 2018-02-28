@@ -366,7 +366,7 @@ $user->PrincipalObj->GrantRight( Right => $_ )
     );
     is($res->code, 200);
     $content = $mech->json_response;
-    cmp_deeply($content->{Requestor}, [{
+    cmp_deeply($content->{Requestor}, bag({
         type => 'user',
         id   => 'requestor2@example.com',
         _url => re(qr{$rest_base_path/user/requestor2\@example\.com$}),
@@ -374,9 +374,9 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         type => 'user',
         id   => 'requestor@example.com',
         _url => re(qr{$rest_base_path/user/requestor\@example\.com$}),
-    }], 'two Requestors');
+    }), 'two Requestors');
 
-    cmp_deeply($content->{Cc}, [{
+    cmp_deeply($content->{Cc}, bag({
         type => 'user',
         id   => 'cc2@example.com',
         _url => re(qr{$rest_base_path/user/cc2\@example\.com$}),
@@ -384,9 +384,9 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         type => 'user',
         id   => 'cc@example.com',
         _url => re(qr{$rest_base_path/user/cc\@example\.com$}),
-    }], 'two Ccs');
+    }), 'two Ccs');
 
-    cmp_deeply($content->{AdminCc}, [{
+    cmp_deeply($content->{AdminCc}, bag({
         type => 'user',
         id   => 'admincc2@example.com',
         _url => re(qr{$rest_base_path/user/admincc2\@example\.com$}),
@@ -394,7 +394,7 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         type => 'user',
         id   => 'admincc@example.com',
         _url => re(qr{$rest_base_path/user/admincc\@example\.com$}),
-    }], 'two AdminCcs');
+    }), 'two AdminCcs');
 
     my $users = RT::Users->new(RT->SystemUser);
     $users->UnLimit;
@@ -440,7 +440,7 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         );
         is($res->code, 200);
         $content = $mech->json_response;
-        cmp_deeply($content->{Requestor}, [{
+        cmp_deeply($content->{Requestor}, bag({
             type => 'user',
             id   => 'requestor2@example.com',
             _url => re(qr{$rest_base_path/user/requestor2\@example\.com$}),
@@ -448,9 +448,9 @@ $user->PrincipalObj->GrantRight( Right => $_ )
             type => 'user',
             id   => 'requestor@example.com',
             _url => re(qr{$rest_base_path/user/requestor\@example\.com$}),
-        }], "preserved two Requestors when $name");
+        }), "preserved two Requestors when $name");
 
-        cmp_deeply($content->{Cc}, [{
+        cmp_deeply($content->{Cc}, bag({
             type => 'user',
             id   => 'cc2@example.com',
             _url => re(qr{$rest_base_path/user/cc2\@example\.com$}),
@@ -458,9 +458,9 @@ $user->PrincipalObj->GrantRight( Right => $_ )
             type => 'user',
             id   => 'cc@example.com',
             _url => re(qr{$rest_base_path/user/cc\@example\.com$}),
-        }], "preserved two Ccs when $name");
+        }), "preserved two Ccs when $name");
 
-        cmp_deeply($content->{AdminCc}, [{
+        cmp_deeply($content->{AdminCc}, bag({
             type => 'user',
             id   => 'admincc2@example.com',
             _url => re(qr{$rest_base_path/user/admincc2\@example\.com$}),
@@ -468,7 +468,7 @@ $user->PrincipalObj->GrantRight( Right => $_ )
             type => 'user',
             id   => 'admincc@example.com',
             _url => re(qr{$rest_base_path/user/admincc\@example\.com$}),
-        }], "preserved two AdminCcs when $name");
+        }), "preserved two AdminCcs when $name");
     }
 }
 

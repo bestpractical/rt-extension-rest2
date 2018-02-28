@@ -352,7 +352,7 @@ $user->PrincipalObj->GrantRight( Right => $_ )
     );
     is($res->code, 200);
     $content = $mech->json_response;
-    cmp_deeply($content->{$multi->GroupType}, [{
+    cmp_deeply($content->{$multi->GroupType}, bag({
         type => 'user',
         id   => 'multi2@example.com',
         _url => re(qr{$rest_base_path/user/multi2\@example\.com$}),
@@ -360,7 +360,7 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         type => 'user',
         id   => 'multi@example.com',
         _url => re(qr{$rest_base_path/user/multi\@example\.com$}),
-    }], 'two Multi Member');
+    }), 'two Multi Member');
 
     my $users = RT::Users->new(RT->SystemUser);
     $users->UnLimit;
@@ -400,7 +400,7 @@ $user->PrincipalObj->GrantRight( Right => $_ )
         );
         is($res->code, 200);
         $content = $mech->json_response;
-        cmp_deeply($content->{$multi->GroupType}, [{
+        cmp_deeply($content->{$multi->GroupType}, bag({
             type => 'user',
             id   => 'multi2@example.com',
             _url => re(qr{$rest_base_path/user/multi2\@example\.com$}),
@@ -408,7 +408,7 @@ $user->PrincipalObj->GrantRight( Right => $_ )
             type => 'user',
             id   => 'multi@example.com',
             _url => re(qr{$rest_base_path/user/multi\@example\.com$}),
-        }], "preserved two Multi Members when $name");
+        }), "preserved two Multi Members when $name");
     }
 }
 
