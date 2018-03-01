@@ -280,6 +280,12 @@ controls available in response bodies rather than hardcoding URLs.
     GET /ticket/:id/history
         retrieve list of transactions for ticket
 
+    POST /tickets/bulk
+        create multiple tickets; provide JSON content(array of hashes)
+
+    PUT /tickets/bulk
+        update multiple tickets' metadata; provide JSON content(array of hashes)
+
 =head3 Transactions
 
     GET /transactions?query=<JSON>

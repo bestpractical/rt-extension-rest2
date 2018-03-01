@@ -245,6 +245,12 @@ USAGE
         GET /ticket/:id/history
             retrieve list of transactions for ticket
 
+        POST /tickets/bulk
+            create multiple tickets; provide JSON content(array of hashes)
+
+        PUT /tickets/bulk
+            update multiple tickets' metadata; provide JSON content(array of hashes)
+
    Transactions
         GET /transactions?query=<JSON>
         POST /transactions
