@@ -250,6 +250,9 @@ Currently provided endpoints under C</REST/2.0/> are described below.
 Wherever possible please consider using C<_hyperlinks> hypermedia
 controls available in response bodies rather than hardcoding URLs.
 
+For simplicity, the examples below omit the extra options to
+curl for SSL like --cacert.
+
 =head3 Tickets
 
     GET /tickets?query=<TicketSQL>
@@ -285,6 +288,24 @@ controls available in response bodies rather than hardcoding URLs.
 
     PUT /tickets/bulk
         update multiple tickets' metadata; provide JSON content(array of hashes)
+
+=head3 Ticket Examples
+
+Below are some examples using the endpoints above.
+
+    # Create a ticket, setting some custom fields
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '{ "Queue": "General", "Subject": "Create ticket test",
+            "From": "user1@example.com", "To": "rt@example.com",
+            "Content": "Testing a create",
+            "CustomFields": {"Severity": "Low"}}'
+        'https://myrt.com/REST/2.0/ticket'
+
+    # Update a ticket, with a custom field update
+    curl -X PUT -H "Content-Type: application/json" -u 'root:password'
+        -d '{ "Subject": "Update test", "Content": "Testing an update",
+            "CustomFields": {"Severity": "High"}}'
+        'https://myrt.com/REST/2.0/ticket/6'
 
 =head3 Transactions
 
