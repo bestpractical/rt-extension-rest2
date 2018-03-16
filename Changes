@@ -1,5 +1,9 @@
 Revision history for RT-Extension-REST2
 
+1.03 2018-03-16
+ - Add new bulk option for tickets
+ - Documentation updates
+
 1.02 2017-12-22
  - Add support for external links on tickets
 

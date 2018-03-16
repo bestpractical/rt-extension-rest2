@@ -52,6 +52,7 @@ lib/RT/Extension/REST2/Resource/Root.pm
 lib/RT/Extension/REST2/Resource/RT.pm
 lib/RT/Extension/REST2/Resource/Ticket.pm
 lib/RT/Extension/REST2/Resource/Tickets.pm
+lib/RT/Extension/REST2/Resource/TicketsBulk.pm
 lib/RT/Extension/REST2/Resource/Transaction.pm
 lib/RT/Extension/REST2/Resource/Transactions.pm
 lib/RT/Extension/REST2/Resource/User.pm
@@ -65,9 +66,9 @@ t/asset-customfields.t
 t/assets.t
 t/catalogs.t
 t/conflict.t
-t/lib/RT/Extension/REST2/Test.pm
 t/lib/RT/Extension/REST2/Test.pm.in
 t/not_found.t
+t/organization.t
 t/queues.t
 t/root.t
 t/search-json.t
@@ -75,6 +76,7 @@ t/ticket-customfields.t
 t/ticket-customroles.t
 t/ticket-links.t
 t/ticket-watchers.t
+t/tickets-bulk.t
 t/tickets.t
 t/transactions.t
 t/user-customfields.t
