@@ -306,6 +306,16 @@ Below are some examples using the endpoints above.
         -d '{ "Subject": "Update test", "CustomFields": {"Severity": "High"}}'
         'https://myrt.com/REST/2.0/ticket/6'
 
+    # Correspond a ticket
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '{ "Content": "Testing a correspondence", "ContentType": "text/plain" }'
+        'https://myrt.com/REST/2.0/ticket/6/correspond'
+
+    # Comment a ticket
+    curl -X POST -H "Content-Type: text/plain" -u 'root:password'
+        -d 'Testing a comment'
+        'https://myrt.com/REST/2.0/ticket/6/comment'
+
 =head3 Transactions
 
     GET /transactions?query=<JSON>
