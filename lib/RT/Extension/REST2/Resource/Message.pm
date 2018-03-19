@@ -6,6 +6,7 @@ use Moose;
 use namespace::autoclean;
 
 extends 'RT::Extension::REST2::Resource';
+use RT::Extension::REST2::Util qw( error_as_json );
 
 sub dispatch_rules {
     Path::Dispatcher::Rule::Regex->new(
