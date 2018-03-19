@@ -43,6 +43,17 @@ sub create_record {
         Object => $queue,
     ) and $queue->Disabled != 1;
 
+    if ( defined $data->{Content} ) {
+        $data->{MIMEObj} = HTML::Mason::Commands::MakeMIMEEntity(
+            Interface => 'REST',
+            Body      => delete $data->{Content},
+            Type      => delete $data->{ContentType} || 'text/plain',
+            ( map { $_ => delete $data->{$_} } grep { defined $data->{$_} } qw/From To Date/ ),
+            # Keep Subject and Cc since they are valid parameters of RT::Ticket::Create
+            ( map { $_ => $data->{$_} } grep        { defined $data->{$_} } qw/Subject Cc/ ),
+        );
+    }
+
     my ($ok, $txn, $msg) = $self->_create_record($data);
     return ($ok, $msg);
 }
