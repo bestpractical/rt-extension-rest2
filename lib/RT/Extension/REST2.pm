@@ -303,8 +303,7 @@ Below are some examples using the endpoints above.
 
     # Update a ticket, with a custom field update
     curl -X PUT -H "Content-Type: application/json" -u 'root:password'
-        -d '{ "Subject": "Update test", "Content": "Testing an update",
-            "CustomFields": {"Severity": "High"}}'
+        -d '{ "Subject": "Update test", "CustomFields": {"Severity": "High"}}'
         'https://myrt.com/REST/2.0/ticket/6'
 
 =head3 Transactions
