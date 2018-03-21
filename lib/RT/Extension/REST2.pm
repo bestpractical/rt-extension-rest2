@@ -316,6 +316,16 @@ Below are some examples using the endpoints above.
         -d 'Testing a comment'
         'https://myrt.com/REST/2.0/ticket/6/comment'
 
+    # Create an Asset
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '{"Name" : "Asset From Rest", "Catalog" : "General assets", "Content" : "Some content"}'
+        'https://myrt.com/REST/2.0/asset'
+
+    # Search Assets
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+    -d '[{ "field" : "id", "operator" : ">=", "value" : 0 }]'
+    'https://myrt.com/REST/2.0/asset'
+
 =head3 Transactions
 
     GET /transactions?query=<JSON>
