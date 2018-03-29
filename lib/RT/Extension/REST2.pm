@@ -316,16 +316,6 @@ Below are some examples using the endpoints above.
         -d 'Testing a comment'
         'https://myrt.com/REST/2.0/ticket/6/comment'
 
-    # Create an Asset
-    curl -X POST -H "Content-Type: application/json" -u 'root:password'
-        -d '{"Name" : "Asset From Rest", "Catalog" : "General assets", "Content" : "Some content"}'
-        'https://myrt.com/REST/2.0/asset'
-
-    # Search Assets
-    curl -X POST -H "Content-Type: application/json" -u 'root:password'
-    -d '[{ "field" : "id", "operator" : ">=", "value" : 0 }]'
-    'https://myrt.com/REST/2.0/asset'
-
 =head3 Transactions
 
     GET /transactions?query=<JSON>
@@ -404,6 +394,30 @@ Below are some examples using the endpoints above.
 
     GET /asset/:id/history
         retrieve list of transactions for asset
+
+=head3 Asset Examples
+
+Below are some examples using the enpoints above.
+
+    # Create an Asset
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '{"Name" : "Asset From Rest",
+            "Catalog" : "General assets",
+            "Description" : "Some content",
+            "CustomFields" : {"MyCustomField" : "Value On Create"}
+            }'
+        'https://myrt.com/REST/2.0/asset'
+
+    # Search Assets
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '[{ "field" : "id", "operator" : ">=", "value" : 0 }]'
+        'https://myrt.com/REST/2.0/assets'
+
+    # Update Asset
+    curl -X PUT -H "Content-Type: application/json" -u 'root:password'
+        -d '{"Description": "A new description",
+            "CustomFields" : {"MyCustomField" : "NewValue"}}'
+        'https://myrt.com/REST/2.0/asset/2'
 
 =head3 Catalogs
 
