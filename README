@@ -425,6 +425,28 @@ USAGE
         GET /user/:name/history
             retrieve list of transactions for user
 
+   User examples
+    Below are some examples using the enpoints above.
+
+        # Search
+        curl -X POST -H "Content-Type: application/json"
+            -d '[{"field": "Name", "operator": "LIKE", "value" : "MyUserName"}]'
+            -u 'root:password' 'https://myrt.com/REST/2.0/users'
+
+        # Create
+        curl -X POST -H "Content-Type: application/json"
+            -d '{"Name": "TestUser", "Nickname": "Tester"}'
+            -u 'root:password' 'https://myrt.com/REST/2.0/user'
+
+        # Update
+        curl -X PUT -H "Content-Type: application/json"
+            -d '{"Name": "NewName",  "CustomFields" : {"MyCF" : "NewValue"} }'
+            -u 'root:password' 'https://myrt.com/REST/2.0/user/TestUser'
+
+        # Delete
+        curl -X DELETE -u 'root:password'
+            'http://localhost:8080/REST/2.0/user/MyUser'
+
    Groups
         GET /groups?query=<JSON>
         POST /groups
