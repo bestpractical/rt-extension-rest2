@@ -374,6 +374,29 @@ Below are some examples using the endpoints above.
     GET /queue/:name/history
         retrieve list of transactions for queue
 
+=head3 Queue examples
+
+Below are some examples using the enpoints above.
+
+    # Create A Queue
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '{"Name" : "NewQueue", "Description" : "A Queue For New Things"}'
+        'https://myrt.com/REST/2.0/queue'
+
+    # Get All Queues
+    curl -X GET -u 'root:password'
+        'https://myrt.com/REST/2.0/queues/all'
+
+    # Search For A Queue
+     curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '[{"field" : "Name", "value" : "General"}]'
+        'https://myrt.com/REST/2.0/queues'
+
+    # Update A Queue
+    curl -X PUT -H "Content-Type: application/json" -u 'root:password'
+        -d '{"Name" : "NewName", "CustomFields" : { "MyCustomField" : "UpdatedValue" } }'
+        'https://myrt.com/REST/2.0/queue/General'
+
 =head3 Assets
 
     GET /assets?query=<JSON>
