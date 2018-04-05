@@ -1,0 +1,2 @@
+version=3
+https://metacpan.org/release/RT-Extension-Rest2   .*/RT-Extension-Rest2-v?(\d[\d.-]*)\.(?:tar(?:\.gz|\.bz2)?|tgz|zip)$

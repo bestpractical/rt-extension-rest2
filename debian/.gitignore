@@ -1,0 +1,5 @@
+debhelper-build-stamp
+files
+*.debhelper.log
+*.substvars
+rt4-extension-resetpassword/
