@@ -2,4 +2,4 @@ debhelper-build-stamp
 files
 *.debhelper.log
 *.substvars
-rt4-extension-resetpassword/
+rt4-extension-rest2/

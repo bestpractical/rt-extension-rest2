@@ -14,7 +14,19 @@ Package: rt4-extension-rest2
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends},
  request-tracker4,
- perl
-Description: REST2 extension (Request Tracker)
+ perl,
+ libencode-perl,
+ libjson-perl,
+ libmodule-path-perl,
+ libmodule-runtime-perl,
+ libmoose-perl,
+ libmoosex-nonmoose-perl,
+ libnamespace-autoclean-perl,
+ libpath-dispatcher-perl,
+ libpod-pom-perl,
+ libplack-perl,
+ libsub-exporter-perl,
+ libweb-machine-perl (>= 0.12)
+Description: REST2 API extension (Request Tracker)
  This extension adds a modern REST API to Request Tracker.
  .
