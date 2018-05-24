@@ -529,7 +529,10 @@ Below are some examples using the endpoints above.
         search for custom fields using L</JSON searches> syntax
 
     GET /customfield/:id
-        retrieve a custom field
+        retrieve a custom field, with values if type is Select
+
+    GET /customfield/:id?category=<category name>
+        retrieve a custom field, with values filtered by category if type is Select
 
 =head3 Custom Roles
 
