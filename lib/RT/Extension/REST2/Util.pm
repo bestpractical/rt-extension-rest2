@@ -91,6 +91,19 @@ sub serialize_record {
         }
     }
 
+    # Add available values for Select RT::CustomField
+    if (ref($record) eq 'RT::CustomField' && $record->Type eq 'Select') {
+        my $values = $record->Values;
+        while (my $val = $values->Next) {
+            my $category = $record->BasedOn ? $val->Category : '';
+            if (exists $data{Values}) {
+                push @{$data{Values}}, {name => $val->Name, category => $category};
+            } else {
+                $data{Values} = [{name => $val->Name, category => $category}];
+            }
+        }
+    }
+
     # Replace UIDs with object placeholders
     for my $uid (grep ref eq 'SCALAR', values %data) {
         $uid = expand_uid($uid);

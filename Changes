@@ -1,5 +1,9 @@
 Revision history for RT-Extension-REST2
 
+ - Add a new JSON property, "Values:" as an array of all possible values for
+   RT::Customfield of type Select.
+ - Allow filtering values for BasedOn custom fields, by specifying a category argument
+
 1.07 2019-05-24
  - Accept 'Content' as a parameter on create. The documentation previously showed
    this in examples, but it wasn't yet supported. Now it works as documented.
