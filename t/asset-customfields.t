@@ -97,9 +97,14 @@ my ($asset_url, $asset_id);
     is($content->{id}, $asset_id);
     is($content->{Status}, 'new');
     is($content->{Name}, 'Asset creation using REST');
-    is_deeply($content->{'CustomFields'}, {}, 'Asset custom field not present');
+    is_deeply($content->{'CustomFields'}, [], 'Asset custom field not present');
     is_deeply([grep { $_->{ref} eq 'customfield' } @{ $content->{'_hyperlinks'} }], [], 'No CF hypermedia');
 }
+
+my $no_asset_cf_values = bag(
+  { name => 'Single', id => $single_cf_id, type => 'customfield', _url => ignore(), values => [] },
+  { name => 'Multi',  id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => [] },
+);
 
 # Rights Test - With ShowAsset and SeeCustomField
 {
@@ -114,7 +119,9 @@ my ($asset_url, $asset_id);
     is($content->{id}, $asset_id);
     is($content->{Status}, 'new');
     is($content->{Name}, 'Asset creation using REST');
-    is_deeply($content->{CustomFields}, { $single_cf_id => [], $multi_cf_id => [] }, 'No asset custom field values');
+    cmp_deeply($content->{CustomFields}, $no_asset_cf_values, 'No asset custom field values');
+
+
     cmp_deeply(
         [grep { $_->{ref} eq 'customfield' } @{ $content->{'_hyperlinks'} }],
         [{
@@ -199,7 +206,7 @@ my ($asset_url, $asset_id);
     my $content = $mech->json_response;
     is($content->{Name}, 'Asset update using REST');
     is($content->{Status}, 'allocated');
-    is_deeply($content->{CustomFields}, { $single_cf_id => [], $multi_cf_id => [] }, 'No update to CF');
+    cmp_deeply($content->{CustomFields}, $no_asset_cf_values, 'No update to CF');
 }
 
 # Asset Update with ModifyCustomField
@@ -224,10 +231,15 @@ my ($asset_url, $asset_id);
     );
     is($res->code, 200);
 
+    my $modified_asset_cf_values = bag(
+        { name => 'Single', id => $single_cf_id, type => 'customfield', _url => ignore(), values => ['Modified CF'] },
+        { name => 'Multi',  id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => [] },
+    );
+
     my $content = $mech->json_response;
     is($content->{Name}, 'More updates using REST');
     is($content->{Status}, 'in-use');
-    is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified CF'], $multi_cf_id => [] }, 'New CF value');
+    cmp_deeply($content->{CustomFields}, $modified_asset_cf_values, 'New CF value');
 
     # make sure changing the CF doesn't add a second OCFV
     $payload->{CustomFields}{$single_cf_id} = 'Modified Again';
@@ -243,8 +255,13 @@ my ($asset_url, $asset_id);
     );
     is($res->code, 200);
 
+    $modified_asset_cf_values = bag(
+        { name => 'Single', id => $single_cf_id, type => 'customfield', _url => ignore(), values => ['Modified Again'] },
+        { name => 'Multi',  id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => [] },
+    );
+
     $content = $mech->json_response;
-    is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified Again'], $multi_cf_id => [] }, 'New CF value');
+    cmp_deeply($content->{CustomFields}, $modified_asset_cf_values, 'New CF value');
 
     # stop changing the CF, change something else, make sure CF sticks around
     delete $payload->{CustomFields}{$single_cf_id};
@@ -262,7 +279,7 @@ my ($asset_url, $asset_id);
     is($res->code, 200);
 
     $content = $mech->json_response;
-    is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified Again'], $multi_cf_id => [] }, 'Same CF value');
+    cmp_deeply($content->{CustomFields}, $modified_asset_cf_values, 'Same CF value');
 }
 
 # Asset Creation with ModifyCustomField
@@ -291,11 +308,16 @@ my ($asset_url, $asset_id);
     );
     is($res->code, 200);
 
+    my $asset_cf_values = bag(
+        { name => 'Single', id => $single_cf_id, type => 'customfield', _url => ignore(), values => ['Hello world!'] },
+        { name => 'Multi',  id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => [] },
+    );
+
     my $content = $mech->json_response;
     is($content->{id}, $asset_id);
     is($content->{Status}, 'new');
     is($content->{Name}, 'Asset creation using REST');
-    is_deeply($content->{'CustomFields'}{$single_cf_id}, ['Hello world!'], 'Asset custom field');
+    cmp_deeply($content->{'CustomFields'}, $asset_cf_values, 'Asset custom field');
 }
 
 # Asset Creation for multi-value CF
@@ -331,7 +353,12 @@ for my $value (
     is($content->{Name}, 'Multi-value CF');
 
     my $output = ref($value) ? $value : [$value]; # scalar input comes out as array reference
-    is_deeply($content->{'CustomFields'}, { $multi_cf_id => $output, $single_cf_id => [] }, 'Asset custom field');
+    my $asset_cf_values = bag(
+        { name => 'Single', id => $single_cf_id, type => 'customfield', _url => ignore(), values => [] },
+        { name => 'Multi',  id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => $output },
+    );
+
+    cmp_deeply($content->{'CustomFields'}, $asset_cf_values, 'Asset custom field');
 }
 
 {
@@ -360,8 +387,13 @@ for my $value (
         is($res->code, 200);
 
         my $content = $mech->json_response;
-        my @values = sort @{ $content->{CustomFields}{$multi_cf_id} };
-        is_deeply(\@values, $output, $name || 'New CF value');
+        my $values;
+        for my $cf (@{ $content->{CustomFields} }) {
+            next unless $cf->{id} == $multi_cf_id;
+
+            $values = [ sort @{ $cf->{values} } ];
+        }
+        cmp_deeply($values, $output, $name || 'New CF value');
     }
 
     # starting point: ['multiple', 'values'],

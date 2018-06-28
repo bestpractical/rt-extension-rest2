@@ -114,8 +114,13 @@ sub serialize_record {
     if (my $cfs = custom_fields_for($record)) {
         my %values;
         while (my $cf = $cfs->Next) {
-            my $key    = $cf->Id;
-            my $values = $values{$key} ||= [];
+            if (! defined $values{$cf->Id}) {
+                $values{$cf->Id} = {
+                    %{ expand_uid($cf->UID) },
+                    name   => $cf->Name,
+                    values => [],
+                };
+            }
             my $ocfvs  = $cf->ValuesForObject( $record );
             my $type   = $cf->Type;
             while (my $ocfv = $ocfvs->Next) {
@@ -130,11 +135,11 @@ sub serialize_record {
                         _url         => RT::Extension::REST2->base_uri . "/download/cf/" . $ocfv->id,
                     };
                 }
-                push @$values, $content;
+                push @{ $values{$cf->Id}{values} }, $content;
             }
         }
 
-        $data{CustomFields} = \%values;
+        push @{ $data{CustomFields} }, values %values;
     }
     return \%data;
 }
