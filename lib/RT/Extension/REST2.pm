@@ -618,6 +618,13 @@ the query parameters C<page> and C<per_page>.  The default page size is 20
 items, but it may be increased up to 100 (or decreased if desired).  Page
 numbers start at 1.
 
+=head2 Fields
+
+When fetching search results you can include additional fields by adding
+a query parameter C<fields> which is a comma seperated list of fields
+to include. You must use the camel case version of the name as included
+in the results for the actual item.
+
 =head2 Authentication Methods
 
 Authentication should B<always> be done over HTTPS/SSL for
