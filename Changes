@@ -1,5 +1,8 @@
 Revision history for RT-Extension-REST2
 
+Unreleased
+ - Return more information about CustomFields when returning ticket
+
 1.07 2019-05-24
  - Accept 'Content' as a parameter on create. The documentation previously showed
    this in examples, but it wasn't yet supported. Now it works as documented.
