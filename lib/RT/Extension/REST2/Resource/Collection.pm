@@ -54,10 +54,20 @@ sub serialize {
     my $self = shift;
     my $collection = $self->collection;
     my @results;
+    my @fields = defined $self->request->param('fields') ? split(/,/, $self->request->param('fields')) : ();
 
     while (my $item = $collection->Next) {
-        # TODO: Allow selection of desired fields
-        push @results, expand_uid( $item->UID );
+        my $result = expand_uid( $item->UID );
+
+        # Allow selection of desired fields
+        if ($result) {
+            for my $field (@fields) {
+                if ($item->_Accessible($field, 'read')) {
+                   $result->{$field} = $item->$field;
+                }
+            }
+        }
+        push @results, $result;
     }
     return {
         count       => scalar(@results)         + 0,

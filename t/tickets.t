@@ -138,6 +138,22 @@ my ($ticket_url, $ticket_id);
     is($ticket->{type}, 'ticket');
     is($ticket->{id}, 1);
     like($ticket->{_url}, qr{$rest_base_path/ticket/1$});
+    is(scalar keys %$ticket, 3);
+}
+
+# Ticket Search - Fields
+{
+    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Subject",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $ticket = $content->{items}->[0];
+    is($ticket->{Subject}, 'Ticket creation using REST');
+    is($ticket->{Status}, 'new');
+    is(scalar keys %$ticket, 5);
 }
 
 # Ticket Update

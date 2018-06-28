@@ -243,5 +243,53 @@ my ($features_url, $features_id);
     like($queue->{_url}, qr{$rest_base_path/queue/$features_id$});
 }
 
-done_testing;
+# id > 0 (finds new Features queue but not disabled Bugs queue), include Name field
+{
+    my $res = $mech->post_json("$rest_base_path/queues?fields=Name",
+        [{ field => 'id', operator => '>', value => 0 }],
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
 
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $queue = $content->{items}->[0];
+    is($queue->{Name}, 'Features');
+    is(scalar keys %$queue, 4);
+}
+
+
+# all queues, basic fields
+{
+    my $res = $mech->post_json("$rest_base_path/queues/all",
+        [],
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $queue = $content->{items}->[0];
+    is(scalar keys %$queue, 3);
+}
+
+# all queues, basic fields plus Name
+{
+    my $res = $mech->post_json("$rest_base_path/queues/all?fields=Name",
+        [],
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $queue = $content->{items}->[0];
+    is(scalar keys %$queue, 4);
+    is($queue->{Name}, 'Features');
+}
+
+
+done_testing;
