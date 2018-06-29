@@ -10,7 +10,7 @@ extends 'RT::Extension::REST2::Resource';
 use Scalar::Util qw( blessed );
 use Web::Machine::FSM::States qw( is_status_code );
 use Module::Runtime qw( require_module );
-use RT::Extension::REST2::Util qw( serialize_record expand_uid );
+use RT::Extension::REST2::Util qw( serialize_record expand_uid format_datetime );
 
 has 'collection_class' => (
     is  => 'ro',
@@ -62,8 +62,20 @@ sub serialize {
         # Allow selection of desired fields
         if ($result) {
             for my $field (@fields) {
-                if ($item->_Accessible($field, 'read')) {
-                   $result->{$field} = $item->$field;
+                if ($item->_Accessible($field => 'read')) {
+                    if ($item->_Accessible($field => 'type') =~ /(datetime|timestamp)/i) {
+                        $result->{$field} = format_datetime($item->$field);
+                    } elsif ($item->can($field . 'Obj')) {
+                        my $method = $field . 'Obj';
+                        my $obj = $item->$method;
+                        if ($obj->can('UID')) {
+                            $result->{$field} = expand_uid( $obj->UID );
+                        } else {
+                            $result->{$field} = $obj;
+                        }
+                    } else {
+                        $result->{$field} = $item->$field;
+                    }
                 }
             }
         }
