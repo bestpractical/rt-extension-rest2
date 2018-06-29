@@ -62,21 +62,8 @@ sub serialize {
         # Allow selection of desired fields
         if ($result) {
             for my $field (@fields) {
-                if ($item->_Accessible($field => 'read')) {
-                    if ($item->_Accessible($field => 'type') =~ /(datetime|timestamp)/i) {
-                        $result->{$field} = format_datetime($item->$field);
-                    } elsif ($item->can($field . 'Obj')) {
-                        my $method = $field . 'Obj';
-                        my $obj = $item->$method;
-                        if ($obj->can('UID')) {
-                            $result->{$field} = expand_uid( $obj->UID );
-                        } else {
-                            $result->{$field} = $obj;
-                        }
-                    } else {
-                        $result->{$field} = $item->$field;
-                    }
-                }
+                my $field_result = $self->expand_field($item, $field);
+                $result->{$field} = $field_result if defined $field_result;
             }
         }
         push @results, $result;
@@ -88,6 +75,63 @@ sub serialize {
         page        => ($collection->FirstRow / $collection->RowsPerPage) + 1,
         items       => \@results,
     };
+}
+
+# Whitelist of methods which are allowed to be called on objects via
+# the "fields" parameter. Only relevant for objects which don't
+# have RT::Record as a base class.
+our %expand_field_method_whitelist = (
+    'RT::Lifecycle' => [qw(Name)],
+    'RT::Lifecycle::Ticket' => [qw(Name)],
+);
+
+# Used in Serialize to allow additional fields to be selected ala JSON API on:
+# http://jsonapi.org/examples/
+sub expand_field {
+    my $self  = shift;
+    my $item  = shift;
+    my $field = shift;
+    my $param_prefix = shift || 'fields';
+
+    my ($result, $obj);
+    if (! $item->can('_Accessible')) {
+        # Not an RT::Record derived object, so we need to check our whitelist
+        # of allowed methods. Don't want any accidental calling of methods
+        # That shouldn't be exposed.
+        my $item_type = blessed($item);
+        if (defined $item_type && defined $expand_field_method_whitelist{$item_type} && grep /^$field$/, @{$expand_field_method_whitelist{$item_type}}) {
+            $result = $item->$field;
+        }
+
+    } elsif ($item->_Accessible($field => 'read')) {
+        # RT::Record derived object, so we can check access permissions.
+
+        if ($item->_Accessible($field => 'type') =~ /(datetime|timestamp)/i) {
+            $result = format_datetime($item->$field);
+        } elsif ($item->can($field . 'Obj')) {
+            my $method = $field . 'Obj';
+            $obj = $item->$method;
+            if ($obj->can('UID')) {
+                $result = expand_uid( $obj->UID );
+            } else {
+                $result = {};
+            }
+        } else {
+            $result = $item->$field;
+        }
+    }
+
+    if (defined $obj && defined $result) {
+        my $param_field = $param_prefix . '[' . $field . ']';
+        my @subfields = split(/,/, $self->request->param($param_field) || '');
+
+        for my $subfield (@subfields) {
+            my $subfield_result = $self->expand_field($obj, $subfield, $param_field);
+            $result->{$subfield} = $subfield_result if defined $subfield_result;
+        }
+    }
+    
+    return $result;
 }
 
 # XXX TODO: Bulk update via DELETE/PUT on a collection resource?

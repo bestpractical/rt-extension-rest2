@@ -549,6 +549,48 @@ a query prarameter C<fields> which is a comma seperated list of fields
 to include. You must use the camel case version of the name as included
 in the results for the actual item.
 
+You can use additional fields parameters to expand child blocks, for
+example (line wrapping inserted for readability):
+
+    XX_RT_URL_XX/REST/2.0/tickets
+      ?fields=Owner,Status,Created,Subject,Queue
+      &fields[Queue]=Name,Lifecycle
+      &fields[Queue][Lifecycle]=Name
+
+Says that in the result set for tickets, the extra fields for Owner, Status,
+Created, Subject and Queue should be included. But in addition, for the Queue
+block, also include Name and Lifecycle. Then for the Lifecycle block within
+Queue, also return the Name. The results would be similar to this (only
+one ticket is displayed):
+
+   "items" : [
+      {
+         "Subject" : "Sample Ticket",
+         "id" : "2",
+         "type" : "ticket",
+         "Owner" : {
+            "id" : "root",
+            "_url" : "XX_RT_URL_XX/REST/2.0/user/root",
+            "type" : "user"
+         },
+         "_url" : "XX_RT_URL_XX/REST/2.0/ticket/2",
+         "Status" : "resolved",
+         "Created" : "2018-06-29:10:25Z",
+         "Queue" : {
+            "id" : "1",
+            "Lifecycle" : {
+               "Name" : "default"
+            },
+            "type" : "queue",
+            "Name" : "General",
+            "_url" : "XX_RT_URL_XX/REST/2.0/queue/1"
+         }
+      }
+      { … },
+      …
+   ],
+
+
 =head2 Authentication Methods
 
 Authentication should B<always> be done over HTTPS/SSL for
