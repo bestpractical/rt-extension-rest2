@@ -130,6 +130,7 @@ my ($ticket_url, $ticket_id);
     my $content = $mech->json_response;
     is($content->{count}, 1);
     is($content->{page}, 1);
+    is($content->{pages}, 1);
     is($content->{per_page}, 20);
     is($content->{total}, 1);
     is(scalar @{$content->{items}}, 1);

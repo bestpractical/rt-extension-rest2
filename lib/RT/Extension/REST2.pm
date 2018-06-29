@@ -69,6 +69,7 @@ see a response, typical of search results, like this:
        "total" : 1,
        "count" : 1,
        "page" : 1,
+       "pages" : 1,
        "per_page" : 20,
        "items" : [
           {
@@ -504,7 +505,9 @@ standard JSON format:
     {
        "count" : 20,
        "page" : 1,
+       "pages" : 191,
        "per_page" : 20,
+       "next_page" : "<collection path>?page=2"
        "total" : 3810,
        "items" : [
           { … },
@@ -521,7 +524,10 @@ is requested.
 All plural resources (such as C</tickets>) require pagination, controlled by
 the query parameters C<page> and C<per_page>.  The default page size is 20
 items, but it may be increased up to 100 (or decreased if desired).  Page
-numbers start at 1.
+numbers start at 1. The number of pages is returned, and if there is a next
+or previous page, then the URL for that page is returned in the next_page
+and prev_page variables respectively. It is up to you to store the required
+JSON to pass with the following page request.
 
 =head2 Authentication Methods
 
@@ -658,6 +664,7 @@ L<rt.cpan.org|http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-REST
 =head1 LICENSE AND COPYRIGHT
 
 This software is Copyright (c) 2015-2017 by Best Practical Solutions, LLC.
+Portions are Copyright (c) 2018 by Catalyst Cloud Ltd.
 
 This is free software, licensed under:
 
