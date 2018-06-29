@@ -34,12 +34,17 @@ sub _build_collection {
 sub setup_paging {
     my $self = shift;
     my $per_page = $self->request->param('per_page') || 20;
-       $per_page = 20  if $per_page <= 0;
-       $per_page = 100 if $per_page > 100;
+    if    ($per_page !~ /^\d+$/ ) { $per_page = 20  }
+    elsif ($per_page == 0       ) { $per_page = 20  }
+    elsif ($per_page > 100      ) { $per_page = 100 }
     $self->collection->RowsPerPage($per_page);
 
+    my $max_page = ceil($self->collection->CountAll / $self->collection->RowsPerPage);
+
     my $page = $self->request->param('page') || 1;
-       $page = 1 if $page < 0;
+    if    ($page !~ /^\d+$/  ) { $page = 1 }
+    elsif ($page == 0        ) { $page = 1 }
+    elsif ($page > $max_page ) { $page = $max_page }
     $self->collection->GotoPage($page - 1);
 }
 

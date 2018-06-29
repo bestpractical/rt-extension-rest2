@@ -122,5 +122,28 @@ my $bravo_id = $bravo->Id;
     is(scalar @{$content->{items}}, 1);
 }
 
-done_testing;
+# Test sanity checking for the pagination parameters.
+for my $param ( 'per_page', 'page' ) {
+    for my $value ( 'abc', '-10', '30' ) {
+        # No need to test the following combination.
+        next if $param eq 'per_page' && $value eq '30';
 
+        my $res = $mech->post_json("$rest_base_path/queues/all?$param=$value",
+            [],
+            'Authorization' => $auth,
+        );
+        is($res->code, 200);
+
+        my $content = $mech->json_response;
+        is($content->{count}, 3);
+        is($content->{page}, 1);
+        is($content->{pages}, 1);
+        is($content->{per_page}, 20);
+        is($content->{total}, 3);
+        undef($content->{prev_page});
+        undef($content->{next_page});
+        is(scalar @{$content->{items}}, 3);
+    }
+}
+
+done_testing;
