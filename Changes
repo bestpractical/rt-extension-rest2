@@ -1,5 +1,8 @@
 Revision history for RT-Extension-REST2
 
+1.04 2018-07-06
+ - Fix bug that caused custom fields to be updated after create
+
 1.03 2018-03-16
  - Add new bulk option for tickets
  - Documentation updates
