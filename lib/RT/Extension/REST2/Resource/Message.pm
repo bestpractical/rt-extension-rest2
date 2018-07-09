@@ -92,7 +92,7 @@ sub add_message {
             $MIME->attach(
                 Type => $$attachment{ContentType},
                 Filename => $$attachment{Filename},
-                Data => MIME::Base64::decode_base64($$attachment{Content})
+                Data => RT::I18N::IsTextualContentType($$attachment{ContentType}) ? $$attachment{Content} : MIME::Base64::decode_base64($$attachment{Content})
             );
         }
     }
