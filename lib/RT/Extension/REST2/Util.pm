@@ -90,6 +90,11 @@ sub serialize_record {
         }
     }
 
+    # Encode binary attachments into text for JSON
+    if ($record->isa("RT::Attachment") && $data{ContentType} && !RT::I18N::IsTextualContentType($data{ContentType})) {
+        $data{Content} = MIME::Base64::encode_base64($data{Content});
+    }
+
     # Replace UIDs with object placeholders
     for my $uid (grep ref eq 'SCALAR', values %data) {
         $uid = expand_uid($uid);
