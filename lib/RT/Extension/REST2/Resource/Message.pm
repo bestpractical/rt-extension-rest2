@@ -69,6 +69,34 @@ sub add_message {
         Subject   => $args{Subject},
     );
 
+    if (defined $args{Attachments} && ref $args{Attachments} eq 'ARRAY' && scalar(@{$args{Attachments}}) > 0) {
+        $MIME->make_multipart;
+
+        foreach my $attachment (@{$args{Attachments}}) {
+            if (!$$attachment{ContentType}) {
+                return error_as_json(
+                    $self->response,
+                    \400, "ContentType is a required attachment field");
+            }
+
+            if (!$$attachment{Filename}) {
+                $$attachment{Filename} = "unknown.dat";
+            }
+
+            if (!$$attachment{Content}) {
+                return error_as_json(
+                    $self->response,
+                    \400, "Content is a required attachment field");
+            }
+
+            $MIME->attach(
+                Type => $$attachment{ContentType},
+                Filename => $$attachment{Filename},
+                Data => RT::I18N::IsTextualContentType($$attachment{ContentType}) ? $$attachment{Content} : MIME::Base64::decode_base64($$attachment{Content})
+            );
+        }
+    }
+
     my ( $Trans, $msg, $TransObj ) ;
 
     if ($self->type eq 'correspond') {
