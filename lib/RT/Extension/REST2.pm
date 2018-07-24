@@ -545,7 +545,7 @@ numbers start at 1.
 =head2 Fields
 
 When fetching search results you can include additional fields by adding
-a query prarameter C<fields> which is a comma seperated list of fields
+a query parameter C<fields> which is a comma seperated list of fields
 to include. You must use the camel case version of the name as included
 in the results for the actual item.
 
