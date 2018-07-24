@@ -158,7 +158,7 @@ my ($ticket_url, $ticket_id);
 
 # Ticket Search - Fields, sub objects, no right to see Queues
 {
-    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Owner,Queue&fields[Queue]=Name,Description,Lifecycle&fields[Queue][Lifecycle]=Name&fields[Owner]=Name",
+    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Owner,Queue&fields[Queue]=Name,Description&fields[Owner]=Name",
         'Authorization' => $auth,
     );
     is($res->code, 200);
@@ -180,7 +180,7 @@ my ($ticket_url, $ticket_id);
 {
     $user->PrincipalObj->GrantRight( Right => 'SeeQueue' );
 
-    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Owner,Queue&fields[Queue]=Name,Description,Lifecycle&fields[Queue][Lifecycle]=Name&fields[Owner]=Name",
+    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Owner,Queue&fields[Queue]=Name,Description&fields[Owner]=Name",
         'Authorization' => $auth,
     );
     is($res->code, 200);

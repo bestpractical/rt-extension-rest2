@@ -77,14 +77,6 @@ sub serialize {
     };
 }
 
-# Whitelist of methods which are allowed to be called on objects via
-# the "fields" parameter. Only relevant for objects which don't
-# have RT::Record as a base class.
-our %expand_field_method_whitelist = (
-    'RT::Lifecycle' => [qw(Name)],
-    'RT::Lifecycle::Ticket' => [qw(Name)],
-);
-
 # Used in Serialize to allow additional fields to be selected ala JSON API on:
 # http://jsonapi.org/examples/
 sub expand_field {
@@ -94,16 +86,7 @@ sub expand_field {
     my $param_prefix = shift || 'fields';
 
     my ($result, $obj);
-    if (! $item->can('_Accessible')) {
-        # Not an RT::Record derived object, so we need to check our whitelist
-        # of allowed methods. Don't want any accidental calling of methods
-        # That shouldn't be exposed.
-        my $item_type = blessed($item);
-        if (defined $item_type && defined $expand_field_method_whitelist{$item_type} && grep /^$field$/, @{$expand_field_method_whitelist{$item_type}}) {
-            $result = $item->$field;
-        }
-
-    } elsif ($item->_Accessible($field => 'read')) {
+    if ($item->_Accessible($field => 'read')) {
         # RT::Record derived object, so we can check access permissions.
 
         if ($item->_Accessible($field => 'type') =~ /(datetime|timestamp)/i) {
