@@ -86,7 +86,7 @@ sub expand_field {
     my $param_prefix = shift || 'fields';
 
     my ($result, $obj);
-    if ($item->_Accessible($field => 'read')) {
+    if ($item->can('_Accessible') && $item->_Accessible($field => 'read')) {
         # RT::Record derived object, so we can check access permissions.
 
         if ($item->_Accessible($field => 'type') =~ /(datetime|timestamp)/i) {
@@ -100,9 +100,11 @@ sub expand_field {
                 $result = {};
             }
         } else {
-            $result = $item->$field || '';
+            $result = $item->$field;
         }
     }
+
+    $result //= '';
 
     if (defined $obj && defined $result) {
         my $param_field = $param_prefix . '[' . $field . ']';

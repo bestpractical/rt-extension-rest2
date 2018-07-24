@@ -586,6 +586,8 @@ this (only one ticket is displayed):
       …
    ],
 
+If the user performing the query doesn't have rights to view the record
+(or sub record), then the empty string or an empty hash will be returned.
 
 =head2 Authentication Methods
 
