@@ -117,7 +117,7 @@ sub expand_field {
                 $result = {};
             }
         } else {
-            $result = $item->$field;
+            $result = $item->$field || '';
         }
     }
 

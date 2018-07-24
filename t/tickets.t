@@ -156,6 +156,49 @@ my ($ticket_url, $ticket_id);
     is(scalar keys %$ticket, 5);
 }
 
+# Ticket Search - Fields, sub objects, no right to see Queues
+{
+    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Owner,Queue&fields[Queue]=Name,Description,Lifecycle&fields[Queue][Lifecycle]=Name&fields[Owner]=Name",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $ticket = $content->{items}->[0];
+
+    is($ticket->{Status}, 'new');
+    is($ticket->{Queue}{Name}, '');
+    is($ticket->{Queue}{id}, '1');
+    is($ticket->{Queue}{type}, 'queue');
+    like($ticket->{Queue}{_url}, qr[$rest_base_path/queue/1$]);
+    is($ticket->{Owner}{Name}, 'Nobody');
+    is(scalar keys %$ticket, 6);
+}
+
+# Ticket Search - Fields, sub objects with SeeQueue right
+{
+    $user->PrincipalObj->GrantRight( Right => 'SeeQueue' );
+
+    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Owner,Queue&fields[Queue]=Name,Description,Lifecycle&fields[Queue][Lifecycle]=Name&fields[Owner]=Name",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $ticket = $content->{items}->[0];
+
+    is($ticket->{Status}, 'new');
+    is($ticket->{Queue}{Name}, 'General');
+    is($ticket->{Queue}{Description}, 'The default queue');
+    is($ticket->{Queue}{id}, '1');
+    is($ticket->{Queue}{type}, 'queue');
+    like($ticket->{Queue}{_url}, qr[$rest_base_path/queue/1$]);
+    is($ticket->{Owner}{Name}, 'Nobody');
+    is(scalar keys %$ticket, 6);
+}
+
 # Ticket Update
 {
     my $payload = {

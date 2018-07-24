@@ -291,5 +291,21 @@ my ($features_url, $features_id);
     is($queue->{Name}, 'Features');
 }
 
+# all queues, basic fields plus Name, Lifecycle and Lifecycle name.
+{
+    my $res = $mech->post_json("$rest_base_path/queues/all?fields=Name,Lifecycle&fields[Lifecycle]=Name",
+        [],
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $queue = $content->{items}->[0];
+    is(scalar keys %$queue, 5);
+    is($queue->{Name}, 'Features');
+    is($queue->{Lifecycle}{Name}, 'default');
+}
 
 done_testing;
