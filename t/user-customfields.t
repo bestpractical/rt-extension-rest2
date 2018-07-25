@@ -2,6 +2,7 @@ use strict;
 use warnings;
 use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
+use Test::Deep;
 
 my $mech = RT::Extension::REST2::Test->mech;
 
@@ -12,6 +13,7 @@ my $user = RT::Extension::REST2::Test->user;
 my $single_cf = RT::CustomField->new( RT->SystemUser );
 my ($ok, $msg) = $single_cf->Create( Name => 'Freeform', Type => 'FreeformSingle', LookupType => RT::User->CustomFieldLookupType );
 ok($ok, $msg);
+my $single_cf_id = $single_cf->Id();
 my $ocf = RT::ObjectCustomField->new( RT->SystemUser );
 ( $ok, $msg ) = $ocf->Add( CustomField => $single_cf->id, ObjectId => 0 );
 ok($ok, "Applied globally" );
@@ -19,6 +21,7 @@ ok($ok, "Applied globally" );
 my $multi_cf = RT::CustomField->new( RT->SystemUser );
 ($ok, $msg) = $multi_cf->Create( Name => 'Multi', Type => 'FreeformMultiple', LookupType => RT::User->CustomFieldLookupType );
 ok($ok, $msg);
+my $multi_cf_id = $multi_cf->Id();
 $ocf = RT::ObjectCustomField->new( RT->SystemUser );
 ( $ok, $msg ) = $ocf->Add( CustomField => $multi_cf->id, ObjectId => 0 );
 ok($ok, "Applied globally" );
@@ -66,7 +69,7 @@ my ($user_url, $user_id);
     is($content->{id}, $user_id);
     is($content->{EmailAddress}, 'user1@example.com');
     is($content->{Name}, 'user1');
-    is_deeply($content->{'CustomFields'}, {}, 'User custom field not present');
+    is_deeply($content->{'CustomFields'}, [], 'User custom field not present');
 
     # can fetch user by name too
     $res = $mech->get("$rest_base_path/user/user1",
@@ -76,6 +79,11 @@ my ($user_url, $user_id);
 
     is_deeply($mech->json_response, $content, 'requesting user by name is same as user by id');
 }
+
+my $no_user_cf_values = bag(
+  { name => 'Freeform', id => $single_cf_id, type => 'customfield', _url => ignore(), values => [] },
+  { name => 'Multi',    id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => [] },
+);
 
 # Rights Test - With SeeCustomField
 {
@@ -90,7 +98,7 @@ my ($user_url, $user_id);
     is($content->{id}, $user_id);
     is($content->{EmailAddress}, 'user1@example.com');
     is($content->{Name}, 'user1');
-    is_deeply($content->{'CustomFields'}, { $single_cf->Id => [], $multi_cf->Id => [] }, 'User custom field not present');
+    cmp_deeply($content->{'CustomFields'}, $no_user_cf_values, 'User custom field not present');
 }
 
 # User Update without ModifyCustomField
@@ -118,7 +126,7 @@ my ($user_url, $user_id);
     is($content->{id}, $user_id);
     is($content->{EmailAddress}, 'user1@example.com');
     is($content->{Name}, 'User1');
-    is_deeply($content->{CustomFields}, { $single_cf->Id => [], $multi_cf->Id => [] }, 'No update to CF');
+    cmp_deeply($content->{'CustomFields'}, $no_user_cf_values, 'User custom field not present');
 }
 
 # User Update with ModifyCustomField
@@ -127,7 +135,7 @@ my ($user_url, $user_id);
     my $payload = {
         EmailAddress  => 'user1+rt@example.com',
         CustomFields => {
-            $single_cf->Id => 'Modified CF',
+            $single_cf_id => 'Modified CF',
         },
     };
     my $res = $mech->put_json($user_url,
@@ -144,7 +152,12 @@ my ($user_url, $user_id);
 
     my $content = $mech->json_response;
     is($content->{EmailAddress}, 'user1+rt@example.com');
-    is_deeply($content->{CustomFields}, { $single_cf->Id => ['Modified CF'], $multi_cf->Id => [] }, 'New CF value');
+
+    my $set_user_cf_values = bag(
+        { name => 'Freeform', id => $single_cf_id, type => 'customfield', _url => ignore(), values => ['Modified CF'] },
+        { name => 'Multi',    id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => [] },
+    );
+    cmp_deeply($content->{'CustomFields'}, $set_user_cf_values, 'New CF value');
 
     # make sure changing the CF doesn't add a second OCFV
     $payload->{CustomFields}{$single_cf->Id} = 'Modified Again';
@@ -161,7 +174,12 @@ my ($user_url, $user_id);
     is($res->code, 200);
 
     $content = $mech->json_response;
-    is_deeply($content->{CustomFields}, { $single_cf->Id => ['Modified Again'], $multi_cf->Id => [] }, 'New CF value');
+
+    $set_user_cf_values = bag(
+        { name => 'Freeform', id => $single_cf_id, type => 'customfield', _url => ignore(), values => ['Modified Again'] },
+        { name => 'Multi',    id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => [] },
+    );
+    cmp_deeply($content->{'CustomFields'}, $set_user_cf_values, 'New CF value');
 
     # stop changing the CF, change something else, make sure CF sticks around
     delete $payload->{CustomFields}{$single_cf->Id};
@@ -179,7 +197,7 @@ my ($user_url, $user_id);
     is($res->code, 200);
 
     $content = $mech->json_response;
-    is_deeply($content->{CustomFields}, { $single_cf->Id => ['Modified Again'], $multi_cf->Id => [] }, 'Same CF value');
+    cmp_deeply($content->{'CustomFields'}, $set_user_cf_values, 'Same CF value');
 }
 
 # User Creation with ModifyCustomField
@@ -210,7 +228,12 @@ my ($user_url, $user_id);
     my $content = $mech->json_response;
     is($content->{id}, $user_id);
     is($content->{Name}, 'user2');
-    is_deeply($content->{'CustomFields'}{$single_cf->Id}, ['Hello world!'], 'User custom field');
+
+    my $set_user_cf_values = bag(
+        { name => 'Freeform', id => $single_cf_id, type => 'customfield', _url => ignore(), values => ['Hello world!'] },
+        { name => 'Multi',    id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => [] },
+    );
+    cmp_deeply($content->{'CustomFields'}, $set_user_cf_values, 'User custom field');
 }
 
 # User Creation for multi-value CF
@@ -242,7 +265,11 @@ for my $value (
     my $content = $mech->json_response;
     is($content->{id}, $user_id);
     my $output = ref($value) ? $value : [$value]; # scalar input comes out as array reference
-    is_deeply($content->{'CustomFields'}, { $multi_cf->Id => $output, $single_cf->Id => [] }, 'User custom field');
+    my $set_user_cf_values = bag(
+        { name => 'Freeform', id => $single_cf_id, type => 'customfield', _url => ignore(), values => [] },
+        { name => 'Multi',    id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => $output },
+    );
+    cmp_deeply($content->{'CustomFields'}, $set_user_cf_values, 'User custom field');
 }
 
 done_testing;
