@@ -284,7 +284,8 @@ sub create_record {
         }
     }
 
-    my ($ok, @rest) = $record->Create(%args);
+    my $method = $record->isa('RT::Group') ? 'CreateUserDefinedGroup' : 'Create';
+    my ($ok, @rest) = $record->$method(%args);
 
     if ($ok && $cfs) {
         $self->_update_custom_fields($cfs);
