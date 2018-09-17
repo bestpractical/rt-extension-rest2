@@ -34,6 +34,8 @@ sub serialize {
         @{ $self->record->MembersObj->ItemsArrayRef }
     ];
 
+    $data->{Disabled} = $self->record->PrincipalObj->Disabled;
+
     return $data;
 }
 
