@@ -4,6 +4,7 @@ use warnings;
 
 use Moose;
 use namespace::autoclean;
+use RT::Extension::REST2::Util qw(expand_uid);
 
 extends 'RT::Extension::REST2::Resource::Record';
 with (
@@ -40,6 +41,10 @@ around 'serialize' => sub {
     my $data = $self->$orig(@_);
     $data->{Privileged} = $self->record->Privileged ? 1 : 0;
     $data->{Disabled}   = $self->record->PrincipalObj->Disabled;
+    $data->{Memberships} = [
+        map { expand_uid($_->UID) }
+        @{ $self->record->OwnGroups(Recursively => 0)->ItemsArrayRef }
+    ];
     return $data;
 };
 
