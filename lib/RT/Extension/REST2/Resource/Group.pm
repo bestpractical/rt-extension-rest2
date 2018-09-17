@@ -9,6 +9,7 @@ use RT::Extension::REST2::Util qw(expand_uid);
 extends 'RT::Extension::REST2::Resource::Record';
 with 'RT::Extension::REST2::Resource::Record::Readable'
         => { -alias => { serialize => '_default_serialize' } },
+    'RT::Extension::REST2::Resource::Record::Writable',
     'RT::Extension::REST2::Resource::Record::Hypermedia'
         => { -alias => { hypermedia_links => '_default_hypermedia_links' } };
 
