@@ -11,7 +11,6 @@ with 'RT::Extension::REST2::Resource::Role::RequestBodyIsJSON' =>
 
 has 'group' => (
     is  => 'ro',
-    isa => 'RT::Group',
 );
 
 sub dispatch_rules {
@@ -23,16 +22,20 @@ sub dispatch_rules {
             my $type = $match->pos(2) || '';
             my $group = RT::Group->new($req->env->{"rt.current_user"});
             $group->Load($group_id);
+            my $collection;
 
             if ($type eq 'deep') {
-                return {group => $group, collection => $group->DeepMembersObj};
+                $collection = $group->DeepMembersObj;
             } elsif ($type eq 'group') {
-                return {group => $group, collection => $group->GroupMembersObj(Recursively => $req->parameters->{recursively} // 1)};
+                $collection = $group->GroupMembersObj(Recursively => $req->parameters->{recursively} // 1);
+                $collection->ItemsArrayRef;
             } elsif ($type eq 'user') {
-                return {group => $group, collection => $group->UserMembersObj(Recursively => $req->parameters->{recursively} // 1)};
+                $collection = $group->UserMembersObj(Recursively => $req->parameters->{recursively} // 1);
             } else {
-                return {group => $group, collection => $group->MembersObj};
+                $collection = $group->MembersObj;
             }
+
+            return {group => $group, collection => $collection};
         },
     ),
     Path::Dispatcher::Rule::Regex->new(
@@ -52,10 +55,8 @@ sub dispatch_rules {
 
 sub forbidden {
     my $self = shift;
-    return 0 if $self->current_user->HasRight(
-        Right   => "AdminUsers",
-        Object  => RT->System,
-    );
+    return 0 unless $self->group->id;
+    return !$self->group->CurrentUserHasRight('AdminGroupMembership');
     return 1;
 }
 
@@ -73,9 +74,12 @@ sub serialize {
         } elsif (ref $item eq 'RT::Group') {
             $class = 'group';
             $id = $item->id;
-        } else {
+        } elsif (ref $item eq 'RT::User') {
             $class = 'user';
             $id = $item->id;
+        }
+        else {
+            next;
         }
 
         my $result = {
@@ -86,8 +90,8 @@ sub serialize {
         push @results, $result;
     }
     return {
-        count       => scalar(@results)         + 0,
-        total       => $collection->CountAll    + 0,
+        count       => scalar(@results) + 0,
+        total       => $collection->CountAll,
         per_page    => $collection->RowsPerPage + 0,
         page        => ($collection->FirstRow / $collection->RowsPerPage) + 1,
         items       => \@results,

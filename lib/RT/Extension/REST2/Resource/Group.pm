@@ -10,7 +10,9 @@ extends 'RT::Extension::REST2::Resource::Record';
 with 'RT::Extension::REST2::Resource::Record::Readable'
         => { -alias => { serialize => '_default_serialize' } },
     'RT::Extension::REST2::Resource::Record::DeletableByDisabling',
+        => { -alias => { delete_resource => '_delete_resource' } },
     'RT::Extension::REST2::Resource::Record::Writable',
+        => { -alias => { create_record => '_create_record' } },
     'RT::Extension::REST2::Resource::Record::Hypermedia'
         => { -alias => { hypermedia_links => '_default_hypermedia_links' } };
 
@@ -44,6 +46,34 @@ sub hypermedia_links {
     my $links = $self->_default_hypermedia_links(@_);
     push @$links, $self->_transaction_history_link;
     return $links;
+}
+
+sub create_record {
+    my $self = shift;
+    my $data = shift;
+
+    return (\403, $self->record->loc("Permission Denied"))
+        unless  $self->current_user->HasRight(
+            Right   => "AdminGroup",
+            Object  => RT->System,
+        );
+
+    return $self->_create_record($data);
+}
+
+sub delete_resource {
+    my $self = shift;
+
+    return (\403, $self->record->loc("Permission Denied"))
+        unless $self->record->CurrentUserHasRight('AdminGroup');
+
+    return $self->_delete_resource;
+}
+
+sub forbidden {
+    my $self = shift;
+    return 0 unless $self->record->id;
+    return !$self->record->CurrentUserHasRight('SeeGroup');
 }
 
 __PACKAGE__->meta->make_immutable;
