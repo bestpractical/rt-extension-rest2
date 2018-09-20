@@ -23,7 +23,7 @@ sub dispatch_rules {
             my $user = RT::User->new($req->env->{"rt.current_user"});
             $user->Load($user_id);
 
-            return {user => $user, collection => $user->OwnGroups(Recursively => $req->parameters->{recursively} // 1)};
+            return {user => $user, collection => $user->OwnGroups};
         },
     ),
     Path::Dispatcher::Rule::Regex->new(
