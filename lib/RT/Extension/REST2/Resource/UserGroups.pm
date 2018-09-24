@@ -43,10 +43,14 @@ sub dispatch_rules {
 
 sub forbidden {
     my $self = shift;
-    return 0 if $self->current_user->HasRight(
-        Right   => "ModifyOwnMembership",
-        Object  => RT->System,
-    );
+    return 0 if
+        ($self->current_user->HasRight(
+            Right  => "ModifyOwnMembership",
+            Object => RT->System,
+        ) && $self->current_user->id == $self->user->id) ||
+        $self->current_user->HasRight(
+            Right  => 'AdminGroupMembership',
+            Object => RT->System);
     return 1;
 }
 
