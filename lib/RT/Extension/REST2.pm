@@ -727,7 +727,9 @@ L<rt.cpan.org|http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-REST
 
 =head1 LICENSE AND COPYRIGHT
 
-This software is Copyright (c) 2015-2017 by Best Practical Solutions, LLC.
+This software is Copyright (c) 2015-2018 by Best Practical Solutions, LLC.
+Portions are Copyright (c) 2018 by Catalyst Cloud Ltd.
+Portions are Copyright (c) 2018 by Easter-eggs SARL.
 
 This is free software, licensed under:
 
