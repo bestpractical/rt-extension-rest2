@@ -70,6 +70,7 @@ xt/asset-customfields.t
 xt/assets.t
 xt/catalogs.t
 xt/conflict.t
+xt/customfields.t
 xt/group-members.t
 xt/not_found.t
 xt/organization.t
