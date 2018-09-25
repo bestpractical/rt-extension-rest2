@@ -549,15 +549,18 @@ a query parameter C<fields> which is a comma seperated list of fields
 to include. You must use the camel case version of the name as included
 in the results for the actual item.
 
+CustomFields can be specified in the C<fields> parameter either with
+CustomField-I<cf_name> or CF.{I<cf_name>} syntaxes.
+
 You can use additional fields parameters to expand child blocks, for
 example (line wrapping inserted for readability):
 
     XX_RT_URL_XX/REST/2.0/tickets
-      ?fields=Owner,Status,Created,Subject,Queue
+      ?fields=Owner,Status,Created,Subject,Queue,CF.{My CF}
       &fields[Queue]=Name,Description
 
 Says that in the result set for tickets, the extra fields for Owner, Status,
-Created, Subject and Queue should be included. But in addition, for the Queue
+Created, Subject, Queue, and CustomField "My CF" should be included. But in addition, for the Queue
 block, also include Name and Description. The results would be similar to
 this (only one ticket is displayed):
 
@@ -574,6 +577,7 @@ this (only one ticket is displayed):
          "_url" : "XX_RT_URL_XX/REST/2.0/ticket/2",
          "Status" : "resolved",
          "Created" : "2018-06-29:10:25Z",
+         "CF.{My CF} : "My CF Value",
          "Queue" : {
             "id" : "1",
             "type" : "queue",
