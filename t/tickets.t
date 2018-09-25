@@ -199,6 +199,50 @@ my ($ticket_url, $ticket_id);
     is(scalar keys %$ticket, 6);
 }
 
+# Ticket Search - CustomFields
+my ($single_cf_id, $multi_cf_id);
+{
+    $user->PrincipalObj->GrantRight( Right => 'SeeCustomField' );
+
+    my $ticket = RT::Ticket->new( RT->SystemUser );
+    my ($ok, $msg) = $ticket->Load( $ticket_id );
+    ok($ok, $msg);
+
+    my $single_cf = RT::CustomField->new( RT->SystemUser );
+    ($ok, $msg) = $single_cf->Create( Name => 'Single', Type => 'FreeformSingle', Queue => 'General' );
+    ok($ok, $msg);
+    $single_cf_id = $single_cf->Id;
+
+    ($ok, $msg) = $ticket->AddCustomFieldValue( Field => $single_cf_id , Value => "I'm a single CF" );
+    ok($ok, $msg);
+
+    my $multi_cf = RT::CustomField->new( RT->SystemUser );
+    ($ok, $msg) = $multi_cf->Create( Name => 'Multi CF', Type => 'FreeformMultiple', Queue => 'General' );
+    ok($ok, $msg);
+    $multi_cf_id = $multi_cf->Id;
+
+    ($ok, $msg) = $ticket->AddCustomFieldValue( Field => $multi_cf_id , Value => "First Value" );
+    ok($ok, $msg);
+
+    ($ok, $msg) = $ticket->AddCustomFieldValue( Field => $multi_cf_id , Value => "Second Value" );
+    ok($ok, $msg);
+
+    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Subject,CustomField-Single,CF.{Multi CF}",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    $ticket = $content->{items}->[0];
+    is(scalar keys %$ticket, 7);
+    is($ticket->{Status}, 'new');
+    is($ticket->{Subject}, 'Ticket creation using REST');
+    is($ticket->{'CustomField-Single'}, "I'm a single CF");
+    is_deeply($ticket->{'CF.{Multi CF}'}, [ 'First Value', 'Second Value' ]);
+}
+
 # Ticket Update
 {
     my $payload = {
@@ -237,36 +281,44 @@ my ($ticket_url, $ticket_id);
 
     # now that we have ModifyTicket, we should have additional hypermedia
     my $links = $content->{_hyperlinks};
-    is(scalar @$links, 5);
+    is(scalar @$links, 7);
 
     is($links->[0]{ref}, 'self');
     is($links->[0]{id}, 1);
     is($links->[0]{type}, 'ticket');
     like($links->[0]{_url}, qr[$rest_base_path/ticket/$ticket_id$]);
 
-    is($links->[1]{ref}, 'history');
-    like($links->[1]{_url}, qr[$rest_base_path/ticket/$ticket_id/history$]);
+    is($links->[1]{ref}, 'customfield');
+    like($links->[1]{_url}, qr[$rest_base_path/customfield/$single_cf_id$]);
+    is($links->[1]{id}, $single_cf_id);
 
-    is($links->[2]{ref}, 'lifecycle');
-    like($links->[2]{_url}, qr[$rest_base_path/ticket/$ticket_id/correspond$]);
-    is($links->[2]{label}, 'Open It');
-    is($links->[2]{update}, 'Respond');
-    is($links->[2]{from}, 'new');
-    is($links->[2]{to}, 'open');
+    is($links->[2]{ref}, 'customfield');
+    like($links->[2]{_url}, qr[$rest_base_path/customfield/$multi_cf_id$]);
+    is($links->[2]{id}, $multi_cf_id);
 
-    is($links->[3]{ref}, 'lifecycle');
-    like($links->[3]{_url}, qr[$rest_base_path/ticket/$ticket_id/comment$]);
-    is($links->[3]{label}, 'Resolve');
-    is($links->[3]{update}, 'Comment');
-    is($links->[3]{from}, 'new');
-    is($links->[3]{to}, 'resolved');
+    is($links->[3]{ref}, 'history');
+    like($links->[3]{_url}, qr[$rest_base_path/ticket/$ticket_id/history$]);
 
     is($links->[4]{ref}, 'lifecycle');
     like($links->[4]{_url}, qr[$rest_base_path/ticket/$ticket_id/correspond$]);
-    is($links->[4]{label}, 'Reject');
+    is($links->[4]{label}, 'Open It');
     is($links->[4]{update}, 'Respond');
     is($links->[4]{from}, 'new');
-    is($links->[4]{to}, 'rejected');
+    is($links->[4]{to}, 'open');
+
+    is($links->[5]{ref}, 'lifecycle');
+    like($links->[5]{_url}, qr[$rest_base_path/ticket/$ticket_id/comment$]);
+    is($links->[5]{label}, 'Resolve');
+    is($links->[5]{update}, 'Comment');
+    is($links->[5]{from}, 'new');
+    is($links->[5]{to}, 'resolved');
+
+    is($links->[6]{ref}, 'lifecycle');
+    like($links->[6]{_url}, qr[$rest_base_path/ticket/$ticket_id/correspond$]);
+    is($links->[6]{label}, 'Reject');
+    is($links->[6]{update}, 'Respond');
+    is($links->[6]{from}, 'new');
+    is($links->[6]{to}, 'rejected');
 
     # update again with no changes
     $res = $mech->put_json($ticket_url,
@@ -299,11 +351,11 @@ my ($ticket_url, $ticket_id);
     is($res->code, 200);
 
     my $content = $mech->json_response;
-    is($content->{count}, 3);
+    is($content->{count}, 6);
     is($content->{page}, 1);
     is($content->{per_page}, 20);
-    is($content->{total}, 3);
-    is(scalar @{$content->{items}}, 3);
+    is($content->{total}, 6);
+    is(scalar @{$content->{items}}, 6);
 
     for my $txn (@{ $content->{items} }) {
         is($txn->{type}, 'transaction');
