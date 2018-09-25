@@ -104,6 +104,34 @@ sub expand_field {
         }
     }
 
+    # Process CF
+    if ($field =~ /^C(?:ustom)?F(?:ield)?-(.+)|CF\.\{([^\}]+)\}$/) {
+        my $cf_name = $1 // $2;
+        my $cf = RT::CustomField->new($self->current_user);
+        my ($cf_id, $msg) = $cf->Load($cf_name);
+        unless ($cf_id) {
+            $RT::Logger->warn("Cannot find CustomField $cf_name: $msg")
+        } else {
+            my $vals = $item->CustomFieldValues($cf->id);
+            if ( $cf->SingleValue ) {
+                my $v = $vals->Next;
+                $result = $v->Content if $v;
+            } else {
+                my @results;
+                while (my $v = $vals->Next()) {
+                    my $content = $v->Content;
+                    if ( $v->Content =~ /,/ ) {
+                        $content =~ s/([\\'])/\\$1/g;
+                        push @results, q{'} . $content . q{'};
+                    } else {
+                        push @results, $content;
+                    }
+                }
+            $result = \@results;
+            }
+        }
+    }
+
     $result //= '';
 
     if (defined $obj && defined $result) {
