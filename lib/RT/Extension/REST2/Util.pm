@@ -94,10 +94,11 @@ sub serialize_record {
     if (ref($record) eq 'RT::CustomField' && $record->Type eq 'Select') {
         my $values = $record->Values;
         while (my $val = $values->Next) {
+            my $category = $record->BasedOn ? $val->Category : '';
             if (exists $data{Values}) {
-                push @{$data{Values}}, $val->Name;
+                push @{$data{Values}}, {name => $val->Name, category => $category};
             } else {
-                $data{Values} = [ $val->Name ];
+                $data{Values} = [{name => $val->Name, category => $category}];
             }
         }
     }
