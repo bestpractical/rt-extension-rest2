@@ -428,8 +428,17 @@ USAGE
         POST /customfields
             search for custom fields using L</JSON searches> syntax
 
+        POST /customfield
+            create a customfield; provide JSON content
+
         GET /customfield/:id
             retrieve a custom field
+
+        PUT /customfield/:id
+            update a custom field's metadata; provide JSON content
+
+        DELETE /customfield/:id
+            disable customfield
 
    Custom Roles
         GET /customroles?query=<JSON>
