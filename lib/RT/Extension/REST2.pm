@@ -528,11 +528,20 @@ Below are some examples using the endpoints above.
     POST /customfields
         search for custom fields using L</JSON searches> syntax
 
+    POST /customfield
+        create a customfield; provide JSON content
+
     GET /customfield/:id
         retrieve a custom field, with values if type is Select
 
     GET /customfield/:id?category=<category name>
         retrieve a custom field, with values filtered by category if type is Select
+
+    PUT /customfield/:id
+        update a custom field's metadata; provide JSON content
+
+    DELETE /customfield/:id
+        disable customfield
 
 =head3 Custom Roles
 
