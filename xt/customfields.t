@@ -8,10 +8,6 @@ my $auth = RT::Extension::REST2::Test->authorization_header;
 my $rest_base_path = '/REST/2.0';
 my $user = RT::Extension::REST2::Test->user;
 
-my $freeform_cf = RT::CustomField->new(RT->SystemUser);
-$freeform_cf->Create(Name => 'Freeform CF', Type => 'Freeform', MaxValues => 1, Queue => 'General');
-my $freeform_cf_id = $freeform_cf->id;
-
 my $select_cf = RT::CustomField->new(RT->SystemUser);
 $select_cf->Create(Name => 'Select CF', Type => 'Select', MaxValues => 1, Queue => 'General');
 $select_cf->AddValue(Name => 'First Value', SortOder => 0);
@@ -27,8 +23,58 @@ $basedon_cf->AddValue(Name => 'With No Value', SortOder => 0);
 my $basedon_cf_id = $basedon_cf->id;
 my $basedon_cf_values = $basedon_cf->Values->ItemsArrayRef;
 
+my $freeform_cf;
+my $freeform_cf_id;
+
+# Right test - create customfield without SeeCustomField nor AdminCustomField
+{
+    my $payload = {
+        Name      => 'Freeform CF',
+        Type      => 'Freeform',
+        MaxValues => 1,
+    };
+    my $res = $mech->post_json("$rest_base_path/customfield",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 403);
+    is($res->message, 'Forbidden');
+
+    my $freeform_cf = RT::CustomField->new(RT->SystemUser);
+    my ($ok, $msg) = $freeform_cf->Load('Freeform CF');
+    is($freeform_cf->id, undef);
+    ok(!$ok);
+    is($msg, 'Not found');
+}
+
+# Customfield create
+{
+    $user->PrincipalObj->GrantRight( Right => 'SeeCustomField' );
+    $user->PrincipalObj->GrantRight( Right => 'AdminCustomField' );
+    my $payload = {
+        Name       => 'Freeform CF',
+        Type       => 'Freeform',
+        LookupType => 'RT::Queue-RT::Ticket',
+        MaxValues  => 1,
+    };
+    my $res = $mech->post_json("$rest_base_path/customfield",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+
+    $freeform_cf = RT::CustomField->new(RT->SystemUser);
+    $freeform_cf->Load('Freeform CF');
+    $freeform_cf_id = $freeform_cf->id;
+    is($freeform_cf->id, 4);
+    is($freeform_cf->Description, '');
+}
+
+
 # Right test - search all tickets customfields without SeeCustomField
 {
+    $user->PrincipalObj->RevokeRight( Right => 'SeeCustomField' );
+
     my $res = $mech->post_json("$rest_base_path/customfields",
         [{field => 'LookupType', value => 'RT::Queue-RT::Ticket'}],
         'Authorization' => $auth,
@@ -56,7 +102,7 @@ my $basedon_cf_values = $basedon_cf->Values->ItemsArrayRef;
     is($content->{count}, 3);
     my $items = $content->{items};
     is(scalar(@$items), 3);
-    
+
     is($items->[0]->{type}, 'customfield');
     is($items->[0]->{id}, $freeform_cf->id);
     like($items->[0]->{_url}, qr{$rest_base_path/customfield/$freeform_cf_id$});
@@ -216,6 +262,100 @@ my $basedon_cf_values = $basedon_cf->Values->ItemsArrayRef;
     my $values = $content->{Values};
     is_deeply($values, ['With No Value']);
 }
+
+
+# Display customfield
+{
+    $user->PrincipalObj->GrantRight( Right => 'SeeCustomField' );
+
+    my $res = $mech->get("$rest_base_path/customfield/$freeform_cf_id",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    is($content->{id}, $freeform_cf_id);
+    is($content->{Name}, 'Freeform CF');
+    is($content->{Description}, '');
+    is($content->{LookupType}, 'RT::Queue-RT::Ticket');
+    is($content->{Type}, 'Freeform');
+    is($content->{MaxValues}, 1);
+    is($content->{Disabled}, 0);
+
+    my @fields = qw(SortOrder Pattern Created Creator LastUpdated LastUpdatedBy);
+    push @fields, qw(UniqueValues EntryHint) if RT::Handle::cmp_version($RT::VERSION, '4.4.0') >= 0;
+    ok(exists $content->{$_}, "got $_") for @fields;
+
+    my $links = $content->{_hyperlinks};
+    is(scalar @$links, 1);
+    is($links->[0]{ref}, 'self');
+    is($links->[0]{id}, $freeform_cf_id);
+    is($links->[0]{type}, 'customfield');
+    like($links->[0]{_url}, qr{$rest_base_path/customfield/$freeform_cf_id$});
+}
+
+# Right test - update customfield without AdminCustomField
+{
+    $user->PrincipalObj->RevokeRight( Right => 'AdminCustomField' );
+
+    my $payload = {
+        Description  => 'This is a CF for testing REST CRUD on CFs',
+    };
+    my $res = $mech->put_json("$rest_base_path/customfield/$freeform_cf_id",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 403);
+    is($res->message, 'Forbidden');
+}
+
+# Update customfield
+{
+    $user->PrincipalObj->GrantRight( Right => 'AdminCustomField' );
+
+    my $payload = {
+        Description  => 'This is a CF for testing REST CRUD on CFs',
+    };
+    my $res = $mech->put_json("$rest_base_path/customfield/$freeform_cf_id",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $freeform_cf = RT::CustomField->new(RT->SystemUser);
+    $freeform_cf->Load('Freeform CF');
+    is($freeform_cf->id, $freeform_cf_id);
+    is($freeform_cf->Description, 'This is a CF for testing REST CRUD on CFs');
+}
+
+# Right test - delete customfield without AdminCustomField
+{
+    $user->PrincipalObj->RevokeRight( Right => 'AdminCustomField' );
+
+    my $res = $mech->delete("$rest_base_path/customfield/$freeform_cf_id",
+        'Authorization' => $auth,
+    );
+    is($res->code, 403);
+    is($res->message, 'Forbidden');
+
+    my $freeform_cf = RT::CustomField->new(RT->SystemUser);
+    $freeform_cf->Load('Freeform CF');
+    is($freeform_cf->Disabled, 0);
+}
+
+# Delete customfield
+{
+    $user->PrincipalObj->GrantRight( Right => 'AdminCustomField' );
+
+    my $res = $mech->delete("$rest_base_path/customfield/$freeform_cf_id",
+        'Authorization' => $auth,
+    );
+    is($res->code, 204);
+
+    my $freeform_cf = RT::CustomField->new(RT->SystemUser);
+    $freeform_cf->Load('Freeform CF');
+    is($freeform_cf->Disabled, 1);
+}
+
 
 done_testing;
 
