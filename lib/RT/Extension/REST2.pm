@@ -475,6 +475,24 @@ Below are some examples using the endpoints above.
     GET /customfield/:id
         retrieve a custom field
 
+=head3 Custom Field Values
+
+    GET /customfield/:id/values?query=<JSON>
+    POST /customfield/:id/values
+        search for values of a custom field  using L</JSON searches> syntax
+
+    POST /customfield/:id/value
+        add a value to a custom field; provide JSON content
+
+    GET /customfield/:id/value/:id
+        retrieve a value of a custom field
+
+    PUT /customfield/:id/value/:id
+        update a value of a custom field; provide JSON content
+
+    DELETE /customfield/:id/value/:id
+        remove a value from a custom field
+
 =head3 Custom Roles
 
     GET /customroles?query=<JSON>
