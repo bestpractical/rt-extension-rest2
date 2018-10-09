@@ -163,11 +163,14 @@ my $freeform_cf_id;
     ok(exists $content->{$_}, "got $_") for @fields;
 
     my $links = $content->{_hyperlinks};
-    is(scalar @$links, 1);
+    is(scalar @$links, 2);
     is($links->[0]{ref}, 'self');
     is($links->[0]{id}, $select_cf_id);
     is($links->[0]{type}, 'customfield');
     like($links->[0]{_url}, qr{$rest_base_path/customfield/$select_cf_id$});
+
+    is($links->[1]{ref}, 'customfieldvalues');
+    like($links->[1]{_url}, qr{$rest_base_path/customfield/$select_cf_id/values$});
 
     my $values = $content->{Values};
     is_deeply($values, ['First Value', 'Second Value', 'Third Value']);
@@ -193,11 +196,14 @@ my $freeform_cf_id;
     ok(exists $content->{$_}, "got $_") for @fields;
 
     my $links = $content->{_hyperlinks};
-    is(scalar @$links, 1);
+    is(scalar @$links, 2);
     is($links->[0]{ref}, 'self');
     is($links->[0]{id}, $basedon_cf_id);
     is($links->[0]{type}, 'customfield');
     like($links->[0]{_url}, qr{$rest_base_path/customfield/$basedon_cf_id$});
+
+    is($links->[1]{ref}, 'customfieldvalues');
+    like($links->[1]{_url}, qr{$rest_base_path/customfield/$basedon_cf_id/values$});
 
     my $values = $content->{Values};
     is_deeply($values, ['With First Value', 'With No Value']);
@@ -223,11 +229,14 @@ my $freeform_cf_id;
     ok(exists $content->{$_}, "got $_") for @fields;
 
     my $links = $content->{_hyperlinks};
-    is(scalar @$links, 1);
+    is(scalar @$links, 2);
     is($links->[0]{ref}, 'self');
     is($links->[0]{id}, $basedon_cf_id);
     is($links->[0]{type}, 'customfield');
     like($links->[0]{_url}, qr{$rest_base_path/customfield/$basedon_cf_id$});
+
+    is($links->[1]{ref}, 'customfieldvalues');
+    like($links->[1]{_url}, qr{$rest_base_path/customfield/$basedon_cf_id/values$});
 
     my $values = $content->{Values};
     is_deeply($values, ['With First Value']);
@@ -253,11 +262,15 @@ my $freeform_cf_id;
     ok(exists $content->{$_}, "got $_") for @fields;
 
     my $links = $content->{_hyperlinks};
-    is(scalar @$links, 1);
+    is(scalar @$links, 2);
     is($links->[0]{ref}, 'self');
     is($links->[0]{id}, $basedon_cf_id);
     is($links->[0]{type}, 'customfield');
     like($links->[0]{_url}, qr{$rest_base_path/customfield/$basedon_cf_id$});
+
+
+    is($links->[1]{ref}, 'customfieldvalues');
+    like($links->[1]{_url}, qr{$rest_base_path/customfield/$basedon_cf_id/values$});
 
     my $values = $content->{Values};
     is_deeply($values, ['With No Value']);
