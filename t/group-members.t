@@ -257,5 +257,21 @@ $user->PrincipalObj->GrantRight(Right => 'SeeGroup', Object => $group1);
     is($members1->Count, 0, 'All members removed');
 }
 
+# Group hypermedia links
+{
+    my $res = $mech->get("$rest_base_path/group/$group1_id",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    my $links = $content->{_hyperlinks};
+    my @members_links = grep { $_->{ref} =~ /members/ } @$links;
+    is(scalar(@members_links), 4);
+    like($members_links[0]->{_url}, qr{$rest_base_path/group/$group1_id/members$});
+    like($members_links[1]->{_url}, qr{$rest_base_path/group/$group1_id/deepmembers$});
+    like($members_links[2]->{_url}, qr{$rest_base_path/group/$group1_id/groupmembers$});
+    like($members_links[3]->{_url}, qr{$rest_base_path/group/$group1_id/usermembers$});
+}
+
 done_testing;
 

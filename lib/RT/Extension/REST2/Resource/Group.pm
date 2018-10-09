@@ -45,6 +45,27 @@ sub hypermedia_links {
     my $self = shift;
     my $links = $self->_default_hypermedia_links(@_);
     push @$links, $self->_transaction_history_link;
+
+    if ($self->record->CurrentUserHasRight('AdminGroupMembership')) {
+        my $id = $self->record->id;
+        push @$links,
+            {
+                ref  => 'members',
+                _url => RT::Extension::REST2->base_uri . "/group/$id/members",
+            },
+            {
+                ref  => 'deepmembers',
+                _url => RT::Extension::REST2->base_uri . "/group/$id/deepmembers",
+            },
+            {
+                ref  => 'groupmembers',
+                _url => RT::Extension::REST2->base_uri . "/group/$id/groupmembers",
+            },
+            {
+                ref  => 'usermembers',
+                _url => RT::Extension::REST2->base_uri . "/group/$id/usermembers",
+            };
+    }
     return $links;
 }
 
