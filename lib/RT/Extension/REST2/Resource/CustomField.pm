@@ -8,7 +8,8 @@ use namespace::autoclean;
 extends 'RT::Extension::REST2::Resource::Record';
 with 'RT::Extension::REST2::Resource::Record::Readable',
         => { -alias => { serialize => '_default_serialize' } },
-     'RT::Extension::REST2::Resource::Record::Hypermedia',
+     'RT::Extension::REST2::Resource::Record::Hypermedia'
+        => { -alias => { hypermedia_links => '_default_hypermedia_links' } },
      'RT::Extension::REST2::Resource::Record::DeletableByDisabling',
      'RT::Extension::REST2::Resource::Record::Writable';
 
@@ -53,8 +54,20 @@ sub forbidden {
     return 0;
 }
 
+sub hypermedia_links {
+    my $self = shift;
+    my $links = $self->_default_hypermedia_links(@_);
+
+    if ($self->record->IsSelectionType) {
+        push @$links, {
+            ref  => 'customfieldvalues',
+            _url => RT::Extension::REST2->base_uri . "/customfield/" . $self->record->id . "/values",
+        };
+    }
+    return $links;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 1;
-
 
