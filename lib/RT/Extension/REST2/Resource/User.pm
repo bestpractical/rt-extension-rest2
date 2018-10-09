@@ -60,6 +60,22 @@ sub hypermedia_links {
     my $self = shift;
     my $links = $self->_default_hypermedia_links(@_);
     push @$links, $self->_transaction_history_link;
+
+    if (
+        ($self->current_user->HasRight(
+            Right => "ModifyOwnMembership",
+            Object => RT->System)
+         && $self->current_user->id == $self->record->id)
+        || $self->current_user->HasRight(
+            Right => 'AdminGroupMembership',
+            Object => RT->System)
+    ) {
+        my $id = $self->record->id;
+        push @$links, {
+            ref  => 'memberships',
+            _url => RT::Extension::REST2->base_uri . "/user/$id/groups",
+        };
+    }
     return $links;
 }
 

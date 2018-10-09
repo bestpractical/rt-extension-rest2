@@ -102,4 +102,18 @@ ok($ok, $msg);
     is($memberships->Count, 0, 'All membership removed');
 }
 
+# User hypermedia links
+{
+    my $res = $mech->get("$rest_base_path/user/" . $user->id,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    my $links = $content->{_hyperlinks};
+    my @memberships_links = grep { $_->{ref} eq 'memberships' } @$links;
+    is(scalar(@memberships_links), 1);
+    my $user_id = $user->id;
+    like($memberships_links[0]->{_url}, qr{$rest_base_path/user/$user_id/groups$});
+}
+
 done_testing;
