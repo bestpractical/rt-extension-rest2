@@ -60,6 +60,12 @@ sub hypermedia_links {
     my $self = shift;
     my $links = $self->_default_hypermedia_links(@_);
     push @$links, $self->_transaction_history_link;
+
+    my $id = $self->record->id;
+    push @$links,
+      { ref  => 'memberships',
+        _url => RT::Extension::REST2->base_uri . "/user/$id/groups",
+      };
     return $links;
 }
 
