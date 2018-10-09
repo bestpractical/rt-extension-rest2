@@ -37,6 +37,7 @@ lib/RT/Extension/REST2/Resource/CustomRole.pm
 lib/RT/Extension/REST2/Resource/CustomRoles.pm
 lib/RT/Extension/REST2/Resource/Group.pm
 lib/RT/Extension/REST2/Resource/Groups.pm
+lib/RT/Extension/REST2/Resource/Members.pm
 lib/RT/Extension/REST2/Resource/Message.pm
 lib/RT/Extension/REST2/Resource/Queue.pm
 lib/RT/Extension/REST2/Resource/Queues.pm
@@ -56,6 +57,7 @@ lib/RT/Extension/REST2/Resource/TicketsBulk.pm
 lib/RT/Extension/REST2/Resource/Transaction.pm
 lib/RT/Extension/REST2/Resource/Transactions.pm
 lib/RT/Extension/REST2/Resource/User.pm
+lib/RT/Extension/REST2/Resource/UserGroups.pm
 lib/RT/Extension/REST2/Resource/Users.pm
 lib/RT/Extension/REST2/Util.pm
 Makefile.PL
@@ -66,6 +68,7 @@ t/asset-customfields.t
 t/assets.t
 t/catalogs.t
 t/conflict.t
+t/group-members.t
 t/lib/RT/Extension/REST2/Test.pm.in
 t/not_found.t
 t/organization.t
@@ -80,4 +83,5 @@ t/tickets-bulk.t
 t/tickets.t
 t/transactions.t
 t/user-customfields.t
+t/user-memberships.t
 TODO
