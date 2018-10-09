@@ -33,6 +33,8 @@ lib/RT/Extension/REST2/Resource/Collection/ProcessPOSTasGET.pm
 lib/RT/Extension/REST2/Resource/Collection/QueryByJSON.pm
 lib/RT/Extension/REST2/Resource/CustomField.pm
 lib/RT/Extension/REST2/Resource/CustomFields.pm
+lib/RT/Extension/REST2/Resource/CustomFieldValue.pm
+lib/RT/Extension/REST2/Resource/CustomFieldValues.pm
 lib/RT/Extension/REST2/Resource/CustomRole.pm
 lib/RT/Extension/REST2/Resource/CustomRoles.pm
 lib/RT/Extension/REST2/Resource/Group.pm
@@ -71,6 +73,7 @@ xt/assets.t
 xt/catalogs.t
 xt/conflict.t
 xt/customfields.t
+xt/customfieldvalues.t
 xt/group-members.t
 xt/not_found.t
 xt/organization.t
