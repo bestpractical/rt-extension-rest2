@@ -29,8 +29,8 @@ my $bravo_id = $bravo->Id;
     is($content->{pages}, 1);
     is($content->{per_page}, 20);
     is($content->{total}, 3);
-    undef($content->{prev_page});
-    undef($content->{next_page});
+    is($content->{prev_page}, undef);
+    is($content->{next_page}, undef);
     is(scalar @{$content->{items}}, 3);
 }
 
@@ -48,8 +48,8 @@ my $bravo_id = $bravo->Id;
     is($content->{pages}, 1);
     is($content->{per_page}, 3);
     is($content->{total}, 3);
-    undef($content->{prev_page});
-    undef($content->{next_page});
+    is($content->{prev_page}, undef);
+    is($content->{next_page}, undef);
     is(scalar @{$content->{items}}, 3);
 }
 
@@ -71,7 +71,7 @@ my $bravo_id = $bravo->Id;
     is($content->{pages}, 3);
     is($content->{per_page}, 1);
     is($content->{total}, 3);
-    undef($content->{prev_page});
+    is($content->{prev_page}, undef);
     like($content->{next_page}, qr[$url&page=2]);
     is(scalar @{$content->{items}}, 1);
 }
@@ -118,7 +118,7 @@ my $bravo_id = $bravo->Id;
     is($content->{per_page}, 1);
     is($content->{total}, 3);
     like($content->{prev_page}, qr[$url&page=2]);
-    undef($content->{next_page});
+    is($content->{next_page}, undef);
     is(scalar @{$content->{items}}, 1);
 }
 
@@ -155,8 +155,8 @@ for my $param ( 'per_page', 'page' ) {
             }
         }
         is($content->{total}, 3);
-        undef($content->{prev_page});
-        undef($content->{next_page});
+        is($content->{prev_page}, undef);
+        is($content->{next_page}, undef);
     }
 }
 
