@@ -296,6 +296,10 @@ sub create_record {
     if ($record->isa('RT::Ticket') || $record->isa('RT::Asset')) {
         if ($cfs) {
             while (my ($id, $value) = each(%$cfs)) {
+                if ($id !~ /^\d+$/) {
+                    my $cf = $record->LoadCustomFieldByIdentifier($id);
+                    $id = $cf->Id;
+                }
                 delete $cfs->{$id};
                 $args{"CustomField-$id"} = $value;
             }
