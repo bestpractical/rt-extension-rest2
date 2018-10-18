@@ -64,8 +64,10 @@ META.yml
 README
 t/asset-customfields.t
 t/assets.t
+t/attachments.t
 t/catalogs.t
 t/conflict.t
+t/data/image.png
 t/lib/RT/Extension/REST2/Test.pm.in
 t/not_found.t
 t/organization.t
