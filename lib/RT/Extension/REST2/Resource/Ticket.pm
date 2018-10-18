@@ -54,6 +54,19 @@ sub create_record {
         );
     }
 
+    foreach my $attachment (@{$data->{AttachmentsContents}}) {
+        foreach my $field ('FileName', 'FileType', 'FileContent') {
+            return (\400, "$field is a required field for each attachment in AttachmentsContents")
+            unless $attachment->{$field};
+        }
+        $data->{MIMEObj}->attach(
+            Type => $attachment->{FileType},
+            Filename => $attachment->{FileName},
+            Data => MIME::Base64::decode_base64($attachment->{FileContent}),
+        );
+        delete $data->{AttachmentsContents};
+    }
+
     my ($ok, $txn, $msg) = $self->_create_record($data);
     return ($ok, $msg);
 }

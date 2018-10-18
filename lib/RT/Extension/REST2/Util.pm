@@ -148,6 +148,7 @@ sub deserialize_record {
     # Sanitize input for the Perl API
     for my $field (sort keys %$data) {
         next if $field eq 'CustomFields';
+        next if $field eq 'AttachmentsContents';
 
         my $value = $data->{$field};
         next unless ref $value;
