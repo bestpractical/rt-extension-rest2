@@ -4,6 +4,7 @@ use warnings;
 
 use Moose;
 use namespace::autoclean;
+use MIME::Base64;
 
 extends 'RT::Extension::REST2::Resource';
 use RT::Extension::REST2::Util qw( error_as_json update_custom_fields );
@@ -49,7 +50,20 @@ sub from_json {
     my $self = shift;
     my $body = JSON::decode_json( $self->request->content );
 
-    if (!$body->{ContentType}) {
+    if ($body->{Attachments}) {
+        foreach my $attachment (@{$body->{Attachments}}) {
+            foreach my $field ('FileName', 'FileType', 'FileContent') {
+                return error_as_json(
+                    $self->response,
+                    \400, "$field is a required field for each attachment in Attachments")
+                unless $attachment->{$field};
+            }
+        }
+
+        $body->{NoContent} = 1 unless $body->{Content};
+    }
+
+    if (!$body->{NoContent} && !$body->{ContentType}) {
         return error_as_json(
             $self->response,
             \400, "ContentType is a required field for application/json");
@@ -65,10 +79,19 @@ sub add_message {
 
     my $MIME = HTML::Mason::Commands::MakeMIMEEntity(
         Interface => 'REST',
-        Body      => $args{Content}     || $self->request->content,
+        $args{NoContent} ? () : (Body => $args{Content} || $self->request->content),
         Type      => $args{ContentType} || $self->request->content_type,
         Subject   => $args{Subject},
     );
+
+    # Process attachments
+    foreach my $attachment (@{$args{Attachments}}) {
+        $MIME->attach(
+            Type => $attachment->{FileType},
+            Filename => $attachment->{FileName},
+            Data => MIME::Base64::decode_base64($attachment->{FileContent}),
+        );
+    }
 
     my ( $Trans, $msg, $TransObj );
     if ($self->type eq 'correspond') {

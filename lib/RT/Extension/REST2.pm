@@ -224,6 +224,148 @@ adding time worked can be automatically be recalculated).
 You may of course choose to ignore the C<ETag> header and not provide
 C<If-Match> in your requests; RT doesn't require its use.
 
+=head3 Replying/Commenting Tickets
+
+You can reply to or comment a ticket by C<POST>ing to C<_url> from the
+C<correspond> or C<comment> hyperlinks that were returned when fetching the
+ticket.
+
+    curl -X POST
+         -H "Content-Type: application/json"
+         -d '{
+              "Subject"    : "response",
+              "Content"    : "What is your <em>issue</em>?",
+              "ContentType": "text/html",
+              "TimeTaken"  : "1"
+            }'
+         -H 'Authorization: token XX_TOKEN_XX'
+            'XX_TICKET_URL_XX'/correspond
+
+Replying or commenting a ticket is quite similar to a ticket creation: you
+send a C<POST> request, with data encoded in C<JSON>. The difference lies in
+the properties of the JSON data object you can pass:
+
+=over 4
+
+=item C<Subject>
+
+The subject of your response/comment, optional
+
+=item C<Content>
+
+The content of your response/comment, mandatory unless there is a non empty
+C<Attachments> property to add at least one attachment to the ticket (see
+L<Add Attachments> section below).
+
+=item C<ContentType>
+
+The MIME content type of your response/comment, typically C<text/plain> or
+C</text/html>, mandatory unless there is a non empty C<Attachments> property
+to add at least one attachment to the ticket (see L<Add Attachments> section
+below).
+
+=item C<TimeTaken>
+
+The time, in minutes, you've taken to work on your response/comment, optional.
+
+=back
+
+=head3 Add Attachments
+
+You can attach any binary or text file to your response or comment by
+specifying C<Attachements> property in the JSON object, which should be a
+JSON array where each item represents a file you want to attach. Each item
+is a JSON object with the following properties:
+
+=over 4
+
+=item C<FileName>
+
+The name of the file to attach to your response/comment, mandatory.
+
+=item C<FileType>
+
+The MIME type of the file to attach to your response/comment, mandatory.
+
+=item C<FileContent>
+
+The content, I<encoded in C<MIME Base64>> of the file to attach to your
+response/comment, mandatory.
+
+=back
+
+The reason why you should encode the content of any file to C<MIME Base64>
+is that a JSON string value should be a sequence of zero or more Unicode
+characters. C<MIME Base64> is a binary-to-text encoding scheme widely used
+(for eg. by web browser) to send binary data when text data is required.
+Most popular language have C<MIME Base64> libraries that you can use to
+encode the content of your attached files (see L<MIME::Base64> for C<Perl>).
+Note that even text files should be C<MIME Base64> encoded to be passed in
+the C<FileContent> property.
+
+Here's a Perl example to send an image and a plain text file attached to a
+comment:
+
+    #!/usr/bin/perl
+    use strict;
+    use warnings;
+
+    use LWP::UserAgent;
+    use JSON;
+    use MIME::Base64;
+    use Data::Dumper;
+
+    my $url = 'http://rt.local/REST/2.0/ticket/1/comment';
+
+    my $img_path = '/tmp/my_image.png';
+    my $img_content;
+    open my $img_fh, '<', $img_path or die "Cannot read $img_path: $!\n";
+    {
+        local $/;
+        $img_content = <$img_fh>;
+    }
+    close $img_fh;
+    $img_content = MIME::Base64::encode_base64($img_content);
+
+    my $txt_path = '~/.bashrc';
+    my $txt_content;
+    open my $txt_fh, '<', glob($txt_path) or die "Cannot read $txt_path: $!\n";
+    {
+        local $/;
+        $txt_content = <$txt_fh>;
+    }
+    close $txt_fh;
+    $txt_content = MIME::Base64::encode_base64($txt_content);
+
+    my $json = JSON->new->utf8;
+    my $payload = {
+        Content => '<p>I want <b>two</b> <em>attachments</em></p>',
+        ContentType => 'text/html',
+        Subject => 'Attachments in JSON Array',
+        Attachments => [
+            {
+                FileName => 'my_image.png',
+                FileType => 'image/png',
+                FileContent => $img_content,
+            },
+            {
+                FileName => '.bashrc',
+                FileType => 'text/plain',
+                FileContent => $txt_content,
+            },
+        ],
+    };
+
+    my $req = HTTP::Request->new(POST => $url);
+    $req->header('Authorization' => 'token 6-66-66666666666666666666666666666666');
+    $req->header('Content-Type'  => 'application/json' );
+    $req->header('Accept'        => 'application/json' );
+    $req->content($json->encode($payload));
+
+    my $ua = LWP::UserAgent->new;
+    my $res = $ua->request($req);
+    print Dumper($json->decode($res->content)) . "\n";
+
 =head3 Summary
 
 RT's REST2 API provides the tools you need to build robust and dynamic
