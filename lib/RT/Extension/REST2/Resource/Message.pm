@@ -59,9 +59,11 @@ sub from_json {
                 unless $attachment->{$field};
             }
         }
+
+        $body->{NoContent} = 1 unless $body->{Content};
     }
 
-    if (!$body->{ContentType}) {
+    if (!$body->{NoContent} && !$body->{ContentType}) {
         return error_as_json(
             $self->response,
             \400, "ContentType is a required field for application/json");
@@ -77,7 +79,7 @@ sub add_message {
 
     my $MIME = HTML::Mason::Commands::MakeMIMEEntity(
         Interface => 'REST',
-        Body      => $args{Content}     || $self->request->content,
+        $args{NoContent} ? () : (Body => $args{Content} || $self->request->content),
         Type      => $args{ContentType} || $self->request->content_type,
         Subject   => $args{Subject},
     );

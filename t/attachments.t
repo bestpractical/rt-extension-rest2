@@ -97,4 +97,52 @@ $image_content = MIME::Base64::encode_base64($image_content);
     ok(!$attachments->[3]->Subject);
 }
 
+#Comment ticket with image attachment and no content
+{
+    my $payload = {
+        Subject     => 'No content, just an image',
+        AttachmentsContents => [
+            {
+                FileName => $image_name,
+                FileType => 'image/png',
+                FileContent => $image_content,
+            },
+        ],
+    };
+    my $res = $mech->post_json("$rest_base_path/ticket/$ticket_id/comment",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    cmp_deeply($mech->json_response, [re(qr/Comments added|Message recorded/)]);
+
+    my $transaction_id = $ticket->Transactions->Last->id;
+    my @attachments = grep { $_->TransactionId == $transaction_id } @{$ticket->Attachments->ItemsArrayRef};
+
+    # 2 attachments + 1 wrapper
+    is(scalar(@attachments), 3);
+
+    # 1st attachment is wrapper
+    is($attachments[0]->Parent, 0);
+    is($attachments[0]->Subject, 'No content, just an image');
+    ok(!$attachments[0]->Filename);
+    is($attachments[0]->ContentType, 'multipart/mixed');
+
+    # 2nd attachment is empty comment's content
+    is($attachments[1]->Parent, $attachments[0]->id);
+    is($attachments[1]->TransactionId, $transaction_id);
+    is($attachments[1]->ContentType, 'application/octet-stream');
+    ok(!$attachments[1]->ContentEncoding);
+    ok(!$attachments[1]->Content);
+    ok(!$attachments[1]->Subject);
+
+    # 3rd attachment is image
+    is($attachments[2]->Parent, $attachments[0]->id);
+    is($attachments[2]->TransactionId, $transaction_id);
+    is($attachments[2]->ContentType, 'image/png');
+    is($attachments[2]->ContentEncoding, 'base64');
+    is($attachments[2]->Filename, $image_name);
+    ok(!$attachments[2]->Subject);
+}
+
 done_testing;
