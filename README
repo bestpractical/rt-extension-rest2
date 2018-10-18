@@ -233,9 +233,9 @@ USAGE
 
    Add Attachments
     You can attach any binary or text file to your response or comment by
-    specifying in the JSON data sent a property AttachementsContents, which
-    should be an JSON array where each item represents a file you want to
-    attach. Each file is a JSON object with the following properties:
+    specifying in the JSON object sent a AttachementsContents property,
+    which should be a JSON array where each item represents a file you want
+    to attach. Each item is a JSON object with the following properties:
 
     FileName
         The name of the file to attach to your response/comment, mandatory.

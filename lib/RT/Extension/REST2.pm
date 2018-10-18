@@ -263,7 +263,7 @@ The time, in minutes, you've taken to work on your response/comment, optional.
 
 =head3 Add Attachments
 
-You can attach any binary or text file to your response or comment by specifying in the JSON data sent a property C<AttachementsContents>, which should be an JSON array where each item represents a file you want to attach. Each file is a JSON object with the following properties:
+You can attach any binary or text file to your response or comment by specifying in the JSON object sent a C<AttachementsContents> property, which should be a JSON array where each item represents a file you want to attach. Each item is a JSON object with the following properties:
 
 =over 4
 
@@ -281,7 +281,7 @@ The content, I<encoded in C<MIME Base64>> of the file to attach to your response
 
 =back
 
-The reason why you should encode the content of any file to C<MIME Base64> is that  a JSON string value should be a sequence of zero or more Unicode characters. C<MIME Base64> is a binary-to-text encoding scheme widely used (for eg. by web browser) to send binary data when text data is required. Most popular language have C<MIME Base64> libraries that you can use to encode the content of your attached files (see L<MIME::Base64> for C<Perl>). Note that even text files should be C<MIME Base64> encoded to be passed in the C<FileContent> property.
+The reason why you should encode the content of any file to C<MIME Base64> is that a JSON string value should be a sequence of zero or more Unicode characters. C<MIME Base64> is a binary-to-text encoding scheme widely used (for eg. by web browser) to send binary data when text data is required. Most popular language have C<MIME Base64> libraries that you can use to encode the content of your attached files (see L<MIME::Base64> for C<Perl>). Note that even text files should be C<MIME Base64> encoded to be passed in the C<FileContent> property.
 
 Here's a Perl example to send an image and a plain text file attached to a comment:
 
