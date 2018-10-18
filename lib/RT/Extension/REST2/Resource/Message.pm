@@ -4,6 +4,7 @@ use warnings;
 
 use Moose;
 use namespace::autoclean;
+use MIME::Base64;
 
 extends 'RT::Extension::REST2::Resource';
 use RT::Extension::REST2::Util qw( error_as_json );
@@ -49,11 +50,23 @@ sub from_json {
     my $self = shift;
     my $body = JSON::decode_json( $self->request->content );
 
+    if ($body->{AttachmentsContents}) {
+        foreach my $attachment (@{$body->{AttachmentsContents}}) {
+            foreach my $field ('FileName', 'FileType', 'FileContent') {
+                return error_as_json(
+                    $self->response,
+                    \400, "$field is a required field for each attachment in AttachmentsContents")
+                unless $attachment->{$field};
+            }
+        }
+    }
+
     if (!$body->{ContentType}) {
         return error_as_json(
             $self->response,
             \400, "ContentType is a required field for application/json");
     }
+
 
     $self->add_message(%$body);
 }
@@ -68,6 +81,15 @@ sub add_message {
         Type      => $args{ContentType} || $self->request->content_type,
         Subject   => $args{Subject},
     );
+
+    # Process attachments
+    foreach my $attachment (@{$args{AttachmentsContents}}) {
+        $MIME->attach(
+            Type => $attachment->{FileType},
+            Filename => $attachment->{FileName},
+            Data => MIME::Base64::decode_base64($attachment->{FileContent}),
+        );
+    }
 
     my ( $Trans, $msg, $TransObj ) ;
 
