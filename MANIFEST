@@ -68,8 +68,10 @@ README
 TODO
 xt/asset-customfields.t
 xt/assets.t
+xt/attachments.t
 xt/catalogs.t
 xt/conflict.t
+xt/data/image.png
 xt/group-members.t
 xt/not_found.t
 xt/organization.t
