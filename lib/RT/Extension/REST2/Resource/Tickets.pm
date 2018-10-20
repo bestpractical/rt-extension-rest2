@@ -50,6 +50,19 @@ sub limit_collection {
     my $self = shift;
     my ($ok, $msg) = $self->collection->FromSQL( $self->query );
     return error_as_json( $self->response, 0, $msg ) unless $ok;
+
+    my @orderby_cols;
+    my @orders = $self->request->param('order');
+    foreach my $orderby ($self->request->param('orderby')) {
+        $orderby = decode_utf8($orderby);
+        my $order = shift @orders || 'ASC';
+        $order = uc(decode_utf8($order));
+        $order = 'ASC' unless $order eq 'DESC';
+        push @orderby_cols, {FIELD => $orderby, ORDER => $order};
+    }
+    $self->collection->OrderByCols(@orderby_cols)
+        if @orderby_cols;
+
     return 1;
 }
 
