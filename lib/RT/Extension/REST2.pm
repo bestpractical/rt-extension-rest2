@@ -226,7 +226,9 @@ C<If-Match> in your requests; RT doesn't require its use.
 
 =head3 Replying/Commenting Tickets
 
-You can reply to or comment a ticket by C<POST>ing to C<_url> from the C<correspond> or C<comment> hyperlinks that were returned when fetching the ticket.
+You can reply to or comment a ticket by C<POST>ing to C<_url> from the
+C<correspond> or C<comment> hyperlinks that were returned when fetching the
+ticket.
 
     curl -X POST
          -H "Content-Type: application/json"
@@ -239,7 +241,9 @@ You can reply to or comment a ticket by C<POST>ing to C<_url> from the C<corresp
          -H 'Authorization: token XX_TOKEN_XX'
             'XX_TICKET_URL_XX'/correspond
 
-Replying or commenting a ticket is quite similar to a ticket creation: you send a C<POST> request, with data encoded in C<JSON>. The difference lies in the properties of the JSON data object you can pass:
+Replying or commenting a ticket is quite similar to a ticket creation: you send
+a C<POST> request, with data encoded in C<JSON>. The difference lies in the
+properties of the JSON data object you can pass:
 
 =over 4
 
@@ -249,11 +253,16 @@ The subject of your response/comment, optional
 
 =item C<Content>
 
-The content of your response/comment, mandatory unless there is a non empty C<AttachmentsContent> property to add at least one attachment to the ticket (see L<Add Attachments> section below).
+The content of your response/comment, mandatory unless there is a non empty
+C<AttachmentsContent> property to add at least one attachment to the ticket (see
+L<Add Attachments> section below).
 
 =item C<ContentType>
 
-The MIME content type of your response/comment, typically C<text/plain> or C</text/html>, mandatory unless there is a non empty C<AttachmentsContent> property to add at least one attachment to the ticket (see L<Add Attachments> section below).
+The MIME content type of your response/comment, typically C<text/plain> or
+C</text/html>, mandatory unless there is a non empty C<AttachmentsContent>
+property to add at least one attachment to the ticket (see L<Add Attachments>
+section below).
 
 =item C<TimeTaken>
 
@@ -263,7 +272,10 @@ The time, in minutes, you've taken to work on your response/comment, optional.
 
 =head3 Add Attachments
 
-You can attach any binary or text file to your response or comment by specifying in the JSON object sent a C<AttachementsContents> property, which should be a JSON array where each item represents a file you want to attach. Each item is a JSON object with the following properties:
+You can attach any binary or text file to your response or comment by specifying
+in the JSON object sent a C<AttachementsContents> property, which should be a
+JSON array where each item represents a file you want to attach. Each item is
+a JSON object with the following properties:
 
 =over 4
 
@@ -277,13 +289,21 @@ The MIME type of the file to attach to your response/comment, mandatory.
 
 =item C<FileContent>
 
-The content, I<encoded in C<MIME Base64>> of the file to attach to your response/comment, mandatory.
+The content, I<encoded in C<MIME Base64>> of the file to attach to your
+response/comment, mandatory.
 
 =back
 
-The reason why you should encode the content of any file to C<MIME Base64> is that a JSON string value should be a sequence of zero or more Unicode characters. C<MIME Base64> is a binary-to-text encoding scheme widely used (for eg. by web browser) to send binary data when text data is required. Most popular language have C<MIME Base64> libraries that you can use to encode the content of your attached files (see L<MIME::Base64> for C<Perl>). Note that even text files should be C<MIME Base64> encoded to be passed in the C<FileContent> property.
+The reason why you should encode the content of any file to C<MIME Base64> is
+that a JSON string value should be a sequence of zero or more Unicode
+characters. C<MIME Base64> is a binary-to-text encoding scheme widely used (for
+eg. by web browser) to send binary data when text data is required. Most popular
+language have C<MIME Base64> libraries that you can use to encode the content of
+your attached files (see L<MIME::Base64> for C<Perl>). Note that even text files
+should be C<MIME Base64> encoded to be passed in the C<FileContent> property.
 
-Here's a Perl example to send an image and a plain text file attached to a comment:
+Here's a Perl example to send an image and a plain text file attached to a
+comment:
 
     #!/usr/bin/perl
     use strict;
@@ -318,7 +338,7 @@ Here's a Perl example to send an image and a plain text file attached to a comme
 
     my $json = JSON->new->utf8;
     my $payload = {
-        Content => '<p>I want <b>two</b> <em>attachment</em></p>',
+        Content => '<p>I want <b>two</b> <em>attachments</em></p>',
         ContentType => 'text/html',
         Subject => 'Attachments in JSON Array',
         AttachmentsContents => [
@@ -344,6 +364,37 @@ Here's a Perl example to send an image and a plain text file attached to a comme
     my $ua = LWP::UserAgent->new;
     my $res = $ua->request($req);
     print Dumper($json->decode($res->content)) . "\n";
+
+Encoding the content of attachments file in C<MIME Base64> has the drawback
+of adding some processing overhead and to increase the sent data size by around
+33%. RT's REST2 API provides another way to attach any binary or text file to your
+response or comment by C<POST>ing, instead of a JSON request, a
+C<multipart/form-data> request. This kind of request is similar to what the browser
+sends when you add attachments in RT's reply or comment form. As its name suggests,
+a C<multipart/form-data> request message contains a series of parts, each representing
+a form field. To reply to or comment a ticket, the request has to include a field
+named C<Json>, which, as previously, is a JSON object with C<Subject>, C<Content>,
+C<ContentType>, C<TimeTaken> properties. Files can then be attached by specifying
+a field named C<Attachment> for each of them, with the content of the file as value
+and the appropriate MIME type.
+
+The curl invocation is quite straith forward:
+
+    curl -X POST
+         -H "Content-Type: multipart/form-data"
+         -F 'Json={
+                    "Subject"    : "Attachments in multipart/form-data",
+                    "Content"    : "<p>I want <b>two</b> <em>attachments</em></p>",
+                    "ContentType": "text/html",
+                    "TimeTaken"  : "1"
+                  };type=application/json'
+         -F 'Attachment_1=@/tmp/my_image.png;type=image/png'
+         -F 'Attachment_2=@~/.bashrc;type=text/plain'
+         -H 'Authorization: token XX_TOKEN_XX'
+            'XX_TICKET_URL_XX'/comment
+
+As a sidenote, fields for attached files can also be named C<attachment_1>,
+C<attachment_2>, etc. since such names were used in RT's REST 1.0 API.
 
 =head3 Summary
 
@@ -439,7 +490,8 @@ Below are some examples using the endpoints above.
 
     # Create an Asset
     curl -X POST -H "Content-Type: application/json" -u 'root:password'
-        -d '{"Name" : "Asset From Rest", "Catalog" : "General assets", "Content" : "Some content"}'
+        -d '{"Name" : "Asset From Rest",
+             "Catalog" : "General assets", "Content" : "Some content"}'
         'https://myrt.com/REST/2.0/asset'
 
     # Search Assets
