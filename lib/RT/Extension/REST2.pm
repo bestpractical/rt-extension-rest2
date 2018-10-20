@@ -588,6 +588,36 @@ C<orderby=Created&order=ASC&orderby=id&order=DESC>. C<orderby> and
 C<order> query parameters are supported in both JSON and TicketSQL
 searches.
 
+The same C<field> is specified more than one time to express more than
+one condition on this field. For example:
+
+    [
+        { "field":    "id",
+          "operator": ">",
+          "value":    $min },
+
+        { "field":     "id",
+          "operator": "<",
+          "value":    $max }
+    ]
+
+By default, RT will aggregate these conditions with an C<OR>, except for
+when searching queues, where a C<AND> is applied. If you want to search
+for multiple conditions on the same field aggregated with an C<AND>
+(or an C<OR> for queues), you have to specify C<entry_aggregator> keys
+in corresponding hashes:
+
+    [
+        { "field":    "id",
+          "operator": ">",
+          "value":    $min },
+
+        { "field":             "id",
+          "operator":         "<",
+          "value":            $max,
+          "entry_aggregator": "AND" }
+    ]
+
 Results are returned in
 L<the format described below|/"Example of plural resources (collections)">.
 
