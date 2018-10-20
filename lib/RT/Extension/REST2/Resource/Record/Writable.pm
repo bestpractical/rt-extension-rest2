@@ -25,7 +25,7 @@ sub content_types_accepted { [ {'application/json' => 'from_json'} ] }
 
 sub from_json {
     my $self = shift;
-    my $params = JSON::decode_json( $self->request->content );
+    my $params = shift || JSON::decode_json( $self->request->content );
 
     %$params = (
         %$params,
