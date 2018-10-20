@@ -512,6 +512,31 @@ values).  An example:
 The JSON payload must be an array of hashes with the keys C<field> and C<value>
 and optionally C<operator>.
 
+The same C<field> is specified more than one time to express more than one condition on this field. For example:
+
+    [
+        { "field":    "id",
+          "operator": ">",
+          "value":    $min },
+
+        { "field":     "id",
+          "operator": "<",
+          "value":    $max }
+    ]
+
+By default, RT will aggregate these conditions with a C<OR>, safe for searching queues, where a C<AND> is applied. If you want to search for multiple conditions on the same field aggregated with a C<AND> (or a C<OR> for queues), you have to specify C<entry_aggregator> keys in corresponding hashes:
+
+    [
+        { "field":    "id",
+          "operator": ">",
+          "value":    $min },
+
+        { "field":             "id",
+          "operator":         "<",
+          "value":            $max,
+          "entry_aggregator": "AND" }
+    ]
+
 Results are returned in
 L<the format described below|/"Example of plural resources (collections)">.
 
