@@ -512,6 +512,8 @@ values).  An example:
 The JSON payload must be an array of hashes with the keys C<field> and C<value>
 and optionally C<operator>.
 
+Results can be sorted by using multiple query parameter arguments C<orderby> and C<order>. Each C<orderby> query parameter specify a field to be used for sorting results. If the request includes more than one C<orderby> query parameter, results are sorted according to corresponding fields in the same order than they are specified. For instance, if you want to sort results according to creation date and then by id (in case of some items have the same creation date), your request should specify C<?orderby=Created&orderby=id>. By default, results are sorted in ascending order. To sort results in descending order, you should use C<order=DESC> query parameter. Any other value for C<order> query parameter will be treated as C<order=ASC>, for ascending order. The order of the C<order> query parameters should be the same as the C<orderby> query parameters. Therefore, if you specify two fields to sort the results (with two C<orderby> parameters) and you want to sort the second field by descending order, you should also explicitely specify C<order=ASC> for the first field: C<orderby=Created&order=ASC&orderby=id&order=DESC>. C<orderby> and C<order> query parameters are used the smae way for JSON searches and for TicketSQL searches.
+
 Results are returned in
 L<the format described below|/"Example of plural resources (collections)">.
 
