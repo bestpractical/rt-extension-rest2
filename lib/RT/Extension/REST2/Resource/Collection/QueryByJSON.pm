@@ -57,6 +57,9 @@ sub limit_collection {
                 ? (OPERATOR => $limit->{operator})
                 : () ),
             CASESENSITIVE => ($limit->{case_sensitive} || 0),
+            ( $limit->{entry_aggregator}
+                ? (ENTRYAGGREGATOR => $limit->{entry_aggregator})
+                : () ),
         );
     }
 
