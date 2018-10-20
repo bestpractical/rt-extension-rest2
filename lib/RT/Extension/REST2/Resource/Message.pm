@@ -44,11 +44,43 @@ sub allowed_methods           { ['POST'] }
 sub charsets_provided         { [ 'utf-8' ] }
 sub default_charset           { 'utf-8' }
 sub content_types_provided    { [ { 'application/json' => sub {} } ] }
-sub content_types_accepted    { [ { 'text/plain' => 'add_message' }, { 'text/html' => 'add_message' }, { 'application/json' => 'from_json' } ] }
+sub content_types_accepted    { [ { 'text/plain' => 'add_message' }, { 'text/html' => 'add_message' }, { 'application/json' => 'from_json' }, { 'multipart/form-data' => 'from_multipart' } ] }
+
+sub from_multipart {
+    my $self = shift;
+    my $json_str = $self->request->parameters->{JSON};
+    return error_as_json(
+        $self->response,
+        \400, "JSON is a required field for multipart/form-data")
+            unless $json_str;
+
+    my $json = JSON::decode_json($json_str);
+
+    my @attachments = $self->request->upload('Attachments');
+    foreach my $attachment (@attachments) {
+        open my $filehandle, '<', $attachment->tempname;
+        if (defined $filehandle && length $filehandle) {
+            my ( @content, $buffer );
+            while ( my $bytesread = read( $filehandle, $buffer, 72*57 ) ) {
+                push @content, MIME::Base64::encode_base64($buffer);
+            }
+            close $filehandle;
+
+            push @{$json->{Attachments}},
+                {
+                    FileName    => $attachment->filename,
+                    FileType    => $attachment->headers->{'content-type'},
+                    FileContent => join("\n", @content),
+                };
+        }
+    }
+
+    return $self->from_json($json);
+}
 
 sub from_json {
     my $self = shift;
-    my $body = JSON::decode_json( $self->request->content );
+    my $body = shift || JSON::decode_json( $self->request->content );
 
     if ($body->{Attachments}) {
         foreach my $attachment (@{$body->{Attachments}}) {

@@ -366,6 +366,35 @@ comment:
     my $res = $ua->request($req);
     print Dumper($json->decode($res->content)) . "\n";
 
+Encoding the content of attachments file in C<MIME Base64> has the drawback
+of adding some processing overhead and to increase the sent data size by
+around 33%. RT's REST2 API provides another way to attach any binary or text
+file to your response or comment by C<POST>ing, instead of a JSON request, a
+C<multipart/form-data> request. This kind of request is similar to what the
+browser sends when you add attachments in RT's reply or comment form. As its
+name suggests, a C<multipart/form-data> request message contains a series of
+parts, each representing a form field. To reply to or comment a ticket, the
+request has to include a field named C<JSON>, which, as previously, is a
+JSON object with C<Subject>, C<Content>, C<ContentType>, C<TimeTaken>
+properties. Files can then be attached by specifying a field named
+C<Attachments> for each of them, with the content of the file as value and
+the appropriate MIME type.
+
+The curl invocation is quite straightforward:
+
+    curl -X POST
+         -H "Content-Type: multipart/form-data"
+         -F 'JSON={
+                    "Subject"    : "Attachments in multipart/form-data",
+                    "Content"    : "<p>I want <b>two</b> <em>attachments</em></p>",
+                    "ContentType": "text/html",
+                    "TimeTaken"  : "1"
+                  };type=application/json'
+         -F 'Attachments=@/tmp/my_image.png;type=image/png'
+         -F 'Attachments=@/tmp/.bashrc;type=text/plain'
+         -H 'Authorization: token XX_TOKEN_XX'
+            'XX_TICKET_URL_XX'/comment
+
 =head3 Summary
 
 RT's REST2 API provides the tools you need to build robust and dynamic
