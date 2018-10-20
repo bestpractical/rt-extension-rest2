@@ -509,6 +509,8 @@ values).  An example:
         ]
     '
 
+By default, only enabled objects are returned. For results to include also disabled objectn you should specify C<find_disabled_rows=1> as query parameter.
+
 The JSON payload must be an array of hashes with the keys C<field> and C<value>
 and optionally C<operator>.
 
