@@ -203,6 +203,26 @@ And here is a full example to create a ticket with an image attached. Since the 
              -H 'Authorization: token XX_TOKEN_XX'
                 'XX_TICKET_CREATE_URL_XX'
 
+Encoding the content of attachments file in C<MIME Base64> has the drawback of adding some processing overhead and to increase the sent data size by around 33%. RT's REST2 API provides another way to attach any binary or text file to your ticket by C<POST>ing, instead of a JSON request, a C<multipart/form-data> request. This kind of request is similar to what the browser sends when you add attachments in RT's ticket creation form. As its name suggests, a C<multipart/form-data> request message contains a series of parts, each representing a form field. To create a ticket with attachments, the request has to include a field named C<Json>, which, as previously, is a JSON object with C<Queue>, C<Subject>, C<Content>, C<ContentType>, etc. properties. Files can then be attached by specifying a field named C<Attachment> for each of them, with the content of the file as value and the appropriate MIME type.
+
+The curl invocation is quite straith forward:
+
+    curl -X POST
+         -H "Content-Type: multipart/form-data"
+         -F 'Json={
+                    "Queue"      : "General",
+                    "Subject"    : "hello world",
+                    "Content"    : "That <em>damned</em> printer is out of order <b>again</b>!",
+                    "ContentType": "text/html",
+                    "TimeTaken"  : "1"
+                  };type=application/json'
+         -F 'Attachment=@/tmp/image.png;type=image/png'
+         -F 'Attachment=@/etc/cups/cupsd.conf;type=text/plain'
+         -H 'Authorization: token XX_TOKEN_XX'
+            'XX_TICKET_URL_XX'/comment
+
+As a sidenote, fields for attached files can also be named C<attachment_1>, C<attachment_2>, etc. since such names were used in RT's REST 1.0 API.
+
 If successful, that will provide output like so:
 
     {
