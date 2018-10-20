@@ -462,6 +462,10 @@ USAGE
             ]
         '
 
+    By default, only enabled objects are returned. For results to include
+    also disabled objectn you should specify find_disabled_rows=1 as query
+    parameter.
+
     The JSON payload must be an array of hashes with the keys field and
     value and optionally operator.
 
