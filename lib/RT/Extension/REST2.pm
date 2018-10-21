@@ -4,7 +4,7 @@ use 5.010001;
 
 package RT::Extension::REST2;
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 our $REST_PATH = '/REST/2.0';
 
 use Plack::Builder;
@@ -364,6 +364,16 @@ Below are some examples using the endpoints above.
     curl -X POST -H "Content-Type: text/plain" -u 'root:password'
         -d 'Testing a comment'
         'https://myrt.com/REST/2.0/ticket/6/comment'
+
+    # Create an Asset
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '{"Name" : "Asset From Rest", "Catalog" : "General assets", "Content" : "Some content"}'
+        'https://myrt.com/REST/2.0/asset'
+
+    # Search Assets
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+    -d '[{ "field" : "id", "operator" : ">=", "value" : 0 }]'
+    'https://myrt.com/REST/2.0/asset'
 
 =head3 Transactions
 
