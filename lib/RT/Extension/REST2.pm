@@ -531,6 +531,18 @@ Below are some examples using the endpoints above.
     POST /customfield
         create a customfield; provide JSON content
 
+    GET /catalog/:id/customfields?query=<JSON>
+    POST /catalog/:id/customfields
+        search for custom fields attached to a catalog using L</JSON searches> syntax
+
+    GET /class/:id/customfields?query=<JSON>
+    POST /class/:id/customfields
+        search for custom fields attached to a class using L</JSON searches> syntax
+
+    GET /queue/:id/customfields?query=<JSON>
+    POST /queue/:id/customfields
+        search for custom fields attached to a queue using L</JSON searches> syntax
+
     GET /customfield/:id
         retrieve a custom field, with values if type is Select
 
