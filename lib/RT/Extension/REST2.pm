@@ -356,6 +356,11 @@ Below are some examples using the endpoints above.
     GET /attachment/:id
         retrieve an attachment
 
+=head3 Image and Binary Object Custom Field Values
+
+    GET /download/cf/:id
+        retrieve an image or a binary file as an object custom field value
+
 =head3 Queues
 
     GET /queues/all
