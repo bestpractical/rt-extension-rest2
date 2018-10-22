@@ -485,6 +485,10 @@ USAGE
         GET /attachment/:id
             retrieve an attachment
 
+   Image and Binary Object Custom Field Values
+        GET /download/cf/:id
+            retrieve an image or a binary file as an object custom field value
+
    Queues
         GET /queues/all
             retrieve list of all queues you can see
