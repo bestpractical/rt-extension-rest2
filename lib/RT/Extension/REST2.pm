@@ -542,7 +542,7 @@ is requested.
 
 =head2 Object Custom Field Values
 
-When creating (via C<POST>) or updating (via C<PUT>) a ressource which has some custom fields attached to, you can specify the value(s) for these customfield in the C<CustomFields> property of the JSON object parameter. The C<CustomFields> property should be a JSON object, with each property being the custom field identifier or name. If the custom field can have only one value, you just have to speciy the value as JSON string for this custom field. If the customfield can have several value, you have to specify a JSON array of each value you want for this custom field.
+When creating (via C<POST>) or updating (via C<PUT>) a ressource which has some custom fields attached to, you can specify the value(s) for these customfields in the C<CustomFields> property of the JSON object parameter. The C<CustomFields> property should be a JSON object, with each property being the custom field identifier or name. If the custom field can have only one value, you just have to speciy the value as JSON string for this custom field. If the customfield can have several value, you have to specify a JSON array of each value you want for this custom field.
 
     "CustomFields": {
         "XX_SINGLE_CF_ID_XX"   : "My Single Value,
@@ -588,7 +588,7 @@ The reason why you should encode the content of the image or binary file to C<MI
         },
         "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID": [
             {
-                "FileName"   : "image.png",
+                "FileName"   : "another_image.png",
                 "FileType"   : "image/png",
                 "FileContent": "XX_BASE_64_STRING_XX"
             },

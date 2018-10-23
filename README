@@ -493,7 +493,7 @@ USAGE
   Object Custom Field Values
     When creating (via POST) or updating (via PUT) a ressource which has
     some custom fields attached to, you can specify the value(s) for these
-    customfield in the CustomFields property of the JSON object parameter.
+    customfields in the CustomFields property of the JSON object parameter.
     The CustomFields property should be a JSON object, with each property
     being the custom field identifier or name. If the custom field can have
     only one value, you just have to speciy the value as JSON string for
@@ -555,7 +555,7 @@ USAGE
             },
             "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID": [
                 {
-                    "FileName"   : "image.png",
+                    "FileName"   : "another_image.png",
                     "FileType"   : "image/png",
                     "FileContent": "XX_BASE_64_STRING_XX"
                 },
