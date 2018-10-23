@@ -25,6 +25,7 @@ role {
 
         my $request = $self->request;
         return 0 unless $request->method =~ /^(PUT|POST)$/;
+        return 0 unless $request->header('Content-Type') =~ /^application\/json/;
 
         my $json = eval {
             JSON::from_json($request->content)

@@ -21,11 +21,83 @@ sub create_path {
     $_[0]->record->id || undef
 }
 
-sub content_types_accepted { [ {'application/json' => 'from_json'} ] }
+sub content_types_accepted { [ {'application/json' => 'from_json'}, { 'multipart/form-data' => 'from_multipart' } ] }
+
+sub from_multipart {
+    my $self = shift;
+    my $json_str = $self->request->parameters->{JSON};
+    return error_as_json(
+        $self->response,
+        \400, "Json is a required field for multipart/form-data")
+            unless $json_str;
+
+    my $json = JSON::decode_json($json_str);
+
+    my $cfs = delete $json->{CustomFields};
+    if ($cfs) {
+        foreach my $id (keys %$cfs) {
+            my $value = delete $cfs->{$id};
+
+            if (ref($value) eq 'ARRAY') {
+                my @values;
+                foreach my $single_value (@$value) {
+                    if ( ref $single_value eq 'HASH' && ( my $field_name = $single_value->{UploadField} ) ) {
+                        my $file = $self->request->upload($field_name);
+                        if ($file) {
+                            open my $filehandle, '<', $file->tempname;
+                            if (defined $filehandle && length $filehandle) {
+                                my ( @content, $buffer );
+                                while ( my $bytesread = read( $filehandle, $buffer, 72*57 ) ) {
+                                    push @content, MIME::Base64::encode_base64($buffer);
+                                }
+                                close $filehandle;
+
+                                push @values, {
+                                    FileName    => $file->filename,
+                                    FileType    => $file->headers->{'content-type'},
+                                    FileContent => join("\n", @content),
+                                };
+                            }
+                        }
+                    }
+                    else {
+                        push @values, $single_value;
+                    }
+                }
+                $cfs->{$id} = \@values;
+            }
+            elsif ( ref $value eq 'HASH' && ( my $field_name = $value->{UploadField} ) ) {
+                my $file = $self->request->upload($field_name);
+                if ($file) {
+                    open my $filehandle, '<', $file->tempname;
+                    if (defined $filehandle && length $filehandle) {
+                        my ( @content, $buffer );
+                        while ( my $bytesread = read( $filehandle, $buffer, 72*57 ) ) {
+                            push @content, MIME::Base64::encode_base64($buffer);
+                        }
+                        close $filehandle;
+
+                        $cfs->{$id} = {
+                            FileName    => $file->filename,
+                            FileType    => $file->headers->{'content-type'},
+                            FileContent => join("\n", @content),
+                        };
+                    }
+                }
+            }
+            else {
+                $cfs->{$id} = $value;
+            }
+        }
+        $json->{CustomFields} = $cfs;
+    }
+
+    return $self->from_json($json);
+}
 
 sub from_json {
     my $self = shift;
-    my $params = JSON::decode_json( $self->request->content );
+    my $params = shift || JSON::decode_json( $self->request->content );
 
     %$params = (
         %$params,
