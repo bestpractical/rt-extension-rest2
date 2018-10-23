@@ -21,6 +21,7 @@ requires 'Web::Machine' => '0.12';
 requires 'Module::Path';
 requires 'Pod::POM';
 requires 'Path::Dispatcher' => '1.07';
+requires 'HTTP::Message' => '6.07';
 
 recommends 'JSON::XS';
 
