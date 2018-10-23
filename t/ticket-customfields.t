@@ -385,5 +385,287 @@ for my $value (
     }
 }
 
+# Ticket Creation with image CF
+my $image_name = 'image.png';
+my $image_path = RT::Test::get_relocatable_file($image_name, 'data');
+my $image_content;
+open my $fh, '<', $image_path or die "Cannot read $image_path: $!\n";
+{
+    local $/;
+    $image_content = <$fh>;
+}
+close $fh;
+my $image_cf = RT::CustomField->new(RT->SystemUser);
+$image_cf->Create(LookupType => 'RT::Queue-RT::Ticket', Name => 'Image CF', Type => 'Image', MaxValues => 1, Queue => 'General');
+my $image_cf_id = $image_cf->id;
+{
+    my $payload = {
+        Subject => 'Ticket creation with image CF',
+        From    => 'test@bestpractical.com',
+        To      => 'rt@localhost',
+        Queue   => 'General',
+        Content => 'Testing ticket creation with Base64 encoded Image Custom Field using REST API.',
+        CustomFields => {
+            $image_cf_id => {
+                FileName => $image_name,
+                FileType => 'image/png',
+                FileContent => MIME::Base64::encode_base64($image_content),
+            },
+        },
+    };
+
+    my $res = $mech->post_json("$rest_base_path/ticket",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    ok($ticket_url = $res->header('location'));
+    ok(($ticket_id) = $ticket_url =~ qr[/ticket/(\d+)]);
+
+    my $ticket = RT::Ticket->new($user);
+    $ticket->Load($ticket_id);
+    my $image_ocfv = $ticket->CustomFieldValues('Image CF')->First;
+    is($image_ocfv->Content, $image_name);
+    is($image_ocfv->ContentType, 'image/png');
+    is($image_ocfv->LargeContent, $image_content);
+}
+
+# Ticket Update with image CF
+{
+    # Ticket Creation with empty image CF
+    my $payload = {
+        Subject => 'Ticket creation with empty image CF',
+        From    => 'test@bestpractical.com',
+        To      => 'rt@localhost',
+        Queue   => 'General',
+        Content => 'Testing ticket update with Base64 encoded Image Custom Field using REST API.',
+    };
+
+    my $res = $mech->post_json("$rest_base_path/ticket",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    ok($ticket_url = $res->header('location'));
+    ok(($ticket_id) = $ticket_url =~ qr[/ticket/(\d+)]);
+
+    my $ticket = RT::Ticket->new($user);
+    $ticket->Load($ticket_id);
+    my $image_ocfv = $ticket->CustomFieldValues('Image CF')->First;
+    is($image_ocfv, undef);
+
+    # Ticket update with a value for image CF
+    $payload = {
+        Subject => 'Ticket with image CF',
+        CustomFields => {
+            $image_cf_id => {
+                FileName => $image_name,
+                FileType => 'image/png',
+                FileContent => MIME::Base64::encode_base64($image_content),
+            },
+        },
+    };
+
+    $res = $mech->put_json($ticket_url,
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    is_deeply($mech->json_response, ["Ticket $ticket_id: Subject changed from 'Ticket creation with empty image CF' to 'Ticket with image CF'", "Image CF $image_name added"]);
+
+    $ticket = RT::Ticket->new($user);
+    $ticket->Load($ticket_id);
+    $image_ocfv = $ticket->CustomFieldValues('Image CF')->First;
+    is($image_ocfv->Content, $image_name);
+    is($image_ocfv->ContentType, 'image/png');
+    is($image_ocfv->LargeContent, $image_content);
+}
+
+# Ticket Creation with multi-value image CF
+my $multi_image_cf = RT::CustomField->new(RT->SystemUser);
+$multi_image_cf->Create(LookupType => 'RT::Queue-RT::Ticket', Name => 'Multi Image CF', Type => 'Image', MaxValues => 0, Queue => 'General');
+my $multi_image_cf_id = $multi_image_cf->id;
+{
+    my $payload = {
+        Subject => 'Ticket creation with multi-value image CF',
+        From    => 'test@bestpractical.com',
+        To      => 'rt@localhost',
+        Queue   => 'General',
+        Content => 'Testing ticket creation with Base64 encoded Multi-Value Image Custom Field using REST API.',
+        CustomFields => {
+            $multi_image_cf_id => [
+                {
+                    FileName => $image_name,
+                    FileType => 'image/png',
+                    FileContent => MIME::Base64::encode_base64($image_content),
+                },
+                {
+                    FileName => 'Duplicate',
+                    FileType => 'image/png',
+                    FileContent => MIME::Base64::encode_base64($image_content),
+                },
+            ],
+        },
+    };
+
+    my $res = $mech->post_json("$rest_base_path/ticket",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    ok($ticket_url = $res->header('location'));
+    ok(($ticket_id) = $ticket_url =~ qr[/ticket/(\d+)]);
+
+    my $ticket = RT::Ticket->new($user);
+    $ticket->Load($ticket_id);
+    my @multi_image_ocfvs = @{$ticket->CustomFieldValues('Multi Image CF')->ItemsArrayRef};
+    is(scalar(@multi_image_ocfvs), 2);
+    is($multi_image_ocfvs[0]->Content, $image_name);
+    is($multi_image_ocfvs[0]->ContentType, 'image/png');
+    is($multi_image_ocfvs[0]->LargeContent, $image_content);
+    is($multi_image_ocfvs[1]->Content, 'Duplicate');
+    is($multi_image_ocfvs[1]->ContentType, 'image/png');
+    is($multi_image_ocfvs[1]->LargeContent, $image_content);
+}
+
+# Ticket Update with multi-value image CF
+{
+    # Ticket Creation with empty multi-value image CF
+    my $payload = {
+        Subject => 'Ticket creation with empty multi-value image CF',
+        From    => 'test@bestpractical.com',
+        To      => 'rt@localhost',
+        Queue   => 'General',
+        Content => 'Testing ticket creation with Base64 encoded Multi-Value Image Custom Field using REST API.',
+    };
+
+    my $res = $mech->post_json("$rest_base_path/ticket",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    ok($ticket_url = $res->header('location'));
+    ok(($ticket_id) = $ticket_url =~ qr[/ticket/(\d+)]);
+
+    my $ticket = RT::Ticket->new($user);
+    $ticket->Load($ticket_id);
+    my $multi_image_ocfvs = $ticket->CustomFieldValues('Multi Image CF');
+    is($multi_image_ocfvs->Count, 0);
+    die "!".MIME::Base64::encode_base64("Hello World!")."!\n";
+
+    # Ticket update with two values for multi-value image CF
+    $payload = {
+        Subject => 'Ticket with multi-value image CF',
+        CustomFields => {
+            $multi_image_cf_id => [
+                {
+                    FileName => $image_name,
+                    FileType => 'image/png',
+                    FileContent => MIME::Base64::encode_base64($image_content),
+                },
+                {
+                    FileName => 'Duplicate',
+                    FileType => 'image/png',
+                    FileContent => MIME::Base64::encode_base64($image_content),
+                },
+            ],
+        },
+    };
+
+    $res = $mech->put_json($ticket_url,
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    is_deeply($mech->json_response, ["Ticket $ticket_id: Subject changed from 'Ticket creation with empty multi-value image CF' to 'Ticket with multi-value image CF'", "$image_name added as a value for Multi Image CF", "Duplicate added as a value for Multi Image CF"]);
+
+    $ticket = RT::Ticket->new($user);
+    $ticket->Load($ticket_id);
+    my @multi_image_ocfvs = @{$ticket->CustomFieldValues('Multi Image CF')->ItemsArrayRef};
+    is(scalar(@multi_image_ocfvs), 2);
+    is($multi_image_ocfvs[0]->Content, $image_name);
+    is($multi_image_ocfvs[0]->ContentType, 'image/png');
+    is($multi_image_ocfvs[0]->LargeContent, $image_content);
+    is($multi_image_ocfvs[1]->Content, 'Duplicate');
+    is($multi_image_ocfvs[1]->ContentType, 'image/png');
+    is($multi_image_ocfvs[1]->LargeContent, $image_content);
+
+    # Ticket update with deletion of one value for multi-value image CF
+    $payload = {
+        Subject => 'Ticket with deletion of one value for multi-value image CF',
+        CustomFields => {
+            $multi_image_cf_id => [ $image_name ],
+        },
+    };
+
+    $res = $mech->put_json($ticket_url,
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    is_deeply($mech->json_response, ["Ticket $ticket_id: Subject changed from 'Ticket with multi-value image CF' to 'Ticket with deletion of one value for multi-value image CF'", "Duplicate is no longer a value for custom field Multi Image CF"]);
+
+    $ticket = RT::Ticket->new($user);
+    $ticket->Load($ticket_id);
+    @multi_image_ocfvs = @{$ticket->CustomFieldValues('Multi Image CF')->ItemsArrayRef};
+    is(scalar(@multi_image_ocfvs), 1);
+    is($multi_image_ocfvs[0]->Content, $image_name);
+    is($multi_image_ocfvs[0]->ContentType, 'image/png');
+    is($multi_image_ocfvs[0]->LargeContent, $image_content);
+
+    # Ticket update with non-unique values for multi-value image CF
+    $payload = {
+        Subject => 'Ticket with non-unique values for multi-value image CF',
+        CustomFields => {
+            $multi_image_cf_id => [
+                {
+                    FileName => $image_name,
+                    FileType => 'image/png',
+                    FileContent => MIME::Base64::encode_base64($image_content),
+                },
+                $image_name,
+                {
+                    FileName => 'Duplicate',
+                    FileType => 'image/png',
+                    FileContent => MIME::Base64::encode_base64($image_content),
+                },
+            ],
+        },
+    };
+
+    $res = $mech->put_json($ticket_url,
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    $ticket = RT::Ticket->new($user);
+    $ticket->Load($ticket_id);
+    @multi_image_ocfvs = @{$ticket->CustomFieldValues('Multi Image CF')->ItemsArrayRef};
+
+    if (RT::Handle::cmp_version($RT::VERSION, '4.2.5') >= 0) {
+        is_deeply($mech->json_response, ["Ticket $ticket_id: Subject changed from 'Ticket with deletion of one value for multi-value image CF' to 'Ticket with non-unique values for multi-value image CF'", undef, "Duplicate added as a value for Multi Image CF"]);
+        is(scalar(@multi_image_ocfvs), 2);
+        is($multi_image_ocfvs[0]->Content, $image_name);
+        is($multi_image_ocfvs[0]->ContentType, 'image/png');
+        is($multi_image_ocfvs[0]->LargeContent, $image_content);
+        is($multi_image_ocfvs[1]->Content, 'Duplicate');
+        is($multi_image_ocfvs[1]->ContentType, 'image/png');
+        is($multi_image_ocfvs[1]->LargeContent, $image_content);
+    } else {
+        is_deeply($mech->json_response, ["Ticket $ticket_id: Subject changed from 'Ticket with deletion of one value for multi-value image CF' to 'Ticket with non-unique values for multi-value image CF'", "$image_name added as a value for Multi Image CF", "Duplicate added as a value for Multi Image CF"]);
+        is(scalar(@multi_image_ocfvs), 3);
+        is($multi_image_ocfvs[0]->Content, $image_name);
+        is($multi_image_ocfvs[0]->ContentType, 'image/png');
+        is($multi_image_ocfvs[0]->LargeContent, $image_content);
+        is($multi_image_ocfvs[1]->Content, $image_name);
+        is($multi_image_ocfvs[1]->ContentType, 'image/png');
+        is($multi_image_ocfvs[1]->LargeContent, $image_content);
+        is($multi_image_ocfvs[2]->Content, 'Duplicate');
+        is($multi_image_ocfvs[2]->ContentType, 'image/png');
+        is($multi_image_ocfvs[2]->LargeContent, $image_content);
+    }
+}
+
 done_testing;
 
