@@ -546,7 +546,7 @@ When creating (via C<POST>) or updating (via C<PUT>) a ressource which has some 
 
     "CustomFields": {
         "XX_SINGLE_CF_ID_XX"   : "My Single Value,
-        "XX_MULTI_VALUE_CF_ID>": [
+        "XX_MULTI_VALUE_CF_ID": [
             "My First Value",
             "My Second Value"
         ]
@@ -555,7 +555,7 @@ When creating (via C<POST>) or updating (via C<PUT>) a ressource which has some 
 Note that for a multi-value custom field, you have to specify all the values for this custom field. Therefore if the customfield for this ressource already has some values, the existing values must be including in your update request if you want to keep them (and add some new values). Conversely, if you want to delete some existing values, do not include them in your update request (including only values you wan to keep). The following example deletes "My Second Value" from the previous example:
 
     "CustomFields": {
-        "XX_MULTI_VALUE_CF_ID>": [
+        "XX_MULTI_VALUE_CF_ID": [
             "My First Value",
         ]
     }
@@ -584,13 +584,13 @@ The reason why you should encode the content of the image or binary file to C<MI
         "XX_SINGLE_IMAGE_OR_BINARY_CF_ID_XX"   : {
             "FileName"   : "image.png",
             "FileType"   : "image/png",
-            "FileContent": <XX_BASE_64_STRING_XX>
+            "FileContent": "XX_BASE_64_STRING_XX"
         },
-        "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID>": [
+        "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID": [
             {
                 "FileName"   : "image.png",
                 "FileType"   : "image/png",
-                "FileContent": <XX_BASE_64_STRING_XX>
+                "FileContent": "XX_BASE_64_STRING_XX"
             },
             {
                 "FileName"   : "hello_world.txt",
@@ -603,10 +603,30 @@ The reason why you should encode the content of the image or binary file to C<MI
 If you want to delete some existing values from a multi-value image or binary custom field, you can just pass the existing filename as value for the custom field identifier or name, no need to upload again the content of the file. The following example will delete the text file and keep the image upload in previous example:
 
     "CustomFields": {
-        "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID>": [
+        "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID": [
                 "image.png"
         ]
     }
+
+To download an image or binary file which is the custom field value of a resource, you just have to make a C<GET> request to the entry point returned for the corresponding custom field when fetching this resource, and it will return the content of the file as an octet string:
+
+    curl -i -H 'Authorization: token XX_TOKEN_XX' 'XX_TICKET_URL_XX'
+
+    {
+        […]
+        "XX_IMAGE_OR_BINARY_CF_ID_XX" : [
+            {
+                "content_type" : "image/png",
+                "filename" : "image.png",
+                "_url" : "XX_RT_URL_XX/REST/2.0/download/cf/XX_IMAGE_OR_BINARY_OCFV_ID_XX"
+            }
+        ],
+        […]
+    },
+
+    curl -i -H 'Authorization: token XX_TOKEN_XX'
+        'XX_RT_URL_XX/REST/2.0/download/cf/XX_IMAGE_OR_BINARY_OCFV_ID_XX'
+        > file.png
 
 =head2 Paging
 

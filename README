@@ -502,7 +502,7 @@ USAGE
 
         "CustomFields": {
             "XX_SINGLE_CF_ID_XX"   : "My Single Value,
-            "XX_MULTI_VALUE_CF_ID>": [
+            "XX_MULTI_VALUE_CF_ID": [
                 "My First Value",
                 "My Second Value"
             ]
@@ -518,7 +518,7 @@ USAGE
     example:
 
         "CustomFields": {
-            "XX_MULTI_VALUE_CF_ID>": [
+            "XX_MULTI_VALUE_CF_ID": [
                 "My First Value",
             ]
         }
@@ -551,13 +551,13 @@ USAGE
             "XX_SINGLE_IMAGE_OR_BINARY_CF_ID_XX"   : {
                 "FileName"   : "image.png",
                 "FileType"   : "image/png",
-                "FileContent": <XX_BASE_64_STRING_XX>
+                "FileContent": "XX_BASE_64_STRING_XX"
             },
-            "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID>": [
+            "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID": [
                 {
                     "FileName"   : "image.png",
                     "FileType"   : "image/png",
-                    "FileContent": <XX_BASE_64_STRING_XX>
+                    "FileContent": "XX_BASE_64_STRING_XX"
                 },
                 {
                     "FileName"   : "hello_world.txt",
@@ -574,10 +574,33 @@ USAGE
     keep the image upload in previous example:
 
         "CustomFields": {
-            "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID>": [
+            "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID": [
                     "image.png"
             ]
         }
+
+    To download an image or binary file which is the custom field value of a
+    resource, you just have to make a GET request to the entry point
+    returned for the corresponding custom field when fetching this resource,
+    and it will return the content of the file as an octet string:
+
+        curl -i -H 'Authorization: token XX_TOKEN_XX' 'XX_TICKET_URL_XX'
+
+        {
+            […]
+            "XX_IMAGE_OR_BINARY_CF_ID_XX" : [
+                {
+                    "content_type" : "image/png",
+                    "filename" : "image.png",
+                    "_url" : "XX_RT_URL_XX/REST/2.0/download/cf/XX_IMAGE_OR_BINARY_OCFV_ID_XX"
+                }
+            ],
+            […]
+        },
+
+        curl -i -H 'Authorization: token XX_TOKEN_XX'
+            'XX_RT_URL_XX/REST/2.0/download/cf/XX_IMAGE_OR_BINARY_OCFV_ID_XX'
+            > file.png
 
   Paging
     All plural resources (such as /tickets) require pagination, controlled
