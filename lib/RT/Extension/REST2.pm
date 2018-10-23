@@ -542,7 +542,7 @@ is requested.
 
 =head2 Object Custom Field Values
 
-When creating (via C<POST>) or updating (via C<PUT>) a ressource which has some custom fields attached to, you can specify the value(s) for these customfield in the C<CustomFields> property of the JSON object parameter. The C<CustomFields> property should be a JSON object, with each property being the custom field identifier or name. If the custom field can have only one value, you just have to speciy the value as JSON string for this custom field. If the customfield can have several value, you have to specify a JSON array of each value you want for this custom field.
+When creating (via C<POST>) or updating (via C<PUT>) a ressource which has some custom fields attached to, you can specify the value(s) for these customfields in the C<CustomFields> property of the JSON object parameter. The C<CustomFields> property should be a JSON object, with each property being the custom field identifier or name. If the custom field can have only one value, you just have to speciy the value as JSON string for this custom field. If the customfield can have several value, you have to specify a JSON array of each value you want for this custom field.
 
     "CustomFields": {
         "XX_SINGLE_CF_ID_XX"   : "My Single Value,
@@ -588,7 +588,7 @@ The reason why you should encode the content of the image or binary file to C<MI
         },
         "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID": [
             {
-                "FileName"   : "image.png",
+                "FileName"   : "another_image.png",
                 "FileType"   : "image/png",
                 "FileContent": "XX_BASE_64_STRING_XX"
             },
@@ -599,6 +599,28 @@ The reason why you should encode the content of the image or binary file to C<MI
             }
         ]
     }
+
+Encoding the content of image or binary files in C<MIME Base64> has the drawback of adding some processing overhead and to increase the sent data size by around 33%. RT's REST2 API provides another way to upload image or binary files as custom field alues by sending, instead of a JSON request, a C<multipart/form-data> request. This kind of request is similar to what the browser sends when you upload a file in RT's ticket creation or update forms. As its name suggests, a C<multipart/form-data> request message contains a series of parts, each representing a form field. To create or update a ticket with image or binary file, the C<multipart/form-data> request has to include a field named C<Json>, which, as previously, is a JSON object with C<Queue>, C<Subject>, C<Content>, C<ContentType>, etc. properties. But instead of specifying each custom field value as a JSON object with C<FileName>, C<FileType> and C<FileContent> properties, each custom field value should be a JSON string starting with keyword C<field:> followed by a field name. You can choose anything you want for this field name, except I<Attachement> or <attachment_1>, <attachment_2>, etc. which should be reserved for attching binary files to a response or a comment to a ticket. Files can then be attached by specifying a field named as specified in the C<CustomFields> property for each of them, with the content of the file as value and the appropriate MIME type.
+
+Here is an exemple of a curl invocation, wrapped to multiple lines for readability, to create a ticket with a multipart/request to upload some image or binary files as custom fields values.
+
+    curl -X POST
+         -H "Content-Type: multipart/form-data"
+         -F 'Json={
+                    "Queue"      : "General",
+                    "Subject"    : "hello world",
+                    "Content"    : "That <em>damned</em> printer is out of order <b>again</b>!",
+                    "ContentType": "text/html",
+                    "CustomFields"  : {
+                        "XX_SINGLE_IMAGE_OR_BINARY_CF_ID_XX"   => 'field: FILE_1',
+                        "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID" => ['field: FILE_2', 'field: FILE_3']
+                    }
+                  };type=application/json'
+         -F 'FILE_1=@/tmp/image.png;type=image/png'
+         -F 'FILE_1=@/tmp/another_image.png;type=image/png'
+         -F 'FILE_2=@/etc/cups/cupsd.conf;type=text/plain'
+         -H 'Authorization: token XX_TOKEN_XX'
+            'XX_RT_URL_XX'/tickets
 
 If you want to delete some existing values from a multi-value image or binary custom field, you can just pass the existing filename as value for the custom field identifier or name, no need to upload again the content of the file. The following example will delete the text file and keep the image upload in previous example:
 
