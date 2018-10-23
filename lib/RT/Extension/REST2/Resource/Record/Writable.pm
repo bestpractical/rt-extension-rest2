@@ -241,6 +241,36 @@ sub create_record {
     # Lookup CustomFields by name.
     if ($cfs) {
         foreach my $id (keys(%$cfs)) {
+			my $value = delete $cfs->{$id};
+            if ( ref($value) eq 'HASH' ) {
+                foreach my $field ( 'FileName', 'FileType', 'FileContent' ) {
+                    return ( 0, 0, "$field is a required field for Image/Binary ObjectCustomFieldValue" )
+                        unless $value->{$field};
+                }
+                $value->{Value}        = delete $value->{FileName};
+                $value->{ContentType}  = delete $value->{FileType};
+                $value->{LargeContent} = MIME::Base64::decode_base64( delete $value->{FileContent} );
+            }
+            elsif ( ref($value) eq 'ARRAY' ) {
+                my $i = 0;
+                foreach my $single_value (@$value) {
+                    if ( ref($single_value) eq 'HASH' ) {
+                        foreach my $field ( 'FileName', 'FileType', 'FileContent' ) {
+                            return ( 0, 0,
+                                "$field is a required field for Image/Binary ObjectCustomFieldValue" )
+                                unless $single_value->{$field};
+                        }
+                        $single_value->{Value}       = delete $single_value->{FileName};
+                        $single_value->{ContentType} = delete $single_value->{FileType};
+                        $single_value->{LargeContent}
+                            = MIME::Base64::decode_base64( delete $single_value->{FileContent} );
+                        $value->[$i] = $single_value;
+                    }
+                    $i++;
+                }
+            }
+            $cfs->{$id} = $value;
+
             if ($id !~ /^\d+$/) {
                 my $cf = $record->LoadCustomFieldByIdentifier($id);
 
