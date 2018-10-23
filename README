@@ -490,6 +490,95 @@ USAGE
     Each item is nearly the same representation used when an individual
     resource is requested.
 
+  Object Custom Field Values
+    When creating (via POST) or updating (via PUT) a ressource which has
+    some custom fields attached to, you can specify the value(s) for these
+    customfield in the CustomFields property of the JSON object parameter.
+    The CustomFields property should be a JSON object, with each property
+    being the custom field identifier or name. If the custom field can have
+    only one value, you just have to speciy the value as JSON string for
+    this custom field. If the customfield can have several value, you have
+    to specify a JSON array of each value you want for this custom field.
+
+        "CustomFields": {
+            "XX_SINGLE_CF_ID_XX"   : "My Single Value,
+            "XX_MULTI_VALUE_CF_ID>": [
+                "My First Value",
+                "My Second Value"
+            ]
+        }
+
+    Note that for a multi-value custom field, you have to specify all the
+    values for this custom field. Therefore if the customfield for this
+    ressource already has some values, the existing values must be including
+    in your update request if you want to keep them (and add some new
+    values). Conversely, if you want to delete some existing values, do not
+    include them in your update request (including only values you wan to
+    keep). The following example deletes "My Second Value" from the previous
+    example:
+
+        "CustomFields": {
+            "XX_MULTI_VALUE_CF_ID>": [
+                "My First Value",
+            ]
+        }
+
+    New values for Image and Binary custom fields can be set by specifying a
+    JSON object as value for the custom field identifier or name with the
+    following properties:
+
+    FileName
+        The name of the file to attach to your response/comment, mandatory.
+
+    FileType
+        The MIME type of the file to attach to your response/comment,
+        mandatory.
+
+    FileContent
+        The content, *encoded in MIME Base64* of the file to attach to your
+        response/comment, mandatory.
+
+    The reason why you should encode the content of the image or binary file
+    to MIME Base64 is that a JSON string value should be a sequence of zero
+    or more Unicode characters. MIME Base64 is a binary-to-text encoding
+    scheme widely used (for eg. by web browser) to send binary data when
+    text data is required. Most popular language have MIME Base64 libraries
+    that you can use to encode the content of your attached files (see
+    MIME::Base64 for Perl). Note that even text files should be MIME Base64
+    encoded to be passed in the FileContent property.
+
+        "CustomFields": {
+            "XX_SINGLE_IMAGE_OR_BINARY_CF_ID_XX"   : {
+                "FileName"   : "image.png",
+                "FileType"   : "image/png",
+                "FileContent": <XX_BASE_64_STRING_XX>
+            },
+            "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID>": [
+                {
+                    "FileName"   : "image.png",
+                    "FileType"   : "image/png",
+                    "FileContent": <XX_BASE_64_STRING_XX>
+                },
+                {
+                    "FileName"   : "hello_world.txt",
+                    "FileType"   : "text/plain",
+                    "FileContent": "SGVsbG8gV29ybGQh"
+                }
+            ]
+        }
+
+    If you want to delete some existing values from a multi-value image or
+    binary custom field, you can just pass the existing filename as value
+    for the custom field identifier or name, no need to upload again the
+    content of the file. The following example will delete the text file and
+    keep the image upload in previous example:
+
+        "CustomFields": {
+            "XX_MULTI_VALUE_IMAGE_OR_BINARY_CF_ID>": [
+                    "image.png"
+            ]
+        }
+
   Paging
     All plural resources (such as /tickets) require pagination, controlled
     by the query parameters page and per_page. The default page size is 20
