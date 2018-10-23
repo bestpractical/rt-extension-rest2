@@ -873,6 +873,13 @@ following example deletes "My Second Value" from the previous example:
         ]
     }
 
+To delete a single-value custom field, set its value to JSON C<null>
+(C<undef> in Perl):
+
+    "CustomFields": {
+        "XX_SINGLE_CF_ID_XX" : null
+    }
+
 New values for Image and Binary custom fields can be set by specifying a
 JSON object as value for the custom field identifier or name with the
 following properties:
