@@ -551,7 +551,6 @@ my $multi_image_cf_id = $multi_image_cf->id;
     $ticket->Load($ticket_id);
     my $multi_image_ocfvs = $ticket->CustomFieldValues('Multi Image CF');
     is($multi_image_ocfvs->Count, 0);
-    die "!".MIME::Base64::encode_base64("Hello World!")."!\n";
 
     # Ticket update with two values for multi-value image CF
     $payload = {
