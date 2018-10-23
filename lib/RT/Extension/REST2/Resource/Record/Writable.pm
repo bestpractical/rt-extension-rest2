@@ -74,8 +74,24 @@ sub _update_custom_fields {
         next unless $cf->ObjectTypeFromLookupType($cf->__Value('LookupType'))->isa(ref $record);
 
         if ($cf->SingleValue) {
+            my %args;
             if (ref($val) eq 'ARRAY') {
                 $val = $val->[0];
+            }
+            elsif (ref($val) eq 'HASH' && $cf->Type =~ /^(?:Image|Binary)$/) {
+                my @required_fields;
+                foreach my $field ('FileName', 'FileType', 'FileContent') {
+                    unless ($val->{$field}) {
+                        push @required_fields, "$field is a required field for Image/Binary ObjectCustomFieldValue";
+                    }
+                }
+                if (@required_fields) {
+                    push @results, @required_fields;
+                    next;
+                }
+                $args{ContentType} = delete $val->{FileType};
+                $args{LargeContent} = MIME::Base64::decode_base64(delete $val->{FileContent});
+                $val = delete $val->{FileName};
             }
             elsif (ref($val)) {
                 die "Invalid value type for CustomField $cfid";
@@ -84,15 +100,41 @@ sub _update_custom_fields {
             my ($ok, $msg) = $record->AddCustomFieldValue(
                 Field => $cf,
                 Value => $val,
+                %args,
             );
             push @results, $msg;
         }
         else {
             my %count;
             my @vals = ref($val) eq 'ARRAY' ? @$val : $val;
-            for (@vals) {
-                $count{$_}++;
+            my @content_vals;
+            my %args;
+            for my $value (@vals) {
+                if (ref($value) eq 'HASH' && $cf->Type =~ /^(?:Image|Binary)$/) {
+                    my @required_fields;
+                    foreach my $field ('FileName', 'FileType', 'FileContent') {
+                        unless ($value->{$field}) {
+                            push @required_fields, "$field is a required field for Image/Binary ObjectCustomFieldValue";
+                        }
+                    }
+                    if (@required_fields) {
+                        push @results, @required_fields;
+                        next;
+                    }
+                    my $key = delete $value->{FileName};
+                    $args{$key}->{ContentType} = delete $value->{FileType};
+                    $args{$key}->{LargeContent} = MIME::Base64::decode_base64(delete $value->{FileContent});
+                    $count{$key}++;
+                    push @content_vals, $key;
+                }
+                elsif (ref($value)) {
+                    die "Invalid value type for CustomField $cfid";
+                }
+                else {
+                    $count{$value}++;
+                }
             }
+            @vals = @content_vals if @content_vals;
 
             my $ocfvs = $cf->ValuesForObject( $record );
             my %ocfv_id;
@@ -116,6 +158,7 @@ sub _update_custom_fields {
                         my ($ok, $msg) = $record->AddCustomFieldValue(
                             Field => $cf,
                             Value => $key,
+                            $args{$key} ? %{$args{$key}} : (),
                         );
                         push @results, $msg;
                     }
@@ -279,6 +322,31 @@ sub create_record {
         if ($cfs) {
             while (my ($id, $value) = each(%$cfs)) {
                 delete $cfs->{$id};
+                if (ref($value) eq 'HASH') {
+                    foreach my $field ('FileName', 'FileType', 'FileContent') {
+                        return (0, 0, "$field is a required field for Image/Binary ObjectCustomFieldValue")
+                            unless $value->{$field};
+                    }
+                    $value->{Value} = delete $value->{FileName};
+                    $value->{ContentType} = delete $value->{FileType};
+                    $value->{LargeContent} = MIME::Base64::decode_base64(delete $value->{FileContent});
+                }
+                elsif (ref($value) eq 'ARRAY') {
+                    my $i = 0;
+                    foreach my $single_value (@$value) {
+                        if (ref($single_value) eq 'HASH') {
+                            foreach my $field ('FileName', 'FileType', 'FileContent') {
+                                return (0, 0, "$field is a required field for Image/Binary ObjectCustomFieldValue")
+                                    unless $single_value->{$field};
+                            }
+                            $single_value->{Value} = delete $single_value->{FileName};
+                            $single_value->{ContentType} = delete $single_value->{FileType};
+                            $single_value->{LargeContent} = MIME::Base64::decode_base64(delete $single_value->{FileContent});
+                            $value->[$i] = $single_value;
+                        }
+                        $i++;
+                    }
+                }
                 $args{"CustomField-$id"} = $value;
             }
         }
