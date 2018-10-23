@@ -75,7 +75,16 @@ sub _update_custom_fields {
 
         if ($cf->SingleValue) {
             my %args;
-            if (ref($val) eq 'ARRAY') {
+            my $old_val = $record->FirstCustomFieldValue($cfid);
+            if (!defined $val && $old_val) {
+                my ($ok, $msg) = $record->DeleteCustomFieldValue(
+                    Field => $cf,
+                    Value => $old_val,
+                );
+                push @results, $msg;
+                next;
+            }
+            elsif (ref($val) eq 'ARRAY') {
                 $val = $val->[0];
             }
             elsif (ref($val) eq 'HASH' && $cf->Type =~ /^(?:Image|Binary)$/) {
