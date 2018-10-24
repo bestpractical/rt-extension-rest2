@@ -259,6 +259,44 @@ my ($ticket_url, $ticket_id);
 
     $content = $mech->json_response;
     is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified Again'], $multi_cf_id => [] }, 'Same CF value');
+
+    # fail to delete the CF if mandatory
+    $single_cf->SetPattern('(?#Mandatory).');
+    $payload->{Subject} = 'Cannot delete mandatory CF';
+    $payload->{CustomFields}{$single_cf_id} = undef;
+    $res = $mech->put_json($ticket_url,
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    is_deeply($mech->json_response, ["Ticket 1: Subject changed from 'No CF change' to 'Cannot delete mandatory CF'", "Input must match [Mandatory]"]);
+
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    $content = $mech->json_response;
+    is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified Again'], $multi_cf_id => [] }, 'Still same CF value');
+
+    # delete the CF
+    $single_cf->SetPattern();
+    $payload->{Subject} = 'Delete CF';
+    $payload->{CustomFields}{$single_cf_id} = undef;
+    $res = $mech->put_json($ticket_url,
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    is_deeply($mech->json_response, ["Ticket 1: Subject changed from 'Cannot delete mandatory CF' to 'Delete CF'", 'Modified Again is no longer a value for custom field Single']);
+
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    $content = $mech->json_response;
+    is_deeply($content->{CustomFields}, { $single_cf_id => [], $multi_cf_id => [] }, 'No more CF value');
 }
 
 # Ticket Creation with ModifyCustomField
@@ -432,22 +470,18 @@ my $image_cf_id = $image_cf->id;
 
 # Ticket Update with image CF
 {
-    # Ticket Creation with empty image CF
+    # Ticket update to delete image CF
     my $payload = {
-        Subject => 'Ticket creation with empty image CF',
-        From    => 'test@bestpractical.com',
-        To      => 'rt@localhost',
-        Queue   => 'General',
-        Content => 'Testing ticket update with Base64 encoded Image Custom Field using REST API.',
+        CustomFields => {
+            $image_cf_id => undef,
+        },
     };
 
-    my $res = $mech->post_json("$rest_base_path/ticket",
+    my $res = $mech->put_json($ticket_url,
         $payload,
         'Authorization' => $auth,
     );
-    is($res->code, 201);
-    ok($ticket_url = $res->header('location'));
-    ok(($ticket_id) = $ticket_url =~ qr[/ticket/(\d+)]);
+    is($res->code, 200);
 
     my $ticket = RT::Ticket->new($user);
     $ticket->Load($ticket_id);
@@ -471,7 +505,7 @@ my $image_cf_id = $image_cf->id;
         'Authorization' => $auth,
     );
     is($res->code, 200);
-    is_deeply($mech->json_response, ["Ticket $ticket_id: Subject changed from 'Ticket creation with empty image CF' to 'Ticket with image CF'", "Image CF $image_name added"]);
+    is_deeply($mech->json_response, ["Ticket $ticket_id: Subject changed from 'Ticket creation with image CF' to 'Ticket with image CF'", "Image CF $image_name added"]);
 
     $ticket = RT::Ticket->new($user);
     $ticket->Load($ticket_id);
