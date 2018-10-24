@@ -28,45 +28,6 @@ sub dispatch_rules {
 
 sub content_types_accepted { [ {'application/json' => 'from_json'}, { 'multipart/form-data' => 'from_multipart' } ] }
 
-sub from_multipart {
-    my $self = shift;
-    my $json_str = $self->request->parameters->{Json};
-    return error_as_json(
-        $self->response,
-        \400, "Json is a required field for multipart/form-data")
-            unless $json_str;
-
-    my $json = JSON::decode_json($json_str);
-
-    my @attachments = $self->request->upload;
-    if (@attachments && $attachments[0] =~ /^Attachment[_\d]*$/i) {
-        $json->{AttachmentsContents} = ()
-            unless $json->{AttachmentsContents};
-
-        foreach my $attach_field (sort @attachments) {
-            next unless $attach_field =~ /^Attachment[_\d]*$/i;
-
-            my $attachment = $self->request->upload($attach_field);
-            open my $filehandle, '<', $attachment->tempname;
-            if (defined $filehandle && length $filehandle) {
-                my ( @content, $buffer );
-                while ( my $bytesread = read( $filehandle, $buffer, 72*57 ) ) {
-                    push @content, MIME::Base64::encode_base64($buffer);
-                }
-                close $filehandle;
-
-                push @{$json->{AttachmentsContents}},
-                    {
-                        FileName    => $attachment->filename,
-                        FileType    => $attachment->headers->{'content-type'},
-                        FileContent => join("\n", @content),
-                    };
-            }
-        }
-    }
-    return $self->from_json($json);
-}
-
 sub create_record {
     my $self = shift;
     my $data = shift;
