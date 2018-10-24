@@ -501,7 +501,7 @@ USAGE
     to specify a JSON array of each value you want for this custom field.
 
         "CustomFields": {
-            "XX_SINGLE_CF_ID_XX"   : "My Single Value,
+            "XX_SINGLE_CF_ID_XX"   : "My Single Value",
             "XX_MULTI_VALUE_CF_ID": [
                 "My First Value",
                 "My Second Value"
@@ -519,7 +519,7 @@ USAGE
 
         "CustomFields": {
             "XX_MULTI_VALUE_CF_ID": [
-                "My First Value",
+                "My First Value"
             ]
         }
 
