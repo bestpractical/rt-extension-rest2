@@ -501,7 +501,7 @@ USAGE
     to specify a JSON array of each value you want for this custom field.
 
         "CustomFields": {
-            "XX_SINGLE_CF_ID_XX"   : "My Single Value,
+            "XX_SINGLE_CF_ID_XX"   : "My Single Value",
             "XX_MULTI_VALUE_CF_ID": [
                 "My First Value",
                 "My Second Value"
@@ -519,8 +519,15 @@ USAGE
 
         "CustomFields": {
             "XX_MULTI_VALUE_CF_ID": [
-                "My First Value",
+                "My First Value"
             ]
+        }
+
+    To delete a single-value custom field, set its value to JSON null (undef
+    in Perl):
+
+        "CustomFields": {
+            "XX_SINGLE_CF_ID_XX" : null
         }
 
     New values for Image and Binary custom fields can be set by specifying a
