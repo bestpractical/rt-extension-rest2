@@ -545,7 +545,7 @@ is requested.
 When creating (via C<POST>) or updating (via C<PUT>) a ressource which has some custom fields attached to, you can specify the value(s) for these customfields in the C<CustomFields> property of the JSON object parameter. The C<CustomFields> property should be a JSON object, with each property being the custom field identifier or name. If the custom field can have only one value, you just have to speciy the value as JSON string for this custom field. If the customfield can have several value, you have to specify a JSON array of each value you want for this custom field.
 
     "CustomFields": {
-        "XX_SINGLE_CF_ID_XX"   : "My Single Value,
+        "XX_SINGLE_CF_ID_XX"   : "My Single Value",
         "XX_MULTI_VALUE_CF_ID": [
             "My First Value",
             "My Second Value"
@@ -556,7 +556,7 @@ Note that for a multi-value custom field, you have to specify all the values for
 
     "CustomFields": {
         "XX_MULTI_VALUE_CF_ID": [
-            "My First Value",
+            "My First Value"
         ]
     }
 
