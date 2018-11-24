@@ -598,6 +598,57 @@ the query parameters C<page> and C<per_page>.  The default page size is 20
 items, but it may be increased up to 100 (or decreased if desired).  Page
 numbers start at 1.
 
+=head2 Fields
+
+When fetching search results you can include additional fields by adding
+a query parameter C<fields> which is a comma seperated list of fields
+to include. You must use the camel case version of the name as included
+in the results for the actual item.
+
+CustomFields can be specified in the C<fields> parameter either with
+CustomField-I<cf_name> or CF.{I<cf_name>} syntaxes.
+
+You can use additional fields parameters to expand child blocks, for
+example (line wrapping inserted for readability):
+
+    XX_RT_URL_XX/REST/2.0/tickets
+      ?fields=Owner,Status,Created,Subject,Queue,CF.{My CF}
+      &fields[Queue]=Name,Description
+
+Says that in the result set for tickets, the extra fields for Owner, Status,
+Created, Subject, Queue, and CustomField "My CF" should be included. But in addition, for the Queue
+block, also include Name and Description. The results would be similar to
+this (only one ticket is displayed):
+
+   "items" : [
+      {
+         "Subject" : "Sample Ticket",
+         "id" : "2",
+         "type" : "ticket",
+         "Owner" : {
+            "id" : "root",
+            "_url" : "XX_RT_URL_XX/REST/2.0/user/root",
+            "type" : "user"
+         },
+         "_url" : "XX_RT_URL_XX/REST/2.0/ticket/2",
+         "Status" : "resolved",
+         "Created" : "2018-06-29:10:25Z",
+         "CF.{My CF} : "My CF Value",
+         "Queue" : {
+            "id" : "1",
+            "type" : "queue",
+            "Name" : "General",
+            "Description" : "The default queue",
+            "_url" : "XX_RT_URL_XX/REST/2.0/queue/1"
+         }
+      }
+      { … },
+      …
+   ],
+
+If the user performing the query doesn't have rights to view the record
+(or sub record), then the empty string or an empty hash will be returned.
+
 =head2 Authentication Methods
 
 Authentication should B<always> be done over HTTPS/SSL for
@@ -732,7 +783,9 @@ L<rt.cpan.org|http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-REST
 
 =head1 LICENSE AND COPYRIGHT
 
-This software is Copyright (c) 2015-2017 by Best Practical Solutions, LLC.
+This software is Copyright (c) 2015-2018 by Best Practical Solutions, LLC.
+Portions are Copyright (c) 2018 by Catalyst Cloud Ltd.
+Portions are Copyright (c) 2018 by Easter-eggs SARL.
 
 This is free software, licensed under:
 

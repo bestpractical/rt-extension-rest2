@@ -243,5 +243,117 @@ my ($features_url, $features_id);
     like($queue->{_url}, qr{$rest_base_path/queue/$features_id$});
 }
 
-done_testing;
+# id > 0 (finds new Features queue but not disabled Bugs queue), include Name field
+{
+    my $res = $mech->post_json("$rest_base_path/queues?fields=Name",
+        [{ field => 'id', operator => '>', value => 0 }],
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
 
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $queue = $content->{items}->[0];
+    is($queue->{Name}, 'Features');
+    is(scalar keys %$queue, 4);
+}
+
+
+# all queues, basic fields
+{
+    my $res = $mech->post_json("$rest_base_path/queues/all",
+        [],
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $queue = $content->{items}->[0];
+    is(scalar keys %$queue, 3);
+}
+
+# all queues, basic fields plus Name
+{
+    my $res = $mech->post_json("$rest_base_path/queues/all?fields=Name",
+        [],
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $queue = $content->{items}->[0];
+    is(scalar keys %$queue, 4);
+    is($queue->{Name}, 'Features');
+}
+
+# all queues, basic fields plus Name, Lifecycle. Lifecycle should be empty
+# string as we don't allow returning it.
+{
+    my $res = $mech->post_json("$rest_base_path/queues/all?fields=Name,Lifecycle",
+        [],
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $queue = $content->{items}->[0];
+    is(scalar keys %$queue, 5);
+    is($queue->{Name}, 'Features');
+    is_deeply($queue->{Lifecycle}, {}, 'Lifecycle is empty');
+}
+
+# all queues, basic fields plus Name and CustomFields
+{
+    my $features_queue = RT::Queue->new( RT->SystemUser );
+    my ($ok, $msg) = $features_queue->Load( $features_id );
+    ok($ok, $msg);
+
+    my $single_cf = RT::CustomField->new( RT->SystemUser );
+    ($ok, $msg) = $single_cf->Create( Name => 'Single', LookupType => 'RT::Queue', Type => 'FreeformSingle' );
+    ok($ok, $msg);
+    my $single_cf_id = $single_cf->Id;
+
+    ($ok, $msg) = $single_cf->AddToObject( $features_queue );
+    ok($ok, $msg);
+
+    ($ok, $msg) = $features_queue->AddCustomFieldValue( Field => $single_cf_id , Value => "I'm a single CF" );
+    ok($ok, $msg);
+
+    my $multi_cf = RT::CustomField->new( RT->SystemUser );
+    ($ok, $msg) = $multi_cf->Create( Name => 'Multi CF', LookupType => 'RT::Queue', Type => 'FreeformMultiple' );
+    ok($ok, $msg);
+    my $multi_cf_id = $multi_cf->Id;
+
+    ($ok, $msg) = $multi_cf->AddToObject( $features_queue );
+    ok($ok, $msg);
+
+    ($ok, $msg) = $features_queue->AddCustomFieldValue( Field => $multi_cf_id , Value => "First Value" );
+    ok($ok, $msg);
+
+    ($ok, $msg) = $features_queue->AddCustomFieldValue( Field => $multi_cf_id , Value => "Second Value" );
+    ok($ok, $msg);
+
+    my $res = $mech->post_json("$rest_base_path/queues/all?fields=Name,CustomField-Single,CF.{Multi CF}",
+        [],
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $queue = $content->{items}->[0];
+    is(scalar keys %$queue, 6);
+    is($queue->{Name}, 'Features');
+    is($queue->{'CustomField-Single'}, "I'm a single CF");
+    is_deeply($queue->{'CF.{Multi CF}'}, [ 'First Value', 'Second Value' ]);
+}
+
+done_testing;
