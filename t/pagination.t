@@ -161,15 +161,32 @@ for my $param ( 'per_page', 'page' ) {
 }
 
 # Test with limit
+my $alphabis = RT::Test->load_or_create_queue( Name => 'Alphabis' );
 {
-    my $alphabis = RT::Test->load_or_create_queue( Name => 'Alphabis' );
-    my $res = $mech->post_json("$rest_base_path/queues/all?per_page=1",
+    my $res = $mech->post_json("$rest_base_path/queues/all?per_page=1&page=2",
         [{field => 'Name', operator => 'LIKE', value => 'Alp'}],
         'Authorization' => $auth,
     );
     is($res->code, 200);
 
     my $content = $mech->json_response;
+    is($content->{count}, 1);
+    is($content->{page}, 2);
+    is($content->{pages}, 2);
+    is($content->{per_page}, 1);
+    is($content->{total}, 2);
+    like($content->{prev_page}, qr{/queues/all\?per_page=1&page=1$});
+    is($content->{next_page}, undef);
+    is(scalar @{$content->{items}}, 1);
+    is($content->{items}->[0]->{id}, $alphabis->id);
+
+    $res = $mech->post_json($content->{prev_page},
+        [{field => 'Name', operator => 'LIKE', value => 'Alp'}],
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    $content = $mech->json_response;
     is($content->{count}, 1);
     is($content->{page}, 1);
     is($content->{pages}, 2);
@@ -178,6 +195,57 @@ for my $param ( 'per_page', 'page' ) {
     is($content->{prev_page}, undef);
     like($content->{next_page}, qr{/queues/all\?per_page=1&page=2$});
     is(scalar @{$content->{items}}, 1);
+    is($content->{items}->[0]->{id}, $alpha->id);
+}
+
+# Pagination for ticket search
+my $ticket1 = RT::Test->create_ticket(
+    Queue     => $alphabis,
+    Subject   => 'A first ticket',
+    Requestor => ['requestor@test.com'],
+);
+my $ticket2 = RT::Test->create_ticket(
+    Queue     => $alphabis,
+    Subject   => 'A second ticket',
+    Requestor => ['requestor@test.com'],
+);
+my $ticket3 = RT::Test->create_ticket(
+    Queue     => $alphabis,
+    Subject   => 'The last one',
+    Requestor => ['requestor@test.com'],
+);
+{
+    my $res = $mech->get("$rest_base_path/tickets/?query=Subject+LIKE+'ticket'&per_page=1&page=2",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is($content->{count}, 1);
+    is($content->{page}, 2);
+    is($content->{pages}, 2);
+    is($content->{per_page}, 1);
+    is($content->{total}, 2);
+    like($content->{prev_page}, qr{/tickets/\?query=Subject\+LIKE\+'ticket'&per_page=1&page=1$});
+    is($content->{next_page}, undef);
+    is(scalar @{$content->{items}}, 1);
+    is($content->{items}->[0]->{id}, $ticket2->id);
+
+    $res = $mech->get($content->{prev_page},
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    $content = $mech->json_response;
+    is($content->{count}, 1);
+    is($content->{page}, 1);
+    is($content->{pages}, 2);
+    is($content->{per_page}, 1);
+    is($content->{total}, 2);
+    is($content->{prev_page}, undef);
+    like($content->{next_page}, qr{/tickets/\?query=Subject\+LIKE\+'ticket'&per_page=1&page=2$});
+    is(scalar @{$content->{items}}, 1);
+    is($content->{items}->[0]->{id}, $ticket1->id);
 }
 
 done_testing;
