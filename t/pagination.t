@@ -135,14 +135,28 @@ for my $param ( 'per_page', 'page' ) {
         is($res->code, 200);
 
         my $content = $mech->json_response;
-        is($content->{count}, 3);
-        is($content->{page}, 1);
+        if ($param eq 'page') {
+            if ($value eq '30') {
+                is($content->{count}, 0);
+                is($content->{page}, 30);
+                is(scalar @{$content->{items}}, 0);
+            } else {
+                is($content->{count}, 3);
+                is($content->{page}, 1);
+                is(scalar @{$content->{items}}, 3);
+            }
+        }
         is($content->{pages}, 1);
-        is($content->{per_page}, 20);
+        if ($param eq 'per_page') {
+            if ($value eq '30') {
+                is($content->{per_page}, 30);
+            } else {
+                is($content->{per_page}, 20);
+            }
+        }
         is($content->{total}, 3);
         undef($content->{prev_page});
         undef($content->{next_page});
-        is(scalar @{$content->{items}}, 3);
     }
 }
 

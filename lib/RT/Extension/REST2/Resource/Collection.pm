@@ -39,12 +39,9 @@ sub setup_paging {
     elsif ($per_page > 100      ) { $per_page = 100 }
     $self->collection->RowsPerPage($per_page);
 
-    my $max_page = ceil($self->collection->CountAll / $self->collection->RowsPerPage);
-
     my $page = $self->request->param('page') || 1;
     if    ($page !~ /^\d+$/  ) { $page = 1 }
     elsif ($page == 0        ) { $page = 1 }
-    elsif ($page > $max_page ) { $page = $max_page }
     $self->collection->GotoPage($page - 1);
 }
 
