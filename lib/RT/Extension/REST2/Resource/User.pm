@@ -4,6 +4,7 @@ use warnings;
 
 use Moose;
 use namespace::autoclean;
+use RT::Extension::REST2::Util qw(expand_uid);
 
 extends 'RT::Extension::REST2::Resource::Record';
 with (
@@ -40,6 +41,10 @@ around 'serialize' => sub {
     my $data = $self->$orig(@_);
     $data->{Privileged} = $self->record->Privileged ? 1 : 0;
     $data->{Disabled}   = $self->record->PrincipalObj->Disabled;
+    $data->{Memberships} = [
+        map { expand_uid($_->UID) }
+        @{ $self->record->OwnGroups->ItemsArrayRef }
+    ];
     return $data;
 };
 
@@ -55,6 +60,12 @@ sub hypermedia_links {
     my $self = shift;
     my $links = $self->_default_hypermedia_links(@_);
     push @$links, $self->_transaction_history_link;
+
+    my $id = $self->record->id;
+    push @$links,
+      { ref  => 'memberships',
+        _url => RT::Extension::REST2->base_uri . "/user/$id/groups",
+      };
     return $links;
 }
 

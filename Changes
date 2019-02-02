@@ -1,5 +1,9 @@
 Revision history for RT-Extension-REST2
 
+1.05 2018-11-19
+ - Add support to manage memberships for users and groups
+ - Add support to enable/disable users and groups
+
 1.04 2018-07-06
  - Fix bug that caused custom fields to be updated after create
 

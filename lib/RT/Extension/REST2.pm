@@ -4,7 +4,7 @@ use 5.010001;
 
 package RT::Extension::REST2;
 
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 our $REST_PATH = '/REST/2.0';
 
 use Plack::Builder;
@@ -440,11 +440,11 @@ Below are some examples using the endpoints above.
 
     GET /user/:id
     GET /user/:name
-        retrieve a user by numeric id or username
+        retrieve a user by numeric id or username (including its memberships and whether it is disabled)
 
     PUT /user/:id
     PUT /user/:name
-        update a user's metadata; provide JSON content
+        update a user's metadata (including its Disabled status); provide JSON content
 
     DELETE /user/:id
     DELETE /user/:name
@@ -460,11 +460,67 @@ Below are some examples using the endpoints above.
     POST /groups
         search for groups using L</JSON searches> syntax
 
+    POST /group
+        create a (user defined) group; provide JSON content
+
     GET /group/:id
-        retrieve a group (including its members)
+        retrieve a group (including its members and whether it is disabled)
+
+    PUT /group/:id
+        update a groups's metadata (including its Disabled status); provide JSON content
+
+    DELETE /group/:id
+        disable group
 
     GET /group/:id/history
         retrieve list of transactions for group
+
+=head3 User Memberships
+
+    GET /user/:id/groups
+    GET /user/:name/groups
+        retrieve list of groups which a user is a member of
+
+    PUT /user/:id/groups
+    PUT /user/:name/groups
+        add a user to groups; provide a JSON array of groups ids
+
+    DELETE /user/:id/group/:id
+    DELETE /user/:name/group/:id
+        remove a user from a group
+
+    DELETE /user/:id/groups
+    DELETE /user/:name/groups
+        remove a user from all groups
+
+=head3 Group Members
+
+    GET /group/:id/members
+        retrieve list of direct members of a group
+
+    GET /group/:id/members?recursively=1
+        retrieve list of direct and recursive members of a group
+
+    GET /group/:id/members?users=0
+        retrieve list of direct group members of a group
+
+    GET /group/:id/members?users=0&recursively=1
+        retrieve list of direct and recursive group members of a group
+
+    GET /group/:id/members?groups=0
+        retrieve list of direct user members of a group
+
+    GET /group/:id/members?groups=0&recursively=1
+        retrieve list of direct and recursive user members of a group
+
+    PUT /group/:id/members
+        add members to a group; provide a JSON array of principal ids
+
+    DELETE /group/:id/member/:id
+        remove a member from a group
+
+    DELETE /group/:id/members
+        remove all members from a group
 
 =head3 Custom Fields
 
