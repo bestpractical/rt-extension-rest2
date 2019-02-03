@@ -119,6 +119,29 @@ my ($ticket_url, $ticket_id);
     is($updated_by->{id}, 'test');
     is($updated_by->{type}, 'user');
     like($updated_by->{_url}, qr{$rest_base_path/user/test$});
+
+    # Check that our attachment contains the expected content.
+    # We need to work our way through history...
+    $res = $mech->get("$ticket_url/history",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    for my $item (@{ $mech->json_response->{items} }) {
+        $res = $mech->get($item->{_url},
+            'Authorization' => $auth,
+        );
+        is($res->code, 200);
+
+        for my $hyperlink_item (@{ $mech->json_response->{_hyperlinks} }) {
+            next unless $hyperlink_item->{ref} eq 'attachment';
+            my $hyperlink_res = $mech->get($hyperlink_item->{_url},
+                'Authorization' => $auth,
+            );
+            is($res->code, 200);
+            is($mech->json_response->{Content}, 'Testing ticket creation using REST API.');
+        }
+    }
 }
 
 # Ticket Search
