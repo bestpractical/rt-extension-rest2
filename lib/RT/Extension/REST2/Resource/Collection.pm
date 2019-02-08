@@ -97,7 +97,9 @@ sub serialize {
         $results{next_page} = $uri->as_string;
     };
     if ($results{page} > 1) {
-        $uri->query_form( @query_form, page => $results{page} - 1 );
+        # If we're beyond the last page, set prev_page as the last page
+        # available, otherwise, the previous page.
+        $uri->query_form( @query_form, page => ($results{page} > $results{pages} ? $results{pages} : $results{page} - 1) );
         $results{prev_page} = $uri->as_string;
     };
 
