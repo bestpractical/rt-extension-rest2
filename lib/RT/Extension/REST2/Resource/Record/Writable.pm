@@ -56,6 +56,8 @@ sub update_record {
     push @results, $self->_update_role_members($data);
     push @results, $self->_update_disabled($data->{Disabled})
       unless grep { $_ eq 'Disabled' } $self->record->WritableAttributes;
+    push @results, $self->_update_privileged($data->{Privileged})
+      unless grep { $_ eq 'Privileged' } $self->record->WritableAttributes;
 
     # XXX TODO: Figure out how to return success/failure?  Core RT::Record's
     # ->Update will need to be replaced or improved.
@@ -261,6 +263,22 @@ sub _update_disabled {
     return unless $record->can('SetDisabled');
 
     my ($ok, $msg) = $record->SetDisabled($data);
+    push @results, $msg;
+
+    return @results;
+}
+
+sub _update_privileged {
+    my $self = shift;
+    my $data = shift;
+    my @results;
+
+    my $record = $self->record;
+    return unless defined $data and $data =~ /^[01]$/;
+
+    return unless $record->can('SetPrivileged');
+
+    my ($ok, $msg) = $record->SetPrivileged($data);
     push @results, $msg;
 
     return @results;
