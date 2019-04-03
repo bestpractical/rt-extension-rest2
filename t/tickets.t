@@ -357,4 +357,40 @@ my ($ticket_url, $ticket_id);
     is($content->{ContentType}, 'text/html');
 }
 
+# Ticket Sorted Search
+{
+    my $ticket2 = RT::Ticket->new($RT::SystemUser);
+    ok(my ($ticket2_id) = $ticket2->Create(Queue => 'General', Subject => 'Ticket for test'));
+    my $ticket3 = RT::Ticket->new($RT::SystemUser);
+    ok(my ($ticket3_id) = $ticket3->Create(Queue => 'General', Subject => 'Ticket for test'));
+    my $ticket4 = RT::Ticket->new($RT::SystemUser);
+    ok(my ($ticket4_id) = $ticket4->Create(Queue => 'General', Subject => 'Ticket to test sorted search'));
+
+    my $res = $mech->get("$rest_base_path/tickets?query=Subject LIKE 'test'&orderby=Subject&order=DESC&orderby=id",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    is($content->{count}, 3);
+    is($content->{page}, 1);
+    is($content->{per_page}, 20);
+    is($content->{total}, 3);
+    is(scalar @{$content->{items}}, 3);
+
+    my $first_ticket = $content->{items}->[0];
+    is($first_ticket->{type}, 'ticket');
+    is($first_ticket->{id}, $ticket4_id);
+    like($first_ticket->{_url}, qr{$rest_base_path/ticket/$ticket4_id$});
+
+    my $second_ticket = $content->{items}->[1];
+    is($second_ticket->{type}, 'ticket');
+    is($second_ticket->{id}, $ticket2_id);
+    like($second_ticket->{_url}, qr{$rest_base_path/ticket/$ticket2_id$});
+
+    my $third_ticket = $content->{items}->[2];
+    is($third_ticket->{type}, 'ticket');
+    is($third_ticket->{id}, $ticket3_id);
+    like($third_ticket->{_url}, qr{$rest_base_path/ticket/$ticket3_id$});
+}
+
 done_testing;
