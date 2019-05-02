@@ -24,7 +24,6 @@ my $user = RT::Extension::REST2::Test->user;
     my $res = $mech->post_json("$rest_base_path/ticket",
         {
             Subject => 'Ticket creation using REST',
-            From    => 'test@bestpractical.com',
         },
         'Authorization' => $auth,
     );
@@ -37,8 +36,6 @@ my ($ticket_url, $ticket_id);
 {
     my $payload = {
         Subject => 'Ticket creation using REST',
-        From    => 'test@bestpractical.com',
-        To      => 'rt@localhost',
         Queue   => 'General',
         Content => 'Testing ticket creation using REST API.',
     };
