@@ -296,7 +296,7 @@ Below are some examples using the endpoints above.
     # Create a ticket, setting some custom fields
     curl -X POST -H "Content-Type: application/json" -u 'root:password'
         -d '{ "Queue": "General", "Subject": "Create ticket test",
-            "From": "user1@example.com", "To": "rt@example.com",
+            "Requestor": "user1@example.com", "Cc": "user2@example.com",
             "Content": "Testing a create",
             "CustomFields": {"Severity": "Low"}}'
         'https://myrt.com/REST/2.0/ticket'
