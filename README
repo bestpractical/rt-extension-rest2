@@ -260,7 +260,7 @@ USAGE
         # Create a ticket, setting some custom fields
         curl -X POST -H "Content-Type: application/json" -u 'root:password'
             -d '{ "Queue": "General", "Subject": "Create ticket test",
-                "From": "user1@example.com", "To": "rt@example.com",
+                "Requestor": "user1@example.com", "Cc": "user2@example.com",
                 "Content": "Testing a create",
                 "CustomFields": {"Severity": "Low"}}'
             'https://myrt.com/REST/2.0/ticket'
@@ -519,6 +519,25 @@ USAGE
     The JSON payload must be an array of hashes with the keys field and
     value and optionally operator.
 
+    Results can be sorted by using multiple query parameter arguments
+    orderby and order. Each orderby query parameter specify a field to be
+    used for sorting results. If the request includes more than one orderby
+    query parameter, results are sorted according to corresponding fields in
+    the same order than they are specified. For instance, if you want to
+    sort results according to creation date and then by id (in case of some
+    items have the same creation date), your request should specify
+    ?orderby=Created&orderby=id. By default, results are sorted in ascending
+    order. To sort results in descending order, you should use order=DESC
+    query parameter. Any other value for order query parameter will be
+    treated as order=ASC, for ascending order. The order of the order query
+    parameters should be the same as the orderby query parameters.
+    Therefore, if you specify two fields to sort the results (with two
+    orderby parameters) and you want to sort the second field by descending
+    order, you should also explicitely specify order=ASC for the first
+    field: orderby=Created&order=ASC&orderby=id&order=DESC. orderby and
+    order query parameters are supported in both JSON and TicketSQL
+    searches.
+
     Results are returned in the format described below.
 
   Example of plural resources (collections)
@@ -610,7 +629,7 @@ BUGS
     <http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-REST2>.
 
 LICENSE AND COPYRIGHT
-    This software is Copyright (c) 2015-2017 by Best Practical Solutions,
+    This software is Copyright (c) 2015-2019 by Best Practical Solutions,
     LLC.
 
     This is free software, licensed under:

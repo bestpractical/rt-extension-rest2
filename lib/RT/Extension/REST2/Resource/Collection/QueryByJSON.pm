@@ -59,6 +59,18 @@ sub limit_collection {
             CASESENSITIVE => ($limit->{case_sensitive} || 0),
         );
     }
+
+    my @orderby_cols;
+    my @orders = $self->request->param('order');
+    foreach my $orderby ($self->request->param('orderby')) {
+        my $order = shift @orders || 'ASC';
+        $order = uc($order);
+        $order = 'ASC' unless $order eq 'DESC';
+        push @orderby_cols, {FIELD => $orderby, ORDER => $order};
+    }
+    $self->collection->OrderByCols(@orderby_cols)
+        if @orderby_cols;
+
     return 1;
 }
 
