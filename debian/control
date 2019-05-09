@@ -1,0 +1,32 @@
+Source: rt-extension-rest2
+Section: perl
+Priority: optional
+Maintainer: Andrew Ruthven <andrew@etc.gen.nz>
+Build-Depends: debhelper (>= 9.20120312)
+Build-Depends-Indep: perl
+ , libmodule-install-rtx-perl
+Standards-Version: 3.9.8
+Vcs-Git: https://salsa.debian.org/request-tracker-team/rt-extension-rest2.git
+Vcs-Browser: https://salsa.debian.org/request-tracker-team/rt-extension-rest2
+Homepage: https://metacpan.org/release/RT-Extension-Rest2
+
+Package: rt4-extension-rest2
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends},
+ request-tracker4,
+ perl,
+ libencode-perl,
+ libjson-perl,
+ libmodule-path-perl,
+ libmodule-runtime-perl,
+ libmoose-perl,
+ libmoosex-nonmoose-perl,
+ libnamespace-autoclean-perl,
+ libpath-dispatcher-perl,
+ libpod-pom-perl,
+ libplack-perl,
+ libsub-exporter-perl,
+ libweb-machine-perl (>= 0.12)
+Description: REST2 API extension (Request Tracker)
+ This extension adds a modern REST API to Request Tracker.
+ .

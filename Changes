@@ -1,7 +1,17 @@
 Revision history for RT-Extension-REST2
 
-1.04
+1.xx
  - Insert total page count and previous/next links for plural collection results
+
+1.06 2019-04-03
+ - Add orderby and order support to JSON/TicketSQL searches(Thanks gibus!)
+
+1.05 2018-11-19
+ - Add support to manage memberships for users and groups(Thanks gibus!)
+ - Add support to enable/disable users and groups(Thanks gibus!)
+
+1.04 2018-07-06
+ - Fix bug that caused custom fields to be updated after create
 
 1.03 2018-03-16
  - Add new bulk option for tickets

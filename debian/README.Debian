@@ -1,0 +1,16 @@
+See upstream README file for configuration and usage instruction.
+Almost all information from that file is relevant.  However, from
+the section "INSTALLATION", only this is relevant:
+
+  * Edit a file like e.g. /etc/request-tracker4/RT_SiteConfig.d/90-local.pm
+    and add the line:
+
+      Plugin('RT::Extension::REST2');
+
+  * Clear your mason cache
+
+      rm -rf /var/cache/request-tracker4/mason_data/obj
+
+  * Restart your webserver
+
+ -- Andrew Ruthven <andrew@etc.gen.nz>  Fri, 05 Apr 2018 22:38:28 +0000

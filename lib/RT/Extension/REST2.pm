@@ -4,7 +4,7 @@ use 5.010001;
 
 package RT::Extension::REST2;
 
-our $VERSION = '1.03';
+our $VERSION = '1.06';
 our $REST_PATH = '/REST/2.0';
 
 use Plack::Builder;
@@ -297,16 +297,35 @@ Below are some examples using the endpoints above.
     # Create a ticket, setting some custom fields
     curl -X POST -H "Content-Type: application/json" -u 'root:password'
         -d '{ "Queue": "General", "Subject": "Create ticket test",
-            "From": "user1@example.com", "To": "rt@example.com",
+            "Requestor": "user1@example.com", "Cc": "user2@example.com",
             "Content": "Testing a create",
             "CustomFields": {"Severity": "Low"}}'
         'https://myrt.com/REST/2.0/ticket'
 
     # Update a ticket, with a custom field update
     curl -X PUT -H "Content-Type: application/json" -u 'root:password'
-        -d '{ "Subject": "Update test", "Content": "Testing an update",
-            "CustomFields": {"Severity": "High"}}'
+        -d '{ "Subject": "Update test", "CustomFields": {"Severity": "High"}}'
         'https://myrt.com/REST/2.0/ticket/6'
+
+    # Correspond a ticket
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '{ "Content": "Testing a correspondence", "ContentType": "text/plain" }'
+        'https://myrt.com/REST/2.0/ticket/6/correspond'
+
+    # Comment a ticket
+    curl -X POST -H "Content-Type: text/plain" -u 'root:password'
+        -d 'Testing a comment'
+        'https://myrt.com/REST/2.0/ticket/6/comment'
+
+    # Create an Asset
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '{"Name" : "Asset From Rest", "Catalog" : "General assets", "Content" : "Some content"}'
+        'https://myrt.com/REST/2.0/asset'
+
+    # Search Assets
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+    -d '[{ "field" : "id", "operator" : ">=", "value" : 0 }]'
+    'https://myrt.com/REST/2.0/asset'
 
 =head3 Transactions
 
@@ -422,11 +441,11 @@ Below are some examples using the endpoints above.
 
     GET /user/:id
     GET /user/:name
-        retrieve a user by numeric id or username
+        retrieve a user by numeric id or username (including its memberships and whether it is disabled)
 
     PUT /user/:id
     PUT /user/:name
-        update a user's metadata; provide JSON content
+        update a user's metadata (including its Disabled status); provide JSON content
 
     DELETE /user/:id
     DELETE /user/:name
@@ -442,11 +461,67 @@ Below are some examples using the endpoints above.
     POST /groups
         search for groups using L</JSON searches> syntax
 
+    POST /group
+        create a (user defined) group; provide JSON content
+
     GET /group/:id
-        retrieve a group (including its members)
+        retrieve a group (including its members and whether it is disabled)
+
+    PUT /group/:id
+        update a groups's metadata (including its Disabled status); provide JSON content
+
+    DELETE /group/:id
+        disable group
 
     GET /group/:id/history
         retrieve list of transactions for group
+
+=head3 User Memberships
+
+    GET /user/:id/groups
+    GET /user/:name/groups
+        retrieve list of groups which a user is a member of
+
+    PUT /user/:id/groups
+    PUT /user/:name/groups
+        add a user to groups; provide a JSON array of groups ids
+
+    DELETE /user/:id/group/:id
+    DELETE /user/:name/group/:id
+        remove a user from a group
+
+    DELETE /user/:id/groups
+    DELETE /user/:name/groups
+        remove a user from all groups
+
+=head3 Group Members
+
+    GET /group/:id/members
+        retrieve list of direct members of a group
+
+    GET /group/:id/members?recursively=1
+        retrieve list of direct and recursive members of a group
+
+    GET /group/:id/members?users=0
+        retrieve list of direct group members of a group
+
+    GET /group/:id/members?users=0&recursively=1
+        retrieve list of direct and recursive group members of a group
+
+    GET /group/:id/members?groups=0
+        retrieve list of direct user members of a group
+
+    GET /group/:id/members?groups=0&recursively=1
+        retrieve list of direct and recursive user members of a group
+
+    PUT /group/:id/members
+        add members to a group; provide a JSON array of principal ids
+
+    DELETE /group/:id/member/:id
+        remove a member from a group
+
+    DELETE /group/:id/members
+        remove all members from a group
 
 =head3 Custom Fields
 
@@ -493,6 +568,26 @@ values).  An example:
 
 The JSON payload must be an array of hashes with the keys C<field> and C<value>
 and optionally C<operator>.
+
+Results can be sorted by using multiple query parameter arguments
+C<orderby> and C<order>. Each C<orderby> query parameter specify a field
+to be used for sorting results. If the request includes more than one
+C<orderby> query parameter, results are sorted according to
+corresponding fields in the same order than they are specified. For
+instance, if you want to sort results according to creation date and
+then by id (in case of some items have the same creation date), your
+request should specify C<?orderby=Created&orderby=id>. By default,
+results are sorted in ascending order. To sort results in descending
+order, you should use C<order=DESC> query parameter. Any other value for
+C<order> query parameter will be treated as C<order=ASC>, for ascending
+order. The order of the C<order> query parameters should be the same as
+the C<orderby> query parameters. Therefore, if you specify two fields to
+sort the results (with two C<orderby> parameters) and you want to sort
+the second field by descending order, you should also explicitely
+specify C<order=ASC> for the first field:
+C<orderby=Created&order=ASC&orderby=id&order=DESC>. C<orderby> and
+C<order> query parameters are supported in both JSON and TicketSQL
+searches.
 
 Results are returned in
 L<the format described below|/"Example of plural resources (collections)">.
@@ -663,7 +758,7 @@ L<rt.cpan.org|http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-REST
 
 =head1 LICENSE AND COPYRIGHT
 
-This software is Copyright (c) 2015-2017 by Best Practical Solutions, LLC.
+This software is Copyright (c) 2015-2019 by Best Practical Solutions, LLC.
 Portions are Copyright (c) 2018 by Catalyst Cloud Ltd.
 
 This is free software, licensed under:

@@ -54,6 +54,8 @@ sub update_record {
 
     push @results, $self->_update_custom_fields($data->{CustomFields});
     push @results, $self->_update_role_members($data);
+    push @results, $self->_update_disabled($data->{Disabled})
+      unless grep { $_ eq 'Disabled' } $self->record->WritableAttributes;
 
     # XXX TODO: Figure out how to return success/failure?  Core RT::Record's
     # ->Update will need to be replaced or improved.
@@ -248,6 +250,22 @@ sub _update_role_members {
     return @results;
 }
 
+sub _update_disabled {
+    my $self = shift;
+    my $data = shift;
+    my @results;
+
+    my $record = $self->record;
+    return unless defined $data and $data =~ /^[01]$/;
+
+    return unless $record->can('SetDisabled');
+
+    my ($ok, $msg) = $record->SetDisabled($data);
+    push @results, $msg;
+
+    return @results;
+}
+
 sub update_resource {
     my $self = shift;
     my $data = shift;
@@ -278,13 +296,14 @@ sub create_record {
     if ($record->isa('RT::Ticket') || $record->isa('RT::Asset')) {
         if ($cfs) {
             while (my ($id, $value) = each(%$cfs)) {
-                delete $cfs->{id};
+                delete $cfs->{$id};
                 $args{"CustomField-$id"} = $value;
             }
         }
     }
 
-    my ($ok, @rest) = $record->Create(%args);
+    my $method = $record->isa('RT::Group') ? 'CreateUserDefinedGroup' : 'Create';
+    my ($ok, @rest) = $record->$method(%args);
 
     if ($ok && $cfs) {
         $self->_update_custom_fields($cfs);
