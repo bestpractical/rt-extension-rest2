@@ -8,7 +8,6 @@ use lib qw(/opt/rt4/local/lib /opt/rt4/lib);
 
 use base 'RT::Test';
 use Test::WWW::Mechanize::PSGI;
-use RT::User;
 
 sub import {
     my $class = shift;
