@@ -12,4 +12,4 @@ pod2htm*.tmp
 /MYMETA.*
 /t/tmp
 /xt/tmp
-/t/lib/RT/Extension/REST2/Test.pm
+/lib/RT/Extension/REST2/Test.pm

@@ -1,6 +1,5 @@
 use strict;
 use warnings;
-use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
 
 use_ok('RT::Extension::REST2::Util', qw(expand_uid));
