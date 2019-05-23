@@ -665,6 +665,12 @@ this (only one ticket is displayed):
 If the user performing the query doesn't have rights to view the record
 (or sub record), then the empty string will be returned.
 
+For single object URLs like /ticket/:id, as it already contains all the
+fields by default, parameter "fields" is not needed, but you can still
+use additional fields parameters to expand child blocks:
+
+    XX_RT_URL_XX/REST/2.0/ticket/1?fields[Queue]=Name,Description
+
 =head2 Authentication Methods
 
 Authentication should B<always> be done over HTTPS/SSL for

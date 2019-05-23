@@ -21,6 +21,22 @@ sub serialize {
     my $record = $self->record;
     my $data = serialize_record($record);
 
+    for my $field (keys %$data) {
+        my $result = $data->{$field};
+        if ($record->can($field . 'Obj')) {
+            my $method = $field . 'Obj';
+            my $obj = $record->$method;
+            my $param_field = "fields[$field]";
+            my @subfields = split(/,/, $self->request->param($param_field) || '');
+
+            for my $subfield (@subfields) {
+                my $subfield_result = $self->expand_field($obj, $subfield, $param_field);
+                $result->{$subfield} = $subfield_result if defined $subfield_result;
+            }
+        }
+        $data->{$field} = $result;
+    }
+
     if ($self->does('RT::Extension::REST2::Resource::Record::Hypermedia')) {
         $data->{_hyperlinks} = $self->hypermedia_links;
     }
