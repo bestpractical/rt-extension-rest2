@@ -29,7 +29,7 @@ sub expand_field {
     my $field = shift;
     my $param_prefix = shift || 'fields';
 
-    my ($result, $obj);
+    my $result;
     if ($item->can('_Accessible') && $item->_Accessible($field => 'read')) {
         # RT::Record derived object, so we can check access permissions.
 
@@ -37,30 +37,22 @@ sub expand_field {
             $result = format_datetime($item->$field);
         } elsif ($item->can($field . 'Obj')) {
             my $method = $field . 'Obj';
-            $obj = $item->$method;
-            if ($obj->can('UID')) {
-                $result = expand_uid( $obj->UID );
-            } else {
-                $result = {};
+            my $obj = $item->$method;
+            if ( $obj->can('UID') and $result = expand_uid( $obj->UID ) ) {
+                my $param_field = $param_prefix . '[' . $field . ']';
+                my @subfields = split( /,/, $self->request->param($param_field) || '' );
+
+                for my $subfield (@subfields) {
+                    my $subfield_result = $self->expand_field( $obj, $subfield, $param_field );
+                    $result->{$subfield} = $subfield_result if defined $subfield_result;
+                }
             }
-        } else {
-            $result = $item->$field;
         }
+
+        $result //= $item->$field;
     }
 
-    $result //= '';
-
-    if (defined $obj && defined $result) {
-        my $param_field = $param_prefix . '[' . $field . ']';
-        my @subfields = split(/,/, $self->request->param($param_field) || '');
-
-        for my $subfield (@subfields) {
-            my $subfield_result = $self->expand_field($obj, $subfield, $param_field);
-            $result->{$subfield} = $subfield_result if defined $subfield_result;
-        }
-    }
-
-    return $result;
+    return $result // '';
 }
 
 __PACKAGE__->meta->make_immutable;

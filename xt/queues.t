@@ -305,7 +305,7 @@ my ($features_url, $features_id);
     my $queue = $content->{items}->[0];
     is(scalar keys %$queue, 5);
     is($queue->{Name}, 'Features');
-    is_deeply($queue->{Lifecycle}, {}, 'Lifecycle is empty');
+    is_deeply($queue->{Lifecycle}, 'default', 'Lifecycle is default');
 }
 
 done_testing;
