@@ -77,48 +77,6 @@ sub serialize {
     };
 }
 
-# Used in Serialize to allow additional fields to be selected ala JSON API on:
-# http://jsonapi.org/examples/
-sub expand_field {
-    my $self  = shift;
-    my $item  = shift;
-    my $field = shift;
-    my $param_prefix = shift || 'fields';
-
-    my ($result, $obj);
-    if ($item->can('_Accessible') && $item->_Accessible($field => 'read')) {
-        # RT::Record derived object, so we can check access permissions.
-
-        if ($item->_Accessible($field => 'type') =~ /(datetime|timestamp)/i) {
-            $result = format_datetime($item->$field);
-        } elsif ($item->can($field . 'Obj')) {
-            my $method = $field . 'Obj';
-            $obj = $item->$method;
-            if ($obj->can('UID')) {
-                $result = expand_uid( $obj->UID );
-            } else {
-                $result = {};
-            }
-        } else {
-            $result = $item->$field;
-        }
-    }
-
-    $result //= '';
-
-    if (defined $obj && defined $result) {
-        my $param_field = $param_prefix . '[' . $field . ']';
-        my @subfields = split(/,/, $self->request->param($param_field) || '');
-
-        for my $subfield (@subfields) {
-            my $subfield_result = $self->expand_field($obj, $subfield, $param_field);
-            $result->{$subfield} = $subfield_result if defined $subfield_result;
-        }
-    }
-
-    return $result;
-}
-
 # XXX TODO: Bulk update via DELETE/PUT on a collection resource?
 
 sub charsets_provided { [ 'utf-8' ] }
