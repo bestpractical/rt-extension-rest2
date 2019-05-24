@@ -4,7 +4,7 @@ use 5.010001;
 
 package RT::Extension::REST2;
 
-our $VERSION = '1.06';
+our $VERSION = '1.07';
 our $REST_PATH = '/REST/2.0';
 
 use Plack::Builder;
