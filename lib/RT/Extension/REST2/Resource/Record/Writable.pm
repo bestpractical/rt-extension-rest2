@@ -52,6 +52,7 @@ sub update_record {
         AttributesRef => [ $self->record->WritableAttributes ],
     );
 
+    push @results, update_links($self->record, $data->{Links});
     push @results, update_custom_fields($self->record, $data->{CustomFields});
     push @results, $self->_update_role_members($data);
     push @results, $self->_update_disabled($data->{Disabled})
@@ -59,6 +60,32 @@ sub update_record {
 
     # XXX TODO: Figure out how to return success/failure?  Core RT::Record's
     # ->Update will need to be replaced or improved.
+    return @results;
+}
+
+sub update_links {
+    my $self = shift;
+    my $data = shift;
+
+    return unless $self->DOES('RT::Record::Role::Links');
+
+    my @results;
+
+    foreach my $new_link (@{$data}) {
+        my $skip;
+        my $action = (keys %{$new_link})[0];
+
+        my $info = $new_link->{$action};
+
+         if ( $action eq 'AddLink' ) {
+            my ($ret, $msg) = $self->AddLink( Type => $info->{'type'}, Target => $info->{'target'} );
+            push @results, $msg;
+         }
+         elsif ( $action eq 'DeleteLink' ) {
+             my ($ret, $msg) = $self->DeleteLink( Type => $info->{'type'}, Target => $info->{'target'} );
+            push @results, $msg;
+         }
+    }
     return @results;
 }
 

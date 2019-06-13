@@ -152,6 +152,7 @@ sub deserialize_record {
     my $data   = shift;
 
     my $does_roles = $record->DOES("RT::Record::Role::Roles");
+    my $does_links = $record->DOES("RT::Record::Role::Links");
 
     # Sanitize input for the Perl API
     for my $field (sort keys %$data) {
@@ -173,6 +174,11 @@ sub deserialize_record {
                     if looks_like_uid($member);
             }
             $data->{$field} = \@members;
+        }
+        elsif ( $does_links and ($field =~ /^Links$/ ) ) {
+            my @links = ref $value eq 'ARRAY'
+                ? @$value : $value;
+            $data->{$field} = \@links;
         }
         else {
             RT->Logger->debug("Received unknown value via JSON for field $field: ".ref($value));
