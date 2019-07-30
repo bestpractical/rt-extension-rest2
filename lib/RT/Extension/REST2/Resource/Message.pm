@@ -93,6 +93,18 @@ sub add_message {
             \400, $msg || "Message failed for unknown reason");
     }
 
+    my @transaction_custom_field_list = grep { m{^Object-RT::Transaction--CustomField} } keys %{$args{CustomFields}};
+    if( @transaction_custom_field_list ) {
+        my %transaction_custom_fields = map { $_ => $args{CustomFields}->{$_} }  @transaction_custom_field_list;
+        my( $ret, $msg) = $TransObj->UpdateCustomFields( %transaction_custom_fields);
+        if( ! $ret ) {
+            RT->Logger->error( "cannot update transaction custom fields: $msg");
+            return error_as_json(
+                $self->response,
+                \400, $msg || "Transaction Custom Fields update failed");
+        }
+    }
+
     $self->created_transaction($TransObj);
     $self->response->body(JSON::to_json([$msg], { pretty => 1 }));
 
