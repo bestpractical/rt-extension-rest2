@@ -69,8 +69,7 @@ sub add_message {
         Subject   => $args{Subject},
     );
 
-    my ( $Trans, $msg, $TransObj ) ;
-
+    my ( $Trans, $msg, $TransObj );
     if ($self->type eq 'correspond') {
         ( $Trans, $msg, $TransObj ) = $self->record->Correspond(
             MIMEObj   => $MIME,
@@ -93,10 +92,60 @@ sub add_message {
             \400, $msg || "Message failed for unknown reason");
     }
 
+    my ( $update_ret, $update_msg ) = $self->_update_txn_custom_fields(
+        $TransObj, $args{TxnCustomFields} || $args{TransactionCustomFields} );
+    $msg .= " - CF Processing Error: transaction custom fields not updated" unless $update_ret;
+
     $self->created_transaction($TransObj);
     $self->response->body(JSON::to_json([$msg], { pretty => 1 }));
 
     return 1;
+}
+
+sub _update_txn_custom_fields {
+    my $self = shift;
+    my $TransObj = shift;
+    my $TxnCustomFields = shift;
+
+    # generate a hash suitable for UpdateCustomFields
+    # ie the keys are the "full names" of the custom fields
+    my %txn_custom_fields;
+
+    # Create an empty Transaction object to pass to GetCustomFieldInputName
+    # UpdateCustomFields expects ARGS where the Txn input name doesn't have
+    # an Id yet. It uses $self to determine which Txn to operate on.
+    my $EmptyTxn = RT::Transaction->new( RT->SystemUser );
+
+    foreach my $cf_name ( keys %{$TxnCustomFields} ) {
+        my $cf_obj = $TransObj->LoadCustomFieldByIdentifier($cf_name);
+
+        unless ( $cf_obj and $cf_obj->Id ) {
+            RT->Logger->error( "Unable to load transaction custom field: $cf_name" );
+            return ( 0, "Unable to load transaction custom field: $cf_name", undef );
+        }
+
+        my $txn_input_name = RT::Interface::Web::GetCustomFieldInputName(
+                             Object      => $EmptyTxn,
+                             CustomField => $cf_obj,
+                             Grouping    => undef
+        );
+
+        $txn_custom_fields{$txn_input_name} = $TxnCustomFields->{$cf_name};
+    }
+
+    my ( $txn_ret, $txn_msg );
+    if ( keys %$TxnCustomFields ) {
+        ( $txn_ret, $txn_msg ) = $TransObj->UpdateCustomFields( %txn_custom_fields );
+
+        if ( !$txn_ret ) {
+            # the correspond/comment is already a success, the mails have been sent
+            # so we can't return an error here
+            RT->Logger->error( "Could not update transaction custom fields: $txn_msg" );
+            return ( 0, $txn_msg );
+        }
+    }
+
+    return ( 1, $txn_msg );
 }
 
 sub create_path {
