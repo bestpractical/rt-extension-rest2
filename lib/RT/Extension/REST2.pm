@@ -314,7 +314,7 @@ Below are some examples using the endpoints above.
     # Correspond a ticket with a transaction custom field
     curl -X POST -H "Content-Type: application/json" -u 'root:password'
         -d '{ "Content": "Testing a correspondence", "ContentType": "text/plain",
-              "CustomFields": {"Object-RT::Transaction--CustomField-2": "custom field value"}
+              "TxnCustomFields": {"MyField": "custom field value"}
             }'
         'https://myrt.com/REST/2.0/ticket/6/correspond'
 
