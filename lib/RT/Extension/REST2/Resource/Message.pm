@@ -93,20 +93,68 @@ sub add_message {
             \400, $msg || "Message failed for unknown reason");
     }
 
-    my @transaction_custom_field_list = grep { m{^Object-RT::Transaction--CustomField} } keys %{$args{CustomFields}};
-    if( @transaction_custom_field_list ) {
-        my %transaction_custom_fields = map { $_ => $args{CustomFields}->{$_} }  @transaction_custom_field_list;
-        my( $ret, $msg) = $TransObj->UpdateCustomFields( %transaction_custom_fields);
-        if( ! $ret ) {
-            RT->Logger->error( "cannot update transaction custom fields: $msg");
-            return error_as_json(
-                $self->response,
-                \400, $msg || "Transaction Custom Fields update failed");
-        }
+
+    # transaction custom fields can be either in TxnCustomFields or in TransactionCustomFields
+    # $msg is the result that will be returned, so we use $txn_msg in order not to clobber it 
+    my( $txn_ret, $txn_msg)= $self->_update_txn_custom_fields( 
+        TransObj => $TransObj, 
+        TxnCustomFields => $args{TxnCustomFields} || $args{TransactionCustomFields},
+      );
+    if (!$txn_ret) {
+        return error_as_json(
+            $self->response,
+            \400, $msg || "Could not update transaction custom fields");
     }
 
     $self->created_transaction($TransObj);
     $self->response->body(JSON::to_json([$msg], { pretty => 1 }));
+
+    return 1;
+}
+
+sub _update_txn_custom_fields {
+    my $self = shift;
+    my %args = @_;
+
+    return 1 if ! $args{TxnCustomFields};
+
+    # we need the queue to get the transaction custom fields that can apply to it
+    my $queue= RT::Queue->new( $self->request->env->{"rt.current_user"} );
+    my( $ret, $msg)= $queue->Load( $self->record->Queue);
+    if( ! $ret ) {
+        RT->Logger->error( "cannot find ticket queue: $msg");
+        return ( 0, $msg || "Cannot find ticket queue" );
+    }
+
+    # build a hash <custom_field_name> => <custom_field_id>
+    my %txn_cf_name_to_id;
+    my $cfs = $queue->TicketTransactionCustomFields;
+    while( my $cf= $cfs->Next ) {
+         $txn_cf_name_to_id{$cf->Name} = $cf->Id;
+         # also allow the full name  
+         my $full_name = "Object-RT::Transaction--CustomField-" . $cf->Id;
+         $txn_cf_name_to_id{$full_name} = $cf->Id; 
+    }
+
+    # generate a hash suitable for UpdateCustomFields
+    # ie the keys are the "full names" of the custom fields 
+    my %txn_custom_fields;
+    my $txn_cf_by_name = $args{TxnCustomFields};
+    foreach my $cf_name ( keys %$txn_cf_by_name) {
+        my $cf_id = $txn_cf_name_to_id{$cf_name};
+        if( ! $cf_id ) {
+            RT->Logger->error ( "unknown transaction custom field: $cf_name");
+            return ( 0, "unknown transaction custom field: $cf_name");
+        }
+        my $cf_full_name = "Object-RT::Transaction--CustomField-$cf_id";
+        $txn_custom_fields{$cf_full_name} = $txn_cf_by_name->{$cf_name};
+    }
+
+    ( $ret, $msg) = $args{TransObj}->UpdateCustomFields( %txn_custom_fields);
+    if( ! $ret ) {
+        RT->Logger->error( "cannot update transaction custom fields: $msg");
+        return ( 0, $msg || "Transaction Custom Fields update failed");
+    }
 
     return 1;
 }
