@@ -358,6 +358,9 @@ Below are some examples using the endpoints above.
 
 =head3 Reminders
 
+    GET /reminder/:id
+        retrieve a reminder
+
     POST /reminder
         create a reminder on a ticket
 
