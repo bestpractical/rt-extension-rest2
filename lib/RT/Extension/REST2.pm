@@ -356,6 +356,18 @@ Below are some examples using the endpoints above.
     GET /attachment/:id
         retrieve an attachment
 
+=head3 Reminders
+
+    POST /reminder
+        create a reminder on a ticket
+
+=head3 Reminder Examples
+
+    # create a rminder with a due date (must be in ISO format) on ticket #1
+    curl -X POST -H "Content-Type: application/json" -u 'root:password' \
+    -d '{"Ticket": 6, "Due": "2019-08-10 00:00:01", "Subject": "Due date is 2019-08-10 00:00:01" }' \
+    https://myrt.com/REST/2.0/reminder
+
 =head3 Queues
 
     GET /queues/all
