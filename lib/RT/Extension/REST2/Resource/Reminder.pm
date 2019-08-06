@@ -5,7 +5,7 @@ use warnings;
 use Moose;
 use namespace::autoclean;
 
-extends 'RT::Extension::REST2::Resource::Record';
+extends 'RT::Extension::REST2::Resource::Ticket';
 with (
     'RT::Extension::REST2::Resource::Record::Readable',
     'RT::Extension::REST2::Resource::Record::Hypermedia'
@@ -66,6 +66,16 @@ sub create_record {
         return ( \200, "Reminder added" );
     }
 
+}
+
+sub serialize {
+    my $self= shift;
+    my $data = $self->SUPER::serialize();
+    my %keep_field = map { $_ => 1 } (qw( Owner Starts Queue Type Due Resolved id Subject Status LastUpdated LastUpdatedBy Created));
+    foreach my $field ( keys %$data) {
+        delete $data->{$field} if ! $keep_field{$field};
+    }
+    return $data;
 }
 
 sub forbidden {
