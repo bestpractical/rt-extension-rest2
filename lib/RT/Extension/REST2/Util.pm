@@ -18,6 +18,7 @@ use Sub::Exporter -setup => {
         escape_uri
         query_string
         custom_fields_for
+        format_datetime
     ]]
 };
 

@@ -1,6 +1,5 @@
 use strict;
 use warnings;
-use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
 use Test::Deep;
 
@@ -24,7 +23,6 @@ my $user = RT::Extension::REST2::Test->user;
     my $res = $mech->post_json("$rest_base_path/ticket",
         {
             Subject => 'Ticket creation using REST',
-            From    => 'test@bestpractical.com',
         },
         'Authorization' => $auth,
     );
@@ -37,8 +35,6 @@ my ($ticket_url, $ticket_id);
 {
     my $payload = {
         Subject => 'Ticket creation using REST',
-        From    => 'test@bestpractical.com',
-        To      => 'rt@localhost',
         Queue   => 'General',
         Content => 'Testing ticket creation using REST API.',
     };
@@ -104,6 +100,8 @@ my ($ticket_url, $ticket_id);
     is($queue->{id}, 1);
     is($queue->{type}, 'queue');
     like($queue->{_url}, qr{$rest_base_path/queue/1$});
+    ok(!exists $queue->{Name}, 'queue name is absent');
+    ok(!exists $queue->{Lifecycle}, 'queue lifecycle is absent');
 
     my $owner = $content->{Owner};
     is($owner->{id}, 'Nobody');
@@ -119,6 +117,42 @@ my ($ticket_url, $ticket_id);
     is($updated_by->{id}, 'test');
     is($updated_by->{type}, 'user');
     like($updated_by->{_url}, qr{$rest_base_path/user/test$});
+}
+
+# Ticket display with additional fields
+{
+    my $res = $mech->get($ticket_url . '?fields[Queue]=Name,Lifecycle',
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is($content->{id}, $ticket_id);
+
+    my $queue = $content->{Queue};
+    is($queue->{id},   1);
+    is($queue->{type}, 'queue');
+    like($queue->{_url}, qr{$rest_base_path/queue/1$});
+    is($queue->{Name},      '', 'empty queue name');
+    is($queue->{Lifecycle}, '', 'empty queue lifecycle');
+
+    $user->PrincipalObj->GrantRight(Right => 'SeeQueue');
+
+    $res = $mech->get($ticket_url . '?fields[Queue]=Name,Lifecycle',
+        'Authorization' => $auth,);
+    is($res->code, 200);
+
+    $content = $mech->json_response;
+    is($content->{id}, $ticket_id);
+
+    $queue = $content->{Queue};
+    is($queue->{id},   1);
+    is($queue->{type}, 'queue');
+    like($queue->{_url}, qr{$rest_base_path/queue/1$});
+    is($queue->{Name},      'General', 'queue name');
+    is($queue->{Lifecycle}, 'default', 'queue lifecycle');
+
+    $user->PrincipalObj->RevokeRight(Right => 'SeeQueue');
 }
 
 # Ticket Search
@@ -138,6 +172,65 @@ my ($ticket_url, $ticket_id);
     is($ticket->{type}, 'ticket');
     is($ticket->{id}, 1);
     like($ticket->{_url}, qr{$rest_base_path/ticket/1$});
+    is(scalar keys %$ticket, 3);
+}
+
+# Ticket Search - Fields
+{
+    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Subject",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $ticket = $content->{items}->[0];
+    is($ticket->{Subject}, 'Ticket creation using REST');
+    is($ticket->{Status}, 'new');
+    is(scalar keys %$ticket, 5);
+}
+
+# Ticket Search - Fields, sub objects, no right to see Queues
+{
+    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Owner,Queue&fields[Queue]=Name,Description&fields[Owner]=Name",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $ticket = $content->{items}->[0];
+
+    is($ticket->{Status}, 'new');
+    is($ticket->{Queue}{Name}, '');
+    is($ticket->{Queue}{id}, '1');
+    is($ticket->{Queue}{type}, 'queue');
+    like($ticket->{Queue}{_url}, qr[$rest_base_path/queue/1$]);
+    is($ticket->{Owner}{Name}, 'Nobody');
+    is(scalar keys %$ticket, 6);
+}
+
+# Ticket Search - Fields, sub objects with SeeQueue right
+{
+    $user->PrincipalObj->GrantRight( Right => 'SeeQueue' );
+
+    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Owner,Queue&fields[Queue]=Name,Description&fields[Owner]=Name",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $ticket = $content->{items}->[0];
+
+    is($ticket->{Status}, 'new');
+    is($ticket->{Queue}{Name}, 'General');
+    is($ticket->{Queue}{Description}, 'The default queue');
+    is($ticket->{Queue}{id}, '1');
+    is($ticket->{Queue}{type}, 'queue');
+    like($ticket->{Queue}{_url}, qr[$rest_base_path/queue/1$]);
+    is($ticket->{Owner}{Name}, 'Nobody');
+    is(scalar keys %$ticket, 6);
 }
 
 # Ticket Update
@@ -355,6 +448,42 @@ my ($ticket_url, $ticket_id);
     is($content->{Subject}, 'shh');
     is($content->{Content}, '<i>(hello secret camera)</i>');
     is($content->{ContentType}, 'text/html');
+}
+
+# Ticket Sorted Search
+{
+    my $ticket2 = RT::Ticket->new($RT::SystemUser);
+    ok(my ($ticket2_id) = $ticket2->Create(Queue => 'General', Subject => 'Ticket for test'));
+    my $ticket3 = RT::Ticket->new($RT::SystemUser);
+    ok(my ($ticket3_id) = $ticket3->Create(Queue => 'General', Subject => 'Ticket for test'));
+    my $ticket4 = RT::Ticket->new($RT::SystemUser);
+    ok(my ($ticket4_id) = $ticket4->Create(Queue => 'General', Subject => 'Ticket to test sorted search'));
+
+    my $res = $mech->get("$rest_base_path/tickets?query=Subject LIKE 'test'&orderby=Subject&order=DESC&orderby=id",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    is($content->{count}, 3);
+    is($content->{page}, 1);
+    is($content->{per_page}, 20);
+    is($content->{total}, 3);
+    is(scalar @{$content->{items}}, 3);
+
+    my $first_ticket = $content->{items}->[0];
+    is($first_ticket->{type}, 'ticket');
+    is($first_ticket->{id}, $ticket4_id);
+    like($first_ticket->{_url}, qr{$rest_base_path/ticket/$ticket4_id$});
+
+    my $second_ticket = $content->{items}->[1];
+    is($second_ticket->{type}, 'ticket');
+    is($second_ticket->{id}, $ticket2_id);
+    like($second_ticket->{_url}, qr{$rest_base_path/ticket/$ticket2_id$});
+
+    my $third_ticket = $content->{items}->[2];
+    is($third_ticket->{type}, 'ticket');
+    is($third_ticket->{id}, $ticket3_id);
+    like($third_ticket->{_url}, qr{$rest_base_path/ticket/$ticket3_id$});
 }
 
 done_testing;

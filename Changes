@@ -1,8 +1,20 @@
 Revision history for RT-Extension-REST2
 
+1.07 2019-05-24
+ - Accept 'Content' as a parameter on create. The documentation previously showed
+   this in examples, but it wasn't yet supported. Now it works as documented.
+ - Remove To and From from Create examples. These were documentation bugs since
+   they were not supported via the API. Roles can be set using Requestor, Cc, etc.
+ - Reorganize tests for improved development workflow and to avoid spurious
+   failures on install.
+ - Add syntax for requesting specific fields when fetching data (Thanks Andrew Ruthven (puck)!)
+
+1.06 2019-04-03
+ - Add orderby and order support to JSON/TicketSQL searches(Thanks gibus!)
+
 1.05 2018-11-19
- - Add support to manage memberships for users and groups
- - Add support to enable/disable users and groups
+ - Add support to manage memberships for users and groups(Thanks gibus!)
+ - Add support to enable/disable users and groups(Thanks gibus!)
 
 1.04 2018-07-06
  - Fix bug that caused custom fields to be updated after create

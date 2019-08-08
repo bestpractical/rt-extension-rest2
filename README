@@ -260,7 +260,7 @@ USAGE
         # Create a ticket, setting some custom fields
         curl -X POST -H "Content-Type: application/json" -u 'root:password'
             -d '{ "Queue": "General", "Subject": "Create ticket test",
-                "From": "user1@example.com", "To": "rt@example.com",
+                "Requestor": "user1@example.com", "Cc": "user2@example.com",
                 "Content": "Testing a create",
                 "CustomFields": {"Severity": "Low"}}'
             'https://myrt.com/REST/2.0/ticket'
@@ -519,6 +519,25 @@ USAGE
     The JSON payload must be an array of hashes with the keys field and
     value and optionally operator.
 
+    Results can be sorted by using multiple query parameter arguments
+    orderby and order. Each orderby query parameter specify a field to be
+    used for sorting results. If the request includes more than one orderby
+    query parameter, results are sorted according to corresponding fields in
+    the same order than they are specified. For instance, if you want to
+    sort results according to creation date and then by id (in case of some
+    items have the same creation date), your request should specify
+    ?orderby=Created&orderby=id. By default, results are sorted in ascending
+    order. To sort results in descending order, you should use order=DESC
+    query parameter. Any other value for order query parameter will be
+    treated as order=ASC, for ascending order. The order of the order query
+    parameters should be the same as the orderby query parameters.
+    Therefore, if you specify two fields to sort the results (with two
+    orderby parameters) and you want to sort the second field by descending
+    order, you should also explicitely specify order=ASC for the first
+    field: orderby=Created&order=ASC&orderby=id&order=DESC. orderby and
+    order query parameters are supported in both JSON and TicketSQL
+    searches.
+
     Results are returned in the format described below.
 
   Example of plural resources (collections)
@@ -545,6 +564,58 @@ USAGE
     by the query parameters page and per_page. The default page size is 20
     items, but it may be increased up to 100 (or decreased if desired). Page
     numbers start at 1.
+
+  Fields
+    When fetching search results you can include additional fields by adding
+    a query parameter fields which is a comma seperated list of fields to
+    include. You must use the camel case version of the name as included in
+    the results for the actual item.
+
+    You can use additional fields parameters to expand child blocks, for
+    example (line wrapping inserted for readability):
+
+        XX_RT_URL_XX/REST/2.0/tickets
+          ?fields=Owner,Status,Created,Subject,Queue
+          &fields[Queue]=Name,Description
+
+    Says that in the result set for tickets, the extra fields for Owner,
+    Status, Created, Subject and Queue should be included. But in addition,
+    for the Queue block, also include Name and Description. The results
+    would be similar to this (only one ticket is displayed):
+
+       "items" : [
+          {
+             "Subject" : "Sample Ticket",
+             "id" : "2",
+             "type" : "ticket",
+             "Owner" : {
+                "id" : "root",
+                "_url" : "XX_RT_URL_XX/REST/2.0/user/root",
+                "type" : "user"
+             },
+             "_url" : "XX_RT_URL_XX/REST/2.0/ticket/2",
+             "Status" : "resolved",
+             "Created" : "2018-06-29:10:25Z",
+             "Queue" : {
+                "id" : "1",
+                "type" : "queue",
+                "Name" : "General",
+                "Description" : "The default queue",
+                "_url" : "XX_RT_URL_XX/REST/2.0/queue/1"
+             }
+          }
+          { … },
+          …
+       ],
+
+    If the user performing the query doesn't have rights to view the record
+    (or sub record), then the empty string will be returned.
+
+    For single object URLs like /ticket/:id, as it already contains all the
+    fields by default, parameter "fields" is not needed, but you can still
+    use additional fields parameters to expand child blocks:
+
+        XX_RT_URL_XX/REST/2.0/ticket/1?fields[Queue]=Name,Description
 
   Authentication Methods
     Authentication should always be done over HTTPS/SSL for security. You
@@ -610,7 +681,7 @@ BUGS
     <http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-REST2>.
 
 LICENSE AND COPYRIGHT
-    This software is Copyright (c) 2015-2017 by Best Practical Solutions,
+    This software is Copyright (c) 2015-2019 by Best Practical Solutions,
     LLC.
 
     This is free software, licensed under:

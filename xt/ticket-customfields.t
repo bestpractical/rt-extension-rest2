@@ -1,13 +1,7 @@
 use strict;
 use warnings;
-use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
 use Test::Deep;
-
-BEGIN {
-    plan skip_all => 'RT 4.4 required'
-        unless RT::Handle::cmp_version($RT::VERSION, '4.4.0') >= 0;
-}
 
 my $mech = RT::Extension::REST2::Test->mech;
 
@@ -15,106 +9,107 @@ my $auth = RT::Extension::REST2::Test->authorization_header;
 my $rest_base_path = '/REST/2.0';
 my $user = RT::Extension::REST2::Test->user;
 
-my $catalog = RT::Catalog->new( RT->SystemUser );
-$catalog->Load('General assets');
-$catalog->Create(Name => 'General assets') if !$catalog->Id;
-ok($catalog->Id, "General assets catalog");
+my $queue = RT::Test->load_or_create_queue( Name => "General" );
 
 my $single_cf = RT::CustomField->new( RT->SystemUser );
-my ($ok, $msg) = $single_cf->Create( Name => 'Single', Type => 'FreeformSingle', LookupType => RT::Asset->CustomFieldLookupType);
+my ($ok, $msg) = $single_cf->Create( Name => 'Single', Type => 'FreeformSingle', Queue => $queue->Id );
 ok($ok, $msg);
 my $single_cf_id = $single_cf->Id;
 
-($ok, $msg) = $single_cf->AddToObject($catalog);
-ok($ok, $msg);
-
 my $multi_cf = RT::CustomField->new( RT->SystemUser );
-($ok, $msg) = $multi_cf->Create( Name => 'Multi', Type => 'FreeformMultiple', LookupType => RT::Asset->CustomFieldLookupType);
+($ok, $msg) = $multi_cf->Create( Name => 'Multi', Type => 'FreeformMultiple', Queue => $queue->Id );
 ok($ok, $msg);
 my $multi_cf_id = $multi_cf->Id;
 
-($ok, $msg) = $multi_cf->AddToObject($catalog);
-ok($ok, $msg);
-
-# Asset Creation with no ModifyCustomField
-my ($asset_url, $asset_id);
+# Ticket Creation with no ModifyCustomField
+my ($ticket_url, $ticket_id);
 {
     my $payload = {
-        Name    => 'Asset creation using REST',
-        Catalog => 'General assets',
+        Subject => 'Ticket creation using REST',
+        From    => 'test@bestpractical.com',
+        To      => 'rt@localhost',
+        Queue   => 'General',
+        Content => 'Testing ticket creation using REST API.',
         CustomFields => {
             $single_cf_id => 'Hello world!',
         },
     };
 
-    # Rights Test - No CreateAsset
-    my $res = $mech->post_json("$rest_base_path/asset",
+    # 4.2.3 introduced a bug (e092e23) in CFs fixed in 4.2.9 (ab7ea15)
+    delete $payload->{CustomFields}
+        if RT::Handle::cmp_version($RT::VERSION, '4.2.3') >= 0
+        && RT::Handle::cmp_version($RT::VERSION, '4.2.8') <= 0;
+
+    # Rights Test - No CreateTicket
+    my $res = $mech->post_json("$rest_base_path/ticket",
         $payload,
         'Authorization' => $auth,
     );
     is($res->code, 403);
-    my $content = $mech->json_response;
-    is($content->{message}, 'Permission Denied', "can't create Asset with custom fields you can't set");
 
-    # Rights Test - With CreateAsset
-    $user->PrincipalObj->GrantRight( Right => 'CreateAsset' );
-    $res = $mech->post_json("$rest_base_path/asset",
-        $payload,
-        'Authorization' => $auth,
-    );
-    is($res->code, 400);
+    my @warnings;
+    local $SIG{__WARN__} = sub {
+        push @warnings, @_;
+    };
 
-    delete $payload->{CustomFields};
-
-    $res = $mech->post_json("$rest_base_path/asset",
+    # Rights Test - With CreateTicket
+    $user->PrincipalObj->GrantRight( Right => 'CreateTicket' );
+    $res = $mech->post_json("$rest_base_path/ticket",
         $payload,
         'Authorization' => $auth,
     );
     is($res->code, 201);
-    ok($asset_url = $res->header('location'));
-    ok(($asset_id) = $asset_url =~ qr[/asset/(\d+)]);
+    ok($ticket_url = $res->header('location'));
+    ok(($ticket_id) = $ticket_url =~ qr[/ticket/(\d+)]);
+
+   TODO: {
+       local $TODO = "this warns due to specifying a CF with no permission to see" if RT::Handle::cmp_version($RT::VERSION, '4.4.0') >= 0;
+       is(@warnings, 0, "no warnings");
+   }
 }
 
-# Asset Display
+# Ticket Display
 {
-    # Rights Test - No ShowAsset
-    my $res = $mech->get($asset_url,
+    # Rights Test - No ShowTicket
+    my $res = $mech->get($ticket_url,
         'Authorization' => $auth,
     );
     is($res->code, 403);
 }
 
-# Rights Test - With ShowAsset but no SeeCustomField
+# Rights Test - With ShowTicket but no SeeCustomField
 {
-    $user->PrincipalObj->GrantRight( Right => 'ShowAsset' );
+    $user->PrincipalObj->GrantRight( Right => 'ShowTicket' );
 
-    my $res = $mech->get($asset_url,
+    my $res = $mech->get($ticket_url,
         'Authorization' => $auth,
     );
     is($res->code, 200);
 
     my $content = $mech->json_response;
-    is($content->{id}, $asset_id);
+    is($content->{id}, $ticket_id);
+    is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
-    is($content->{Name}, 'Asset creation using REST');
-    is_deeply($content->{'CustomFields'}, {}, 'Asset custom field not present');
+    is($content->{Subject}, 'Ticket creation using REST');
+    is_deeply($content->{'CustomFields'}, {}, 'Ticket custom field not present');
     is_deeply([grep { $_->{ref} eq 'customfield' } @{ $content->{'_hyperlinks'} }], [], 'No CF hypermedia');
 }
 
-# Rights Test - With ShowAsset and SeeCustomField
+# Rights Test - With ShowTicket and SeeCustomField
 {
     $user->PrincipalObj->GrantRight( Right => 'SeeCustomField');
 
-    my $res = $mech->get($asset_url,
+    my $res = $mech->get($ticket_url,
         'Authorization' => $auth,
     );
     is($res->code, 200);
 
     my $content = $mech->json_response;
-    is($content->{id}, $asset_id);
+    is($content->{id}, $ticket_id);
+    is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
-    is($content->{Name}, 'Asset creation using REST');
-    is_deeply($content->{CustomFields}, { $single_cf_id => [], $multi_cf_id => [] }, 'No asset custom field values');
+    is($content->{Subject}, 'Ticket creation using REST');
+    is_deeply($content->{CustomFields}, { $single_cf_id => [], $multi_cf_id => [] }, 'No ticket custom field values');
     cmp_deeply(
         [grep { $_->{ref} eq 'customfield' } @{ $content->{'_hyperlinks'} }],
         [{
@@ -141,7 +136,7 @@ my ($asset_url, $asset_id);
     cmp_deeply($mech->json_response, superhashof({
         id         => $single_cf_id,
         Disabled   => 0,
-        LookupType => RT::Asset->CustomFieldLookupType,
+        LookupType => RT::Ticket->CustomFieldLookupType,
         MaxValues  => 1,
 	Name       => 'Single',
 	Type       => 'Freeform',
@@ -154,25 +149,25 @@ my ($asset_url, $asset_id);
     cmp_deeply($mech->json_response, superhashof({
         id         => $multi_cf_id,
         Disabled   => 0,
-        LookupType => RT::Asset->CustomFieldLookupType,
+        LookupType => RT::Ticket->CustomFieldLookupType,
         MaxValues  => 0,
 	Name       => 'Multi',
 	Type       => 'Freeform',
     }), 'multi cf');
 }
 
-# Asset Update without ModifyCustomField
+# Ticket Update without ModifyCustomField
 {
     my $payload = {
-        Name     => 'Asset update using REST',
-        Status   => 'allocated',
+        Subject  => 'Ticket update using REST',
+        Priority => 42,
         CustomFields => {
             $single_cf_id => 'Modified CF',
         },
     };
 
-    # Rights Test - No ModifyAsset
-    my $res = $mech->put_json($asset_url,
+    # Rights Test - No ModifyTicket
+    my $res = $mech->put_json($ticket_url,
         $payload,
         'Authorization' => $auth,
     );
@@ -180,65 +175,65 @@ my ($asset_url, $asset_id);
         local $TODO = "RT ->Update isn't introspectable";
         is($res->code, 403);
     };
-    is_deeply($mech->json_response, ['Asset Asset creation using REST: Permission Denied', 'Asset Asset creation using REST: Permission Denied', 'Could not add new custom field value: Permission Denied']);
+    is_deeply($mech->json_response, ['Ticket 1: Permission Denied', 'Ticket 1: Permission Denied', 'Could not add new custom field value: Permission Denied']);
 
-    $user->PrincipalObj->GrantRight( Right => 'ModifyAsset' );
+    $user->PrincipalObj->GrantRight( Right => 'ModifyTicket' );
 
-    $res = $mech->put_json($asset_url,
+    $res = $mech->put_json($ticket_url,
         $payload,
         'Authorization' => $auth,
     );
     is($res->code, 200);
-    is_deeply($mech->json_response, ["Asset Asset update using REST: Name changed from 'Asset creation using REST' to 'Asset update using REST'", "Asset Asset update using REST: Status changed from 'new' to 'allocated'", 'Could not add new custom field value: Permission Denied']);
+    is_deeply($mech->json_response, ["Ticket 1: Priority changed from (no value) to '42'", "Ticket 1: Subject changed from 'Ticket creation using REST' to 'Ticket update using REST'", 'Could not add new custom field value: Permission Denied']);
 
-    $res = $mech->get($asset_url,
+    $res = $mech->get($ticket_url,
         'Authorization' => $auth,
     );
     is($res->code, 200);
 
     my $content = $mech->json_response;
-    is($content->{Name}, 'Asset update using REST');
-    is($content->{Status}, 'allocated');
+    is($content->{Subject}, 'Ticket update using REST');
+    is($content->{Priority}, 42);
     is_deeply($content->{CustomFields}, { $single_cf_id => [], $multi_cf_id => [] }, 'No update to CF');
 }
 
-# Asset Update with ModifyCustomField
+# Ticket Update with ModifyCustomField
 {
     $user->PrincipalObj->GrantRight( Right => 'ModifyCustomField' );
     my $payload = {
-        Name  => 'More updates using REST',
-        Status => 'in-use',
+        Subject  => 'More updates using REST',
+        Priority => 43,
         CustomFields => {
             $single_cf_id => 'Modified CF',
         },
     };
-    my $res = $mech->put_json($asset_url,
+    my $res = $mech->put_json($ticket_url,
         $payload,
         'Authorization' => $auth,
     );
     is($res->code, 200);
-    is_deeply($mech->json_response, ["Asset More updates using REST: Name changed from 'Asset update using REST' to 'More updates using REST'", "Asset More updates using REST: Status changed from 'allocated' to 'in-use'", 'Single Modified CF added']);
+    is_deeply($mech->json_response, ["Ticket 1: Priority changed from '42' to '43'", "Ticket 1: Subject changed from 'Ticket update using REST' to 'More updates using REST'", 'Single Modified CF added']);
 
-    $res = $mech->get($asset_url,
+    $res = $mech->get($ticket_url,
         'Authorization' => $auth,
     );
     is($res->code, 200);
 
     my $content = $mech->json_response;
-    is($content->{Name}, 'More updates using REST');
-    is($content->{Status}, 'in-use');
+    is($content->{Subject}, 'More updates using REST');
+    is($content->{Priority}, 43);
     is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified CF'], $multi_cf_id => [] }, 'New CF value');
 
     # make sure changing the CF doesn't add a second OCFV
     $payload->{CustomFields}{$single_cf_id} = 'Modified Again';
-    $res = $mech->put_json($asset_url,
+    $res = $mech->put_json($ticket_url,
         $payload,
         'Authorization' => $auth,
     );
     is($res->code, 200);
     is_deeply($mech->json_response, ['Single Modified CF changed to Modified Again']);
 
-    $res = $mech->get($asset_url,
+    $res = $mech->get($ticket_url,
         'Authorization' => $auth,
     );
     is($res->code, 200);
@@ -248,15 +243,15 @@ my ($asset_url, $asset_id);
 
     # stop changing the CF, change something else, make sure CF sticks around
     delete $payload->{CustomFields}{$single_cf_id};
-    $payload->{Name} = 'No CF change';
-    $res = $mech->put_json($asset_url,
+    $payload->{Subject} = 'No CF change';
+    $res = $mech->put_json($ticket_url,
         $payload,
         'Authorization' => $auth,
     );
     is($res->code, 200);
-    is_deeply($mech->json_response, ["Asset No CF change: Name changed from 'More updates using REST' to 'No CF change'"]);
+    is_deeply($mech->json_response, ["Ticket 1: Subject changed from 'More updates using REST' to 'No CF change'"]);
 
-    $res = $mech->get($asset_url,
+    $res = $mech->get($ticket_url,
         'Authorization' => $auth,
     );
     is($res->code, 200);
@@ -265,73 +260,78 @@ my ($asset_url, $asset_id);
     is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified Again'], $multi_cf_id => [] }, 'Same CF value');
 }
 
-# Asset Creation with ModifyCustomField
+# Ticket Creation with ModifyCustomField
 {
     my $payload = {
-        Name    => 'Asset creation using REST',
-        Catalog => 'General assets',
+        Subject => 'Ticket creation using REST',
+        From    => 'test@bestpractical.com',
+        To      => 'rt@localhost',
+        Queue   => 'General',
+        Content => 'Testing ticket creation using REST API.',
         CustomFields => {
             $single_cf_id => 'Hello world!',
         },
     };
 
-    my $res = $mech->post_json("$rest_base_path/asset",
+    my $res = $mech->post_json("$rest_base_path/ticket",
         $payload,
         'Authorization' => $auth,
     );
     is($res->code, 201);
-    ok($asset_url = $res->header('location'));
-    ok(($asset_id) = $asset_url =~ qr[/asset/(\d+)]);
+    ok($ticket_url = $res->header('location'));
+    ok(($ticket_id) = $ticket_url =~ qr[/ticket/(\d+)]);
 }
 
-# Rights Test - With ShowAsset and SeeCustomField
+# Rights Test - With ShowTicket and SeeCustomField
 {
-    my $res = $mech->get($asset_url,
+    my $res = $mech->get($ticket_url,
         'Authorization' => $auth,
     );
     is($res->code, 200);
 
     my $content = $mech->json_response;
-    is($content->{id}, $asset_id);
+    is($content->{id}, $ticket_id);
+    is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
-    is($content->{Name}, 'Asset creation using REST');
-    is_deeply($content->{'CustomFields'}{$single_cf_id}, ['Hello world!'], 'Asset custom field');
+    is($content->{Subject}, 'Ticket creation using REST');
+    is_deeply($content->{'CustomFields'}{$single_cf_id}, ['Hello world!'], 'Ticket custom field');
 }
 
-# Asset Creation for multi-value CF
+# Ticket Creation for multi-value CF
 for my $value (
     'scalar',
     ['array reference'],
     ['multiple', 'values'],
 ) {
     my $payload = {
-        Name => 'Multi-value CF',
-        Catalog => 'General assets',
+        Subject => 'Multi-value CF',
+        Queue   => 'General',
         CustomFields => {
             $multi_cf_id => $value,
         },
     };
 
-    my $res = $mech->post_json("$rest_base_path/asset",
+    my $res = $mech->post_json("$rest_base_path/ticket",
         $payload,
         'Authorization' => $auth,
     );
     is($res->code, 201);
-    ok($asset_url = $res->header('location'));
-    ok(($asset_id) = $asset_url =~ qr[/asset/(\d+)]);
+    ok($ticket_url = $res->header('location'));
+    ok(($ticket_id) = $ticket_url =~ qr[/ticket/(\d+)]);
 
-    $res = $mech->get($asset_url,
+    $res = $mech->get($ticket_url,
         'Authorization' => $auth,
     );
     is($res->code, 200);
 
     my $content = $mech->json_response;
-    is($content->{id}, $asset_id);
+    is($content->{id}, $ticket_id);
+    is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
-    is($content->{Name}, 'Multi-value CF');
+    is($content->{Subject}, 'Multi-value CF');
 
     my $output = ref($value) ? $value : [$value]; # scalar input comes out as array reference
-    is_deeply($content->{'CustomFields'}, { $multi_cf_id => $output, $single_cf_id => [] }, 'Asset custom field');
+    is_deeply($content->{'CustomFields'}, { $multi_cf_id => $output, $single_cf_id => [] }, 'Ticket custom field');
 }
 
 {
@@ -347,14 +347,14 @@ for my $value (
                 $multi_cf_id => $input,
             },
         };
-        my $res = $mech->put_json($asset_url,
+        my $res = $mech->put_json($ticket_url,
             $payload,
             'Authorization' => $auth,
         );
         is($res->code, 200);
         is_deeply($mech->json_response, $messages);
 
-        $res = $mech->get($asset_url,
+        $res = $mech->get($ticket_url,
             'Authorization' => $auth,
         );
         is($res->code, 200);
@@ -371,10 +371,17 @@ for my $value (
     modify_multi_ok('replace all', ['replace all added as a value for Multi', 'multiple is no longer a value for custom field Multi', 'new is no longer a value for custom field Multi'], ['replace all'], 'replaced all values');
     modify_multi_ok([], ['replace all is no longer a value for custom field Multi'], [], 'removed all values');
 
-    modify_multi_ok(['foo', 'foo', 'bar'], ['foo added as a value for Multi', undef, 'bar added as a value for Multi'], ['bar', 'foo'], 'multiple values with the same name');
-    modify_multi_ok(['foo', 'bar'], [], ['bar', 'foo'], 'multiple values with the same name');
-    modify_multi_ok(['bar'], ['foo is no longer a value for custom field Multi'], ['bar'], 'multiple values with the same name');
-    modify_multi_ok(['bar', 'bar', 'bar'], [undef, undef], ['bar'], 'multiple values with the same name');
+    if (RT::Handle::cmp_version($RT::VERSION, '4.2.5') >= 0) {
+        modify_multi_ok(['foo', 'foo', 'bar'], ['foo added as a value for Multi', undef, 'bar added as a value for Multi'], ['bar', 'foo'], 'multiple values with the same name');
+        modify_multi_ok(['foo', 'bar'], [], ['bar', 'foo'], 'multiple values with the same name');
+        modify_multi_ok(['bar'], ['foo is no longer a value for custom field Multi'], ['bar'], 'multiple values with the same name');
+        modify_multi_ok(['bar', 'bar', 'bar'], [undef, undef], ['bar'], 'multiple values with the same name');
+    } else {
+        modify_multi_ok(['foo', 'foo', 'bar'], ['foo added as a value for Multi', 'foo added as a value for Multi', 'bar added as a value for Multi'], ['bar', 'foo', 'foo'], 'multiple values with the same name');
+        modify_multi_ok(['foo', 'bar'], ['foo is no longer a value for custom field Multi'], ['bar', 'foo'], 'multiple values with the same name');
+        modify_multi_ok(['bar'], ['foo is no longer a value for custom field Multi'], ['bar'], 'multiple values with the same name');
+        modify_multi_ok(['bar', 'bar', 'bar'], ['bar added as a value for Multi', 'bar added as a value for Multi'], ['bar', 'bar', 'bar'], 'multiple values with the same name');
+    }
 }
 
 done_testing;
