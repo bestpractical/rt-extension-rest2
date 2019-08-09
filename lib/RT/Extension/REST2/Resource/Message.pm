@@ -129,11 +129,11 @@ sub _update_txn_custom_fields {
         $txn_custom_fields{$txn_input_name} = $TxnCustomFields->{$cf_name};
     }
 
-    if ( keys %$TxnCustomFields ) {
-        # UpdateCustomFields currently doesn't return messages on updates
-        # Stub it out for now.
-        my @return = $TransObj->UpdateCustomFields( %txn_custom_fields );
+    # UpdateCustomFields currently doesn't return messages on updates
+    # Stub it out for now.
+    my @return = $TransObj->UpdateCustomFields( %txn_custom_fields );
 
+    if ( keys %txn_custom_fields ) {
         # Simulate return messages until we get real results
         if ( @return && $return[0] == 1 ) {
             push @results, 'Custom fields updated';
