@@ -7,10 +7,24 @@ use warnings;
 use lib qw(/opt/rt4/local/lib /opt/rt4/lib);
 
 use base 'RT::Test';
-
-use RT::Extension::REST2;
 use Test::WWW::Mechanize::PSGI;
-use RT::User;
+
+sub import {
+    my $class = shift;
+    my %args  = @_;
+
+    $args{'requires'} ||= [];
+    if ( $args{'testing'} ) {
+        unshift @{ $args{'requires'} }, 'RT::Extension::REST2';
+    } else {
+        $args{'testing'} = 'RT::Extension::REST2';
+    }
+
+    $class->SUPER::import( %args );
+    $class->export_to_level(1);
+
+    require RT::Extension::REST2;
+}
 
 sub mech { RT::Extension::REST2::Test::Mechanize->new }
 

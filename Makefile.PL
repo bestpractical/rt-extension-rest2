@@ -42,7 +42,7 @@ substitute(
     {
         sufix => '.in'
     },
-    qw(t/lib/RT/Extension/REST2/Test.pm),
+    qw(lib/RT/Extension/REST2/Test.pm),
 );
 
 no_index package => 'RT::Extension::REST2::Test';

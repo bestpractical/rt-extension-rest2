@@ -10,7 +10,7 @@ extends 'RT::Extension::REST2::Resource';
 use Scalar::Util qw( blessed );
 use Web::Machine::FSM::States qw( is_status_code );
 use Module::Runtime qw( require_module );
-use RT::Extension::REST2::Util qw( serialize_record expand_uid );
+use RT::Extension::REST2::Util qw( serialize_record expand_uid format_datetime );
 
 has 'collection_class' => (
     is  => 'ro',
@@ -54,10 +54,19 @@ sub serialize {
     my $self = shift;
     my $collection = $self->collection;
     my @results;
+    my @fields = defined $self->request->param('fields') ? split(/,/, $self->request->param('fields')) : ();
 
     while (my $item = $collection->Next) {
-        # TODO: Allow selection of desired fields
-        push @results, expand_uid( $item->UID );
+        my $result = expand_uid( $item->UID );
+
+        # Allow selection of desired fields
+        if ($result) {
+            for my $field (@fields) {
+                my $field_result = $self->expand_field($item, $field);
+                $result->{$field} = $field_result if defined $field_result;
+            }
+        }
+        push @results, $result;
     }
     return {
         count       => scalar(@results)         + 0,
