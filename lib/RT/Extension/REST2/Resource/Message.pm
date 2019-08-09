@@ -113,11 +113,6 @@ sub _update_txn_custom_fields {
     # ie the keys are the "full names" of the custom fields
     my %txn_custom_fields;
 
-    # Create an empty Transaction object to pass to GetCustomFieldInputName
-    # UpdateCustomFields expects ARGS where the Txn input name doesn't have
-    # an Id yet. It uses $self to determine which Txn to operate on.
-    my $EmptyTxn = RT::Transaction->new( RT->SystemUser );
-
     foreach my $cf_name ( keys %{$TxnCustomFields} ) {
         my $cf_obj = $TransObj->LoadCustomFieldByIdentifier($cf_name);
 
@@ -127,7 +122,6 @@ sub _update_txn_custom_fields {
         }
 
         my $txn_input_name = RT::Interface::Web::GetCustomFieldInputName(
-                             Object      => $EmptyTxn,
                              CustomField => $cf_obj,
                              Grouping    => undef
         );
