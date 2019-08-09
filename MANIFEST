@@ -82,6 +82,7 @@ xt/ticket-links.t
 xt/ticket-watchers.t
 xt/tickets-bulk.t
 xt/tickets.t
+xt/transaction-customfields.t
 xt/transactions.t
 xt/user-customfields.t
 xt/user-memberships.t
