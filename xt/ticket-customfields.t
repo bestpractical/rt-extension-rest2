@@ -260,6 +260,37 @@ my ($ticket_url, $ticket_id);
     is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified Again'], $multi_cf_id => [] }, 'Same CF value');
 }
 
+# Ticket Comment with custom field
+{
+    my $payload = {
+        Content     => 'This is some content for a comment',
+        ContentType => 'text/plain',
+        Subject     => 'This is a subject',
+        CustomFields => {
+            $single_cf_id => 'Yet another modified CF',
+        },
+    };
+
+    $user->PrincipalObj->GrantRight( Right => 'CommentOnTicket' );
+
+    my $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+
+    my ($hypermedia) = grep { $_->{ref} eq 'comment' } @{ $content->{_hyperlinks} };
+    ok($hypermedia, 'got comment hypermedia');
+    like($hypermedia->{_url}, qr[$rest_base_path/ticket/$ticket_id/comment$]);
+
+    $res = $mech->post_json($mech->url_for_hypermedia('comment'),
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    cmp_deeply($mech->json_response, [re(qr/Comments added|Message recorded/), "Single Modified Again changed to Yet another modified CF"]);
+}
+
 # Ticket Creation with ModifyCustomField
 {
     my $payload = {

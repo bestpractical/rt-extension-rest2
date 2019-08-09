@@ -6,7 +6,7 @@ use Moose;
 use namespace::autoclean;
 
 extends 'RT::Extension::REST2::Resource';
-use RT::Extension::REST2::Util qw( error_as_json );
+use RT::Extension::REST2::Util qw( error_as_json update_custom_fields );
 
 sub dispatch_rules {
     Path::Dispatcher::Rule::Regex->new(
@@ -61,6 +61,7 @@ sub from_json {
 sub add_message {
     my $self = shift;
     my %args = @_;
+    my @results;
 
     my $MIME = HTML::Mason::Commands::MakeMIMEEntity(
         Interface => 'REST',
@@ -92,12 +93,12 @@ sub add_message {
             \400, $msg || "Message failed for unknown reason");
     }
 
-    my ( $update_ret, $update_msg ) = $self->_update_txn_custom_fields(
-        $TransObj, $args{TxnCustomFields} || $args{TransactionCustomFields} );
-    $msg .= " - CF Processing Error: transaction custom fields not updated" unless $update_ret;
+    push @results, $msg;
+    push @results, update_custom_fields($self->record, $args{CustomFields});
+    push @results, $self->_update_txn_custom_fields( $TransObj, $args{TxnCustomFields} || $args{TransactionCustomFields} );
 
     $self->created_transaction($TransObj);
-    $self->response->body(JSON::to_json([$msg], { pretty => 1 }));
+    $self->response->body(JSON::to_json(\@results, { pretty => 1 }));
 
     return 1;
 }
@@ -106,6 +107,7 @@ sub _update_txn_custom_fields {
     my $self = shift;
     my $TransObj = shift;
     my $TxnCustomFields = shift;
+    my @results;
 
     # generate a hash suitable for UpdateCustomFields
     # ie the keys are the "full names" of the custom fields
@@ -121,7 +123,7 @@ sub _update_txn_custom_fields {
 
         unless ( $cf_obj and $cf_obj->Id ) {
             RT->Logger->error( "Unable to load transaction custom field: $cf_name" );
-            return ( 0, "Unable to load transaction custom field: $cf_name", undef );
+            push @results, "Unable to load transaction custom field: $cf_name";
         }
 
         my $txn_input_name = RT::Interface::Web::GetCustomFieldInputName(
@@ -133,19 +135,18 @@ sub _update_txn_custom_fields {
         $txn_custom_fields{$txn_input_name} = $TxnCustomFields->{$cf_name};
     }
 
-    my ( $txn_ret, $txn_msg );
     if ( keys %$TxnCustomFields ) {
-        ( $txn_ret, $txn_msg ) = $TransObj->UpdateCustomFields( %txn_custom_fields );
+        # UpdateCustomFields currently doesn't return messages on updates
+        # Stub it out for now.
+        my @return = $TransObj->UpdateCustomFields( %txn_custom_fields );
 
-        if ( !$txn_ret ) {
-            # the correspond/comment is already a success, the mails have been sent
-            # so we can't return an error here
-            RT->Logger->error( "Could not update transaction custom fields: $txn_msg" );
-            return ( 0, $txn_msg );
+        # Simulate return messages until we get real results
+        if ( @return && $return[0] == 1 ) {
+            push @results, 'Custom fields updated';
         }
     }
 
-    return ( 1, $txn_msg );
+    return @results;
 }
 
 sub create_path {

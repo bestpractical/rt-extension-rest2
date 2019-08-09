@@ -39,7 +39,7 @@ is( $res->code, 200, 'Fetched ticket via REST2 API');
                   };
     my $res = $mech->post_json("$rest_base_path/ticket/$ticket1_id/correspond", $payload, 'Authorization' => $auth);
     is( $res->code, 201, 'correspond response code is 201');
-    is_deeply( $mech->json_response, [ "Correspondence added" ], 'message is "Correspondence Added"');
+    is_deeply( $mech->json_response, [ "Correspondence added", "Custom fields updated" ], 'message is "Correspondence Added"');
 
     my $ticket = RT::Ticket->new(RT->SystemUser);
     my ( $ret, $msg ) = $ticket->Load( $ticket1_id );

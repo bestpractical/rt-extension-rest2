@@ -314,13 +314,17 @@ Below are some examples using the endpoints above.
     # Correspond a ticket with a transaction custom field
     curl -X POST -H "Content-Type: application/json" -u 'root:password'
         -d '{ "Content": "Testing a correspondence", "ContentType": "text/plain",
-              "TxnCustomFields": {"MyField": "custom field value"}
-            }'
+              "TxnCustomFields": {"MyField": "custom field value"} }'
         'https://myrt.com/REST/2.0/ticket/6/correspond'
 
-    # Comment a ticket
+    # Comment on a ticket
     curl -X POST -H "Content-Type: text/plain" -u 'root:password'
         -d 'Testing a comment'
+        'https://myrt.com/REST/2.0/ticket/6/comment'
+
+    # Comment on a ticket with custom field update
+    curl -X POST -H "Content-Type: text/plain" -u 'root:password'
+        -d '{ "Content": "Testing a comment", "ContentType": "text/plain", "CustomFields": {"Severity": "High"} }'
         'https://myrt.com/REST/2.0/ticket/6/comment'
 
     # Create an Asset
