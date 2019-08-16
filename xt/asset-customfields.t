@@ -126,11 +126,13 @@ my $no_asset_cf_values = bag(
         [{
             ref => 'customfield',
             id  => $single_cf_id,
+            name => 'Single',
             type => 'customfield',
             _url => re(qr[$rest_base_path/customfield/$single_cf_id$]),
         }, {
             ref => 'customfield',
             id  => $multi_cf_id,
+            name => 'Multi',
             type => 'customfield',
             _url => re(qr[$rest_base_path/customfield/$multi_cf_id$]),
         }],

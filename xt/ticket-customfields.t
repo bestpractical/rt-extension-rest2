@@ -176,11 +176,13 @@ my $no_ticket_cf_values = bag(
         [{
             ref => 'customfield',
             id  => $single_cf_id,
+            name => 'Single',
             type => 'customfield',
             _url => re(qr[$rest_base_path/customfield/$single_cf_id$]),
         }, {
             ref => 'customfield',
             id  => $multi_cf_id,
+            name => 'Multi',
             type => 'customfield',
             _url => re(qr[$rest_base_path/customfield/$multi_cf_id$]),
         }],
@@ -234,11 +236,13 @@ my $no_ticket_cf_values = bag(
             id  => $single_cf_id,
             type => 'customfield',
             _url => re(qr[$rest_base_path/customfield/$single_cf_id$]),
+            name => 'Single',
         }, {
             ref => 'customfield',
             id  => $multi_cf_id,
             type => 'customfield',
             _url => re(qr[$rest_base_path/customfield/$multi_cf_id$]),
+            name => 'Multi',
         }],
         'Two CF hypermedia',
     );
