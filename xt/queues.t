@@ -20,6 +20,19 @@ ok($ok, $msg);
 ok($ok, $msg);
 my $single_cf_id = $single_cf->Id;
 
+my $single_ticket_cf = RT::CustomField->new( RT->SystemUser );
+($ok, $msg) = $single_ticket_cf->Create( Name => 'SingleTicket', Type => 'FreeformSingle', Queue => $queue_obj->Id );
+ok($ok, $msg);
+my $single_ticket_cf_id = $single_ticket_cf->Id;
+
+my $single_txn_cf = RT::CustomField->new( RT->SystemUser );
+($ok, $msg) = $single_txn_cf->Create( Name => 'SingleTxn', Type => 'FreeformSingle', LookupType => RT::Transaction->CustomFieldLookupType );
+ok($ok, $msg);
+
+($ok, $msg) = $single_txn_cf->AddToObject($queue_obj);
+ok($ok, $msg);
+my $single_txn_cf_id = $single_txn_cf->Id;
+
 my $queue_url;
 # search Name = General
 {
@@ -95,6 +108,12 @@ my $queue_url;
 
     is_deeply($content->{Cc}, [], 'no Ccs set');
     is_deeply($content->{AdminCc}, [], 'no AdminCcs set');
+
+    my $tix_cfs = $content->{TicketCustomFields};
+    is( $tix_cfs->[0]{id}, $single_ticket_cf_id, 'Returned custom field ' . $single_ticket_cf->Name . ' applied to queue' );
+
+    my $txn_cfs = $content->{TicketTransactionCustomFields};
+    is( $txn_cfs->[0]{id}, $single_txn_cf_id, 'Returned custom field ' . $single_txn_cf->Name . ' applied to queue' );
 
     ok(!exists($content->{Owner}), 'no Owner at the queue level');
     ok(!exists($content->{Requestor}), 'no Requestor at the queue level');
