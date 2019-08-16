@@ -91,6 +91,7 @@ sub _customfield_links {
             push @links, {
                 %$entry,
                 ref => 'customfield',
+                name => $cf->Name,
             };
         }
     }
