@@ -35,37 +35,58 @@ sub dispatch_rules {
     ),
 }
 
+
 around 'serialize' => sub {
     my $orig = shift;
     my $self = shift;
     my $data = $self->$orig(@_);
     $data->{Privileged} = $self->record->Privileged ? 1 : 0;
+
+    unless ($self->record->CurrentUserHasRight("AdminUsers") or $self->record->id == $self->current_user->id ) {
+        my $summary = {
+            map { $_ => $data->{$_} } ('_hyperlinks','Privileged', split(/\s*\,\s*/, RT->Config->Get('UserSummaryExtraInfo') ) )
+        };
+        return $summary;
+    }
+
     $data->{Disabled}   = $self->record->PrincipalObj->Disabled;
     $data->{Memberships} = [
         map { expand_uid($_->UID) }
-        @{ $self->record->OwnGroups->ItemsArrayRef }
-    ];
+            @{ $self->record->OwnGroups->ItemsArrayRef }
+        ];
     return $data;
 };
 
 sub forbidden {
     my $self = shift;
+
     return 0 if not $self->record->id;
     return 0 if $self->record->id == $self->current_user->id;
-    return 0 if $self->record->CurrentUserHasRight("AdminUsers");
+    return 0 if $self->current_user->Privileged;
     return 1;
 }
 
 sub hypermedia_links {
     my $self = shift;
     my $links = $self->_default_hypermedia_links(@_);
-    push @$links, $self->_transaction_history_link;
 
-    my $id = $self->record->id;
-    push @$links,
-      { ref  => 'memberships',
-        _url => RT::Extension::REST2->base_uri . "/user/$id/groups",
-      };
+    my $show_history = 0;
+    $show_history = 1 if ( $self->current_user->HasRight(
+        Right => 'ShowUserHistory',
+        Object  => RT->System,
+    ));
+
+    if ( $self->record->CurrentUserHasRight("AdminUsers") or $self->record->id == $self->current_user->id) {
+        $show_history = 1;
+        my $id = $self->record->id;
+        push @$links,
+            { ref  => 'memberships',
+              _url => RT::Extension::REST2->base_uri . "/user/$id/groups",
+          };
+    }
+
+    push @$links, $self->_transaction_history_link if ($show_history);
+
     return $links;
 }
 

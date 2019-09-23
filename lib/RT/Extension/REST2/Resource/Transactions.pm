@@ -8,6 +8,12 @@ use namespace::autoclean;
 extends 'RT::Extension::REST2::Resource::Collection';
 with 'RT::Extension::REST2::Resource::Collection::QueryByJSON';
 
+has tx_object_type => (
+    is  => 'ro',
+    isa => 'ClassName',
+);
+
+
 sub dispatch_rules {
     Path::Dispatcher::Rule::Regex->new(
         regex => qr{^/transactions/?$},
@@ -37,7 +43,7 @@ sub dispatch_rules {
             }
 
             $record->Load($id);
-            return { collection => $record->Transactions };
+            return { collection => $record->Transactions, tx_object_type => ref($record) };
         },
     ),
     Path::Dispatcher::Rule::Regex->new(
@@ -55,9 +61,26 @@ sub dispatch_rules {
             }
 
             $record->Load($id);
-            return { collection => $record->Transactions };
+            return { collection => $record->Transactions, tx_object_type => ref($record) };
         },
     )
+}
+
+sub forbidden {
+    my $self = shift;
+    # check user history only visible to appropriate users
+    if ( $self->tx_object_type && $self->tx_object_type eq 'RT::User') {
+        return 0 if $self->current_user->HasRight(
+            Right   => "AdminUsers",
+            Object  => RT->System,
+        );
+        return 0 if $self->current_user->HasRight(
+            Right => 'ShowUserHistory',
+            Object  => RT->System,
+        );
+        return 1;
+    }
+    return 0;
 }
 
 __PACKAGE__->meta->make_immutable;

@@ -20,7 +20,10 @@ sub generate_etag {
     if ($record->can('Transactions')) {
         my $txns = $record->Transactions;
         $txns->OrderByCols({ FIELD => 'id', ORDER => 'DESC' });
-        return $txns->First->Id if $txns->Count;
+
+        if ($txns->Count && $txns->First) {
+            return $txns->First->Id;
+        }
     }
 
     # fall back to last-modified time, which is commonly accepted even
