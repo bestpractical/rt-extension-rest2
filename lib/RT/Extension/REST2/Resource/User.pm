@@ -52,6 +52,7 @@ sub forbidden {
     my $self = shift;
     return 0 if not $self->record->id;
     return 0 if $self->record->id == $self->current_user->id;
+    return 0 if $self->record->CurrentUserHasRight("ShowUserHistory");
     return 0 if $self->record->CurrentUserHasRight("AdminUsers");
     return 1;
 }
