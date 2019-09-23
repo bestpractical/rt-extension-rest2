@@ -24,6 +24,11 @@ sub searchable_fields {
 
 sub forbidden {
     my $self = shift;
+
+    return 0 if $self->current_user->HasRight(
+        Right => 'ShowUserHistory',
+        Object  => RT->System,
+    );
     return 0 if $self->current_user->HasRight(
         Right   => "AdminUsers",
         Object  => RT->System,
