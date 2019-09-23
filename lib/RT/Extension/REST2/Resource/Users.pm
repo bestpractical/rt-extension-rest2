@@ -16,18 +16,27 @@ sub dispatch_rules {
 }
 
 sub searchable_fields {
-    my $class = $_[0]->collection->RecordClass;
-    grep {
-        $class->_Accessible($_ => "public")
-    } $class->ReadableAttributes
+    my $self = shift;
+    my $class = $self->collection->RecordClass;
+    my @fields;
+    if ($self->current_user->HasRight(
+            Right   => "AdminUsers",
+            Object  => RT->System,
+        )) {
+        @fields = grep {
+            $class->_Accessible($_ => "public")
+        } $class->ReadableAttributes;
+    }
+    else {
+        @fields = split(/\s*\,\s*/, RT->Config->Get('UserSummaryExtraInfo'));
+    }
+    return @fields
 }
 
 sub forbidden {
     my $self = shift;
-    return 0 if $self->current_user->HasRight(
-        Right   => "AdminUsers",
-        Object  => RT->System,
-    );
+
+    return 0 if $self->current_user->Privileged;
     return 1;
 }
 
