@@ -49,6 +49,7 @@ my ($ok, $msg) = $group1->AddMember($user_bar->id);
                    'count' => 7,
                    'total' => 7,
                    'per_page' => 20,
+                   'pages' => 1,
                    'page' => 1
                });
     is(scalar(@$items), 7);
