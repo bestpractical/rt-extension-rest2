@@ -46,6 +46,7 @@ sub create_record {
     if ( defined $data->{Content} ) {
         $data->{MIMEObj} = HTML::Mason::Commands::MakeMIMEEntity(
             Interface => 'REST',
+            Subject   => $data->{Subject},
             Body      => delete $data->{Content},
             Type      => delete $data->{ContentType} || 'text/plain',
         );
