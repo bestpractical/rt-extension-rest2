@@ -629,13 +629,15 @@ You can use additional fields parameters to expand child blocks, for
 example (line wrapping inserted for readability):
 
     XX_RT_URL_XX/REST/2.0/tickets
-      ?fields=Owner,Status,Created,Subject,Queue
+      ?fields=Owner,Status,Created,Subject,Queue,CustomFields
       &fields[Queue]=Name,Description
+      &fields[CustomFields]=name,values
 
 Says that in the result set for tickets, the extra fields for Owner, Status,
 Created, Subject and Queue should be included. But in addition, for the Queue
-block, also include Name and Description. The results would be similar to
-this (only one ticket is displayed):
+block, also include Name and Description, then include name and values for the
+CustomFields. The results would be similar to this (only one ticket is
+displayed in this example):
 
    "items" : [
       {
@@ -656,7 +658,18 @@ this (only one ticket is displayed):
             "Name" : "General",
             "Description" : "The default queue",
             "_url" : "XX_RT_URL_XX/REST/2.0/queue/1"
-         }
+         },
+         "CustomFields" : [
+             {
+                 "id" : "1",
+                 "type" : "customfield",
+                 "_url" : "XX_RT_URL_XX/REST/2.0/customfield/1",
+                 "name" : "My Custom Field",
+                 "values" : [
+                     "CustomField value"
+                 },
+             }
+         ]
       }
       { … },
       …

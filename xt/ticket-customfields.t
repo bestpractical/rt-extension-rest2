@@ -100,6 +100,25 @@ my $no_ticket_cf_values = bag(
   { name => 'Multi',  id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => [] },
 );
 
+# Rights Test - Searching asking for CustomFields without SeeCustomField
+{
+    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Owner,CustomFields,Subject&fields[Owner]=Name&fields[CustomFields]=Name,values",
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+    is(scalar @{$content->{items}}, 1);
+
+    my $ticket = $content->{items}->[0];
+
+    is($ticket->{Status}, 'new');
+    is($ticket->{Owner}{Name}, 'Nobody');
+    is_deeply($ticket->{CustomFields}, '', 'Ticket custom field not present');
+    is($ticket->{Subject}, 'Ticket creation using REST');
+    is(scalar keys %$ticket, 7);
+}
+
+
 # Rights Test - With ShowTicket and SeeCustomField
 {
     $user->PrincipalObj->GrantRight( Right => 'SeeCustomField');
@@ -356,6 +375,23 @@ for my $value (
         { name => 'Multi',  id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => $output },
     );
     cmp_deeply($content->{'CustomFields'}, $ticket_cf_value, 'Ticket custom field');
+
+    # Ticket Show - Fields, custom fields
+    {
+        $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Owner,CustomFields,Subject&fields[Owner]=Name&fields[CustomFields]=Name,values",
+            'Authorization' => $auth,
+        );
+        is($res->code, 200);
+        my $content = $mech->json_response;
+
+        # Just look at the last one.
+        my $ticket = $content->{items}->[-1];
+
+        is($ticket->{Status}, 'new');
+        is($ticket->{id}, $ticket_id);
+        is($ticket->{Subject}, 'Multi-value CF');
+        cmp_deeply($ticket->{'CustomFields'}, $ticket_cf_value, 'Ticket custom field');
+    }
 }
 
 {
