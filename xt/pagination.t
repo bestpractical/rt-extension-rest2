@@ -1,6 +1,5 @@
 use strict;
 use warnings;
-use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
 
 my $mech = RT::Extension::REST2::Test->mech;
