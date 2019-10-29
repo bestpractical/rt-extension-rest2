@@ -5,7 +5,7 @@ use warnings;
 use Moose;
 use MooseX::NonMoose;
 use namespace::autoclean;
-use RT::Extension::REST2::Util qw(expand_uid format_datetime );
+use RT::Extension::REST2::Util qw(expand_uid format_datetime custom_fields_for);
 
 extends 'Web::Machine::Resource';
 
@@ -30,7 +30,57 @@ sub expand_field {
     my $param_prefix = shift || 'fields';
 
     my $result;
-    if ($item->can('_Accessible') && $item->_Accessible($field => 'read')) {
+    if ($field eq 'CustomFields') {
+        # Handle CustomFields differently.
+        #
+        # I feel terrible that CustomFields are returned using lowercase, but
+        # this is to keep it consistent with when CustomFields are turned as
+        # part of an object fetch.
+
+        if (my $cfs = custom_fields_for($item)) {
+            my %values;
+            while (my $cf = $cfs->Next) {
+                if (! defined $values{$cf->Id}) {
+                    $values{$cf->Id} = {
+                        %{ expand_uid($cf->UID) },
+                    };
+                }
+
+                my $param_field = $param_prefix . '[' . $field . ']';
+                my @subfields = split( /,/, $self->request->param($param_field) || '' );
+
+                for my $subfield (@subfields) {
+                    if ($subfield =~ /^[Vv]alues/) {
+                        my $ocfvs = $cf->ValuesForObject( $item );
+                        my $type  = $cf->Type;
+                        $values{$cf->Id}{values} = [];
+
+                        while (my $ocfv = $ocfvs->Next) {
+                            my $content = $ocfv->Content;
+                            if ($type eq 'DateTime') {
+                                $content = format_datetime($content);
+                            }
+                            elsif ($type eq 'Image' or $type eq 'Binary') {
+                                $content = {
+                                    content_type => $ocfv->ContentType,
+                                    filename     => $content,
+                                    _url         => RT::Extension::REST2->base_uri . "/download/cf/" . $ocfv->id,
+                                };
+                            }
+                            push @{ $values{$cf->Id}{values} }, $content;
+                        }
+                    } else {
+                        my $subfield_result = $self->expand_field( $cf, $subfield, $param_field );
+                        $values{$cf->Id}->{lc($subfield)} = $subfield_result if defined $subfield_result;
+                    }
+                }
+            }
+
+            push @{ $result }, values %values
+                if %values;
+        }
+
+    } elsif ($item->can('_Accessible') && $item->_Accessible($field => 'read')) {
         # RT::Record derived object, so we can check access permissions.
 
         if ($item->_Accessible($field => 'type') =~ /(datetime|timestamp)/i) {
