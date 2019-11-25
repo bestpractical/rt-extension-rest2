@@ -108,7 +108,6 @@ sub add_message {
         # transaction custom fields can be either in TxnCustomFields or in TransactionCustomFields
         # $msg is the result that will be returned, so we use $txn_msg in order not to clobber it
         ( $txn_ret, $txn_msg )= $TransObj->UpdateCustomFields( %$TxnCustomFields );
-        RT->Logger->debug( "did the UpdateCustomFields with $TxnCustomFields->{'Object-RT::Transaction--CustomField-2'}, ret is [$txn_ret], message is [$txn_msg]");
         if (!$txn_ret) {
             # the correspond/comment is already a success, the mails have been sent
             # so we can't return an error here
