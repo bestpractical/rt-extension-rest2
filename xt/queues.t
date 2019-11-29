@@ -9,6 +9,30 @@ my $user = RT::Extension::REST2::Test->user;
 
 $user->PrincipalObj->GrantRight( Right => 'SuperUser' );
 
+my $queue_obj = RT::Test->load_or_create_queue( Name => "General" );
+
+my $single_cf = RT::CustomField->new( RT->SystemUser );
+
+my ($ok, $msg) = $single_cf->Create( Name => 'Single', Type => 'FreeformSingle', LookupType => RT::Queue->CustomFieldLookupType );
+ok($ok, $msg);
+
+($ok, $msg) = $single_cf->AddToObject($queue_obj);
+ok($ok, $msg);
+my $single_cf_id = $single_cf->Id;
+
+my $single_ticket_cf = RT::CustomField->new( RT->SystemUser );
+($ok, $msg) = $single_ticket_cf->Create( Name => 'SingleTicket', Type => 'FreeformSingle', Queue => $queue_obj->Id );
+ok($ok, $msg);
+my $single_ticket_cf_id = $single_ticket_cf->Id;
+
+my $single_txn_cf = RT::CustomField->new( RT->SystemUser );
+($ok, $msg) = $single_txn_cf->Create( Name => 'SingleTxn', Type => 'FreeformSingle', LookupType => RT::Transaction->CustomFieldLookupType );
+ok($ok, $msg);
+
+($ok, $msg) = $single_txn_cf->AddToObject($queue_obj);
+ok($ok, $msg);
+my $single_txn_cf_id = $single_txn_cf->Id;
+
 my $queue_url;
 # search Name = General
 {
@@ -51,19 +75,26 @@ my $queue_url;
     ok(exists $content->{$_}, "got $_") for @fields;
 
     my $links = $content->{_hyperlinks};
-    is(scalar @$links, 3);
+    is(scalar @$links, 4);
 
     is($links->[0]{ref}, 'self');
     is($links->[0]{id}, 1);
     is($links->[0]{type}, 'queue');
     like($links->[0]{_url}, qr[$rest_base_path/queue/1$]);
 
-    is($links->[1]{ref}, 'history');
-    like($links->[1]{_url}, qr[$rest_base_path/queue/1/history$]);
+    is($links->[1]{ref}, 'customfield');
+    like($links->[1]{_url}, qr[$rest_base_path/customfield/$single_cf_id$]);
+    is($links->[1]{name}, 'Single');
 
-    is($links->[2]{ref}, 'create');
-    is($links->[2]{type}, 'ticket');
-    like($links->[2]{_url}, qr[$rest_base_path/ticket\?Queue=1$]);
+    is($links->[2]{ref}, 'history');
+    like($links->[2]{_url}, qr[$rest_base_path/queue/1/history$]);
+
+    is($links->[2]{ref}, 'history');
+    like($links->[2]{_url}, qr[$rest_base_path/queue/1/history$]);
+
+    is($links->[3]{ref}, 'create');
+    is($links->[3]{type}, 'ticket');
+    like($links->[3]{_url}, qr[$rest_base_path/ticket\?Queue=1$]);
 
     my $creator = $content->{Creator};
     is($creator->{id}, 'RT_System');
@@ -77,6 +108,12 @@ my $queue_url;
 
     is_deeply($content->{Cc}, [], 'no Ccs set');
     is_deeply($content->{AdminCc}, [], 'no AdminCcs set');
+
+    my $tix_cfs = $content->{TicketCustomFields};
+    is( $tix_cfs->[0]{id}, $single_ticket_cf_id, 'Returned custom field ' . $single_ticket_cf->Name . ' applied to queue' );
+
+    my $txn_cfs = $content->{TicketTransactionCustomFields};
+    is( $txn_cfs->[0]{id}, $single_txn_cf_id, 'Returned custom field ' . $single_txn_cf->Name . ' applied to queue' );
 
     ok(!exists($content->{Owner}), 'no Owner at the queue level');
     ok(!exists($content->{Requestor}), 'no Requestor at the queue level');

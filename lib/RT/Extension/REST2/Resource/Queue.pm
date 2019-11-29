@@ -4,6 +4,7 @@ use warnings;
 
 use Moose;
 use namespace::autoclean;
+use RT::Extension::REST2::Util qw(expand_uid);
 
 extends 'RT::Extension::REST2::Resource::Record';
 with (
@@ -49,6 +50,48 @@ sub hypermedia_links {
 
     return $links;
 }
+
+around 'serialize' => sub {
+    my $orig = shift;
+    my $self = shift;
+    my $data = $self->$orig(@_);
+
+    # Load Ticket Custom Fields for this queue
+    if ( my $ticket_cfs = $self->record->TicketCustomFields ) {
+        my @values;
+        while (my $cf = $ticket_cfs->Next) {
+            my $entry = expand_uid($cf->UID);
+            my $content = {
+                %$entry,
+                ref      => 'customfield',
+                name     => $cf->Name,
+            };
+
+            push @values, $content;
+        }
+
+        $data->{TicketCustomFields} = \@values;
+    }
+
+    # Load Transaction custom fields for this queue
+    if ( my $ticket_cfs = $self->record->TicketTransactionCustomFields ) {
+        my @values;
+        while (my $cf = $ticket_cfs->Next) {
+            my $entry = expand_uid($cf->UID);
+            my $content = {
+                %$entry,
+                ref      => 'customfield',
+                name     => $cf->Name,
+            };
+
+            push @values, $content;
+        }
+
+        $data->{TicketTransactionCustomFields} = \@values;
+    }
+
+    return $data;
+};
 
 __PACKAGE__->meta->make_immutable;
 
