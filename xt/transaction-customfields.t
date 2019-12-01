@@ -168,4 +168,95 @@ my ($ticket_url, $ticket_id);
 
 =cut
 
+# Test as a user.
+my $user = RT::Extension::REST2::Test->user;
+
+$user->PrincipalObj->GrantRight( Right => 'CreateTicket' );
+$user->PrincipalObj->GrantRight( Right => 'ModifyTicket' );
+$user->PrincipalObj->GrantRight( Right => 'ReplyToTicket' );
+$user->PrincipalObj->GrantRight( Right => 'SeeQueue' );
+$user->PrincipalObj->GrantRight( Right => 'ShowTicket' );
+$user->PrincipalObj->GrantRight( Right => 'ShowTicketComments' );
+$user->PrincipalObj->GrantRight( Right => 'SeeCustomField' );
+$user->PrincipalObj->GrantRight( Right => 'ModifyCustomField' );
+
+my ($ticket_url, $ticket_id);
+{
+    my $payload = {
+        Subject => 'Ticket for CF test',
+        Queue   => 'General',
+        Content => 'Ticket for CF test content',
+    };
+
+    my $res = $mech->post_json("$rest_base_path/ticket",
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    ok($ticket_url = $res->header('location'));
+    ok(($ticket_id) = $ticket_url =~ qr[/ticket/(\d+)]);
+
+    # We need the hypermedia URLs...
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    $payload = {
+        Subject => 'Add Txn with CF',
+        Content => 'Content',
+        ContentType => 'text/plain',
+        'TxnCustomFields' => {
+            'TxnCF' => 'Txn CustomField',
+         },
+    };
+
+    $res = $mech->post_json($mech->url_for_hypermedia('correspond'),
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    my $response = $mech->json_response;
+
+
+    my $response_value = bag(
+        re(qr/Correspondence added|Message added/), 'Custom fields updated',
+    );
+
+    cmp_deeply($mech->json_response, $response_value, 'Response containts correct strings');
+}
+
+# Look for the Transaction with our CustomField set.
+{
+    my $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    $res = $mech->get($mech->url_for_hypermedia('history'),
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    my $content = $mech->json_response;
+    is($content->{count}, 3);
+    is($content->{page}, 1);
+    is($content->{per_page}, 20);
+    is($content->{total}, 3);
+    is(scalar @{$content->{items}}, 3);
+
+    # Check the correspond txn (0 = create, 1 = correspond)
+    my $txn = @{ $content->{items} }[1];
+
+    $res = $mech->get($txn->{_url},
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+
+    $content = $mech->json_response;
+    like($content->{Data}, qr/^Add Txn with CF/);
+
+    cmp_deeply($content->{CustomFields}, { $cfid => ['Txn CustomField' ] }, 'Txn is set');
+}
+
 done_testing();
