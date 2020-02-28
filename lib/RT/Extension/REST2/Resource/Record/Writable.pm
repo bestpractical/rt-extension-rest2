@@ -290,6 +290,25 @@ sub create_record {
 
     my $cfs = delete $args{CustomFields};
 
+    # Lookup CustomFields by name.
+    if ($cfs) {
+        foreach my $id (keys(%$cfs)) {
+            if ($id !~ /^\d+$/) {
+                my $cf = $record->LoadCustomFieldByIdentifier($id);
+
+                if ($cf->Id) {
+                    $cfs->{$cf->Id} = $cfs->{$id};
+                    delete $cfs->{$id};
+                } else {
+                    # I would really like to return an error message, but, how?
+                    # RT appears to treat missing permission to a CF or
+                    # non-existance of a CF as a non-fatal error.
+                    RT->Logger->error( $record->loc( "Custom field [_1] not found", $id ) );
+                }
+            }
+        }
+    }
+
     # if a record class handles CFs in ->Create, use it (so it doesn't generate
     # spurious transactions and interfere with default values, etc). Otherwise,
     # add OCFVs after ->Create
