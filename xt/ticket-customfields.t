@@ -91,9 +91,14 @@ my ($ticket_url, $ticket_id);
     is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
     is($content->{Subject}, 'Ticket creation using REST');
-    is_deeply($content->{'CustomFields'}, {}, 'Ticket custom field not present');
+    is_deeply($content->{'CustomFields'}, [], 'Ticket custom field not present');
     is_deeply([grep { $_->{ref} eq 'customfield' } @{ $content->{'_hyperlinks'} }], [], 'No CF hypermedia');
 }
+
+my $no_ticket_cf_values = bag(
+  { name => 'Single', id => $single_cf_id, type => 'customfield', _url => ignore(), values => [] },
+  { name => 'Multi',  id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => [] },
+);
 
 # Rights Test - With ShowTicket and SeeCustomField
 {
@@ -109,7 +114,7 @@ my ($ticket_url, $ticket_id);
     is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
     is($content->{Subject}, 'Ticket creation using REST');
-    is_deeply($content->{CustomFields}, { $single_cf_id => [], $multi_cf_id => [] }, 'No ticket custom field values');
+    cmp_deeply($content->{CustomFields}, $no_ticket_cf_values, 'No ticket custom field values');
     cmp_deeply(
         [grep { $_->{ref} eq 'customfield' } @{ $content->{'_hyperlinks'} }],
         [{
@@ -194,7 +199,7 @@ my ($ticket_url, $ticket_id);
     my $content = $mech->json_response;
     is($content->{Subject}, 'Ticket update using REST');
     is($content->{Priority}, 42);
-    is_deeply($content->{CustomFields}, { $single_cf_id => [], $multi_cf_id => [] }, 'No update to CF');
+    cmp_deeply($content->{CustomFields}, $no_ticket_cf_values, 'No update to CF');
 }
 
 # Ticket Update with ModifyCustomField
@@ -219,10 +224,15 @@ my ($ticket_url, $ticket_id);
     );
     is($res->code, 200);
 
+    my $modified_single_cf_value = bag(
+        { name => 'Single', id => $single_cf_id, type => 'customfield', _url => ignore(), values => ['Modified CF'] },
+        { name => 'Multi',  id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => [] },
+    );
+
     my $content = $mech->json_response;
     is($content->{Subject}, 'More updates using REST');
     is($content->{Priority}, 43);
-    is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified CF'], $multi_cf_id => [] }, 'New CF value');
+    cmp_deeply($content->{CustomFields}, $modified_single_cf_value, 'New CF value');
 
     # make sure changing the CF doesn't add a second OCFV
     $payload->{CustomFields}{$single_cf_id} = 'Modified Again';
@@ -238,8 +248,13 @@ my ($ticket_url, $ticket_id);
     );
     is($res->code, 200);
 
+    my $modified_again_single_cf_value = bag(
+        { name => 'Single', id => $single_cf_id, type => 'customfield', _url => ignore(), values => ['Modified Again'] },
+        { name => 'Multi',  id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => [] },
+    );
+
     $content = $mech->json_response;
-    is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified Again'], $multi_cf_id => [] }, 'New CF value');
+    cmp_deeply($content->{CustomFields}, $modified_again_single_cf_value, 'New CF value');
 
     # stop changing the CF, change something else, make sure CF sticks around
     delete $payload->{CustomFields}{$single_cf_id};
@@ -257,7 +272,7 @@ my ($ticket_url, $ticket_id);
     is($res->code, 200);
 
     $content = $mech->json_response;
-    is_deeply($content->{CustomFields}, { $single_cf_id => ['Modified Again'], $multi_cf_id => [] }, 'Same CF value');
+    cmp_deeply($content->{CustomFields}, $modified_again_single_cf_value, 'Same CF value');
 }
 
 # Ticket Creation with ModifyCustomField
@@ -289,12 +304,17 @@ my ($ticket_url, $ticket_id);
     );
     is($res->code, 200);
 
+    my $ticket_cf_value = bag(
+        { name => 'Single', id => $single_cf_id, type => 'customfield', _url => ignore(), values => ['Hello world!'] },
+        { name => 'Multi',  id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => [] },
+    );
+
     my $content = $mech->json_response;
     is($content->{id}, $ticket_id);
     is($content->{Type}, 'ticket');
     is($content->{Status}, 'new');
     is($content->{Subject}, 'Ticket creation using REST');
-    is_deeply($content->{'CustomFields'}{$single_cf_id}, ['Hello world!'], 'Ticket custom field');
+    cmp_deeply($content->{CustomFields}, $ticket_cf_value, 'Ticket custom field');
 }
 
 # Ticket Creation for multi-value CF
@@ -331,7 +351,11 @@ for my $value (
     is($content->{Subject}, 'Multi-value CF');
 
     my $output = ref($value) ? $value : [$value]; # scalar input comes out as array reference
-    is_deeply($content->{'CustomFields'}, { $multi_cf_id => $output, $single_cf_id => [] }, 'Ticket custom field');
+    my $ticket_cf_value = bag(
+        { name => 'Single', id => $single_cf_id, type => 'customfield', _url => ignore(), values => [] },
+        { name => 'Multi',  id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => $output },
+    );
+    cmp_deeply($content->{'CustomFields'}, $ticket_cf_value, 'Ticket custom field');
 }
 
 {
@@ -359,9 +383,13 @@ for my $value (
         );
         is($res->code, 200);
 
+        my $ticket_cf_value = bag(
+            { name => 'Single', id => $single_cf_id, type => 'customfield', _url => ignore(), values => [] },
+            { name => 'Multi',  id => $multi_cf_id,  type => 'customfield', _url => ignore(), values => bag(@$output) },
+        );
+
         my $content = $mech->json_response;
-        my @values = sort @{ $content->{CustomFields}{$multi_cf_id} };
-        is_deeply(\@values, $output, $name || 'New CF value');
+        cmp_deeply($content->{'CustomFields'}, $ticket_cf_value, $name || 'New CF value');
     }
 
     # starting point: ['multiple', 'values'],
