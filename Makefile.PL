@@ -20,7 +20,7 @@ requires 'Sub::Exporter';
 requires 'Web::Machine' => '0.12';
 requires 'Module::Path';
 requires 'Pod::POM';
-requires 'Path::Dispatcher';
+requires 'Path::Dispatcher' => '1.07';
 
 recommends 'JSON::XS';
 
