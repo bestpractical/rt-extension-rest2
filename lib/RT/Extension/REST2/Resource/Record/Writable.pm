@@ -166,10 +166,18 @@ sub _update_role_members {
                 die "Invalid value type for role $role";
             }
 
-            my ($ok, $msg) = $record->AddWatcher(
-                Type => $role,
-                User => $val,
-            );
+            my ($ok, $msg);
+            if ($record->can('AddWatcher')) {
+                ($ok, $msg) = $record->AddWatcher(
+                    Type => $role,
+                    User => $val,
+                );
+            } else {
+                ($ok, $msg) = $record->AddRoleMember(
+                    Type => $role,
+                    User => $val,
+                );
+            }
             push @results, $msg;
         }
         else {
