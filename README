@@ -729,9 +729,6 @@ USAGE
             ]
         '
 
-    By default, only enabled objects are returned. To include disabled
-    objects you can specify find_disabled_rows=1 as query parameter.
-
     The JSON payload must be an array of hashes with the keys field and
     value and optionally operator.
 
@@ -975,6 +972,10 @@ USAGE
     next or previous page, then the URL for that page is returned in the
     next_page and prev_page variables respectively. It is up to you to store
     the required JSON to pass with the following page request.
+
+  Disabled items
+    By default, only enabled objects are returned. To include disabled
+    objects you can specify find_disabled_rows=1 as a query parameter.
 
   Fields
     When fetching search results you can include additional fields by adding

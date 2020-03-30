@@ -45,7 +45,14 @@ sub setup_paging {
     $self->collection->GotoPage($page - 1);
 }
 
-sub limit_collection { 1 }
+sub limit_collection {
+    my $self        = shift;
+    my $collection  = $self->collection;
+    $collection->{'find_disabled_rows'} = 1
+        if $self->request->param('find_disabled_rows');
+
+    return 1;
+}
 
 sub search {
     my $self = shift;
