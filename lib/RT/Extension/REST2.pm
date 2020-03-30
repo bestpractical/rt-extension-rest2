@@ -566,8 +566,6 @@ values).  An example:
         ]
     '
 
-By default, only enabled objects are returned. For results to include also disabled objectn you should specify C<find_disabled_rows=1> as query parameter.
-
 The JSON payload must be an array of hashes with the keys C<field> and C<value>
 and optionally C<operator>.
 
@@ -655,6 +653,12 @@ numbers start at 1. The number of pages is returned, and if there is a next
 or previous page, then the URL for that page is returned in the next_page
 and prev_page variables respectively. It is up to you to store the required
 JSON to pass with the following page request.
+
+=head2 Disabled items
+
+By default, only enabled objects are returned. For results to include
+also disabled objectn you should specify C<find_disabled_rows=1> as a
+query parameter.
 
 =head2 Fields
 
