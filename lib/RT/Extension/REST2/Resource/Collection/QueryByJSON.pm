@@ -45,6 +45,9 @@ sub limit_collection {
     my @fields      = $self->searchable_fields;
     my %searchable  = map {; $_ => 1 } @fields;
 
+    $collection->{'find_disabled_rows'} = 1
+        if $self->request->param('find_disabled_rows');
+
     for my $limit (@$query) {
         next unless $limit->{field}
                 and $searchable{$limit->{field}}
