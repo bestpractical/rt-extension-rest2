@@ -2,6 +2,9 @@ Revision history for RT-Extension-REST2
 
 Pending
  - Insert total page count and previous/next links for plural collection results
+ - Allow 'entry_aggregator' property in JSON search
+ - Allow JSON searches to return disabled objects with 'find_disabled_rows=1' query parameter
+ - Allow including CustomFields in search results
 
 1.07 2019-05-24
  - Accept 'Content' as a parameter on create. The documentation previously showed
