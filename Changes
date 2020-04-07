@@ -1,8 +1,11 @@
 Revision history for RT-Extension-REST2
 
+ - Add endpoint to retrieve custom fields for an object (PR #22 Thanks gibus!)
+ - Add Custom Field value admin endpoints (PR #13 Thanks gibus!)
+ - Add Custom Field admin endpoints (PR #12 Thanks gibus!)
  - Add a new JSON property, "Values:" as an array of all possible values for
-   RT::Customfield of type Select.
- - Allow filtering values for BasedOn custom fields, by specifying a category argument
+   RT::Customfield of type Select. (PR #11 Thanks gibus!)
+ - Allow filtering values for BasedOn custom fields, by specifying a category argument (PR #11 Thanks gibus!)
 
 1.07 2019-05-24
  - Accept 'Content' as a parameter on create. The documentation previously showed
