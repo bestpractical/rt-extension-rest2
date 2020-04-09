@@ -176,11 +176,13 @@ my $no_ticket_cf_values = bag(
         [{
             ref => 'customfield',
             id  => $single_cf_id,
+            name => 'Single',
             type => 'customfield',
             _url => re(qr[$rest_base_path/customfield/$single_cf_id$]),
         }, {
             ref => 'customfield',
             id  => $multi_cf_id,
+            name => 'Multi',
             type => 'customfield',
             _url => re(qr[$rest_base_path/customfield/$multi_cf_id$]),
         }],
@@ -234,11 +236,13 @@ my $no_ticket_cf_values = bag(
             id  => $single_cf_id,
             type => 'customfield',
             _url => re(qr[$rest_base_path/customfield/$single_cf_id$]),
+            name => 'Single',
         }, {
             ref => 'customfield',
             id  => $multi_cf_id,
             type => 'customfield',
             _url => re(qr[$rest_base_path/customfield/$multi_cf_id$]),
+            name => 'Multi',
         }],
         'Two CF hypermedia',
     );
@@ -356,6 +360,37 @@ my $no_ticket_cf_values = bag(
 
     $content = $mech->json_response;
     cmp_deeply($content->{CustomFields}, $modified_again_single_cf_value, 'Same CF value');
+}
+
+# Ticket Comment with custom field
+{
+    my $payload = {
+        Content     => 'This is some content for a comment',
+        ContentType => 'text/plain',
+        Subject     => 'This is a subject',
+        CustomFields => {
+            $single_cf_id => 'Yet another modified CF',
+        },
+    };
+
+    $user->PrincipalObj->GrantRight( Right => 'CommentOnTicket' );
+
+    my $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+
+    my ($hypermedia) = grep { $_->{ref} eq 'comment' } @{ $content->{_hyperlinks} };
+    ok($hypermedia, 'got comment hypermedia');
+    like($hypermedia->{_url}, qr[$rest_base_path/ticket/$ticket_id/comment$]);
+
+    $res = $mech->post_json($mech->url_for_hypermedia('comment'),
+        $payload,
+        'Authorization' => $auth,
+    );
+    is($res->code, 201);
+    cmp_deeply($mech->json_response, [re(qr/Comments added|Message recorded/), "Single Modified Again changed to Yet another modified CF"]);
 }
 
 # Ticket Creation with ModifyCustomField

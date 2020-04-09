@@ -6,7 +6,7 @@ use Moose;
 use namespace::autoclean;
 
 extends 'RT::Extension::REST2::Resource';
-use RT::Extension::REST2::Util qw( error_as_json );
+use RT::Extension::REST2::Util qw( error_as_json update_custom_fields );
 
 sub dispatch_rules {
     Path::Dispatcher::Rule::Regex->new(
@@ -61,6 +61,7 @@ sub from_json {
 sub add_message {
     my $self = shift;
     my %args = @_;
+    my @results;
 
     my $MIME = HTML::Mason::Commands::MakeMIMEEntity(
         Interface => 'REST',
@@ -69,8 +70,7 @@ sub add_message {
         Subject   => $args{Subject},
     );
 
-    my ( $Trans, $msg, $TransObj ) ;
-
+    my ( $Trans, $msg, $TransObj );
     if ($self->type eq 'correspond') {
         ( $Trans, $msg, $TransObj ) = $self->record->Correspond(
             MIMEObj   => $MIME,
@@ -93,10 +93,55 @@ sub add_message {
             \400, $msg || "Message failed for unknown reason");
     }
 
+    push @results, $msg;
+    push @results, update_custom_fields($self->record, $args{CustomFields});
+    push @results, $self->_update_txn_custom_fields( $TransObj, $args{TxnCustomFields} || $args{TransactionCustomFields} );
+
     $self->created_transaction($TransObj);
-    $self->response->body(JSON::to_json([$msg], { pretty => 1 }));
+    $self->response->body(JSON::to_json(\@results, { pretty => 1 }));
 
     return 1;
+}
+
+sub _update_txn_custom_fields {
+    my $self = shift;
+    my $TransObj = shift;
+    my $TxnCustomFields = shift;
+    my @results;
+
+    # generate a hash suitable for UpdateCustomFields
+    # ie the keys are the "full names" of the custom fields
+    my %txn_custom_fields;
+
+    foreach my $cf_name ( keys %{$TxnCustomFields} ) {
+        my $cf_obj = $TransObj->LoadCustomFieldByIdentifier($cf_name);
+
+        unless ( $cf_obj and $cf_obj->Id ) {
+            RT->Logger->error( "Unable to load transaction custom field: $cf_name" );
+            push @results, "Unable to load transaction custom field: $cf_name";
+            next;
+        }
+
+        my $txn_input_name = RT::Interface::Web::GetCustomFieldInputName(
+                             CustomField => $cf_obj,
+                             Grouping    => undef
+        );
+
+        $txn_custom_fields{$txn_input_name} = $TxnCustomFields->{$cf_name};
+    }
+
+    # UpdateCustomFields currently doesn't return messages on updates
+    # Stub it out for now.
+    my @return = $TransObj->UpdateCustomFields( %txn_custom_fields );
+
+    if ( keys %txn_custom_fields ) {
+        # Simulate return messages until we get real results
+        if ( @return && $return[0] == 1 ) {
+            push @results, 'Custom fields updated';
+        }
+    }
+
+    return @results;
 }
 
 sub create_path {

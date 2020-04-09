@@ -5,7 +5,7 @@ use warnings;
 use Moose::Role;
 use namespace::autoclean;
 use JSON ();
-use RT::Extension::REST2::Util qw( deserialize_record error_as_json expand_uid );
+use RT::Extension::REST2::Util qw( deserialize_record error_as_json expand_uid update_custom_fields );
 use List::MoreUtils 'uniq';
 
 with 'RT::Extension::REST2::Resource::Role::RequestBodyIsJSON'
@@ -52,91 +52,13 @@ sub update_record {
         AttributesRef => [ $self->record->WritableAttributes ],
     );
 
-    push @results, $self->_update_custom_fields($data->{CustomFields});
+    push @results, update_custom_fields($self->record, $data->{CustomFields});
     push @results, $self->_update_role_members($data);
     push @results, $self->_update_disabled($data->{Disabled})
       unless grep { $_ eq 'Disabled' } $self->record->WritableAttributes;
 
     # XXX TODO: Figure out how to return success/failure?  Core RT::Record's
     # ->Update will need to be replaced or improved.
-    return @results;
-}
-
-sub _update_custom_fields {
-    my $self = shift;
-    my $data = shift;
-
-    my $record = $self->record;
-    my @results;
-
-    foreach my $cfid (keys %{ $data }) {
-        my $val = $data->{$cfid};
-
-        my $cf = $record->LoadCustomFieldByIdentifier($cfid);
-        next unless $cf->ObjectTypeFromLookupType($cf->__Value('LookupType'))->isa(ref $record);
-
-        if ($cf->SingleValue) {
-            if (ref($val) eq 'ARRAY') {
-                $val = $val->[0];
-            }
-            elsif (ref($val)) {
-                die "Invalid value type for CustomField $cfid";
-            }
-
-            my ($ok, $msg) = $record->AddCustomFieldValue(
-                Field => $cf,
-                Value => $val,
-            );
-            push @results, $msg;
-        }
-        else {
-            my %count;
-            my @vals = ref($val) eq 'ARRAY' ? @$val : $val;
-            for (@vals) {
-                $count{$_}++;
-            }
-
-            my $ocfvs = $cf->ValuesForObject( $record );
-            my %ocfv_id;
-            while (my $ocfv = $ocfvs->Next) {
-                my $content = $ocfv->Content;
-                $count{$content}--;
-                push @{ $ocfv_id{$content} }, $ocfv->Id;
-            }
-
-            # we want to provide a stable order, so first go by the order
-            # provided in the argument list, and then for any custom fields
-            # that are being removed, remove in sorted order
-            for my $key (uniq(@vals, sort keys %count)) {
-                my $count = $count{$key};
-                if ($count == 0) {
-                    # new == old, no change needed
-                }
-                elsif ($count > 0) {
-                    # new > old, need to add new
-                    while ($count-- > 0) {
-                        my ($ok, $msg) = $record->AddCustomFieldValue(
-                            Field => $cf,
-                            Value => $key,
-                        );
-                        push @results, $msg;
-                    }
-                }
-                elsif ($count < 0) {
-                    # old > new, need to remove old
-                    while ($count++ < 0) {
-                        my $id = shift @{ $ocfv_id{$key} };
-                        my ($ok, $msg) = $record->DeleteCustomFieldValue(
-                            Field   => $cf,
-                            ValueId => $id,
-                        );
-                        push @results, $msg;
-                    }
-                }
-            }
-        }
-    }
-
     return @results;
 }
 
@@ -325,7 +247,7 @@ sub create_record {
     my ($ok, @rest) = $record->$method(%args);
 
     if ($ok && $cfs) {
-        $self->_update_custom_fields($cfs);
+        update_custom_fields($record, $cfs);
     }
 
     return ($ok, @rest);
