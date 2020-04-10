@@ -20,6 +20,7 @@ name: RT-Extension-REST2
 no_index:
   directory:
     - inc
+    - t
     - xt
   package:
     - RT::Extension::REST2::Test
@@ -33,7 +34,7 @@ requires:
   Moose: 0
   MooseX::NonMoose: 0
   MooseX::Role::Parameterized: 0
-  Path::Dispatcher: 0
+  Path::Dispatcher: '1.07'
   Plack::Builder: 0
   Pod::POM: 0
   Scalar::Util: 0
