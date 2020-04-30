@@ -493,8 +493,49 @@ USAGE
         POST /customfields
             search for custom fields using L</JSON searches> syntax
 
+        POST /customfield
+            create a customfield; provide JSON content
+
+        GET /catalog/:id/customfields?query=<JSON>
+        POST /catalog/:id/customfields
+            search for custom fields attached to a catalog using L</JSON searches> syntax
+
+        GET /class/:id/customfields?query=<JSON>
+        POST /class/:id/customfields
+            search for custom fields attached to a class using L</JSON searches> syntax
+
+        GET /queue/:id/customfields?query=<JSON>
+        POST /queue/:id/customfields
+            search for custom fields attached to a queue using L</JSON searches> syntax
+
         GET /customfield/:id
-            retrieve a custom field
+            retrieve a custom field, with values if type is Select
+
+        GET /customfield/:id?category=<category name>
+            retrieve a custom field, with values filtered by category if type is Select
+
+        PUT /customfield/:id
+            update a custom field's metadata; provide JSON content
+
+        DELETE /customfield/:id
+            disable customfield
+
+   Custom Field Values
+        GET /customfield/:id/values?query=<JSON>
+        POST /customfield/:id/values
+            search for values of a custom field  using L</JSON searches> syntax
+
+        POST /customfield/:id/value
+            add a value to a custom field; provide JSON content
+
+        GET /customfield/:id/value/:id
+            retrieve a value of a custom field
+
+        PUT /customfield/:id/value/:id
+            update a value of a custom field; provide JSON content
+
+        DELETE /customfield/:id/value/:id
+            remove a value from a custom field
 
    Custom Roles
         GET /customroles?query=<JSON>
