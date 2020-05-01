@@ -11,6 +11,7 @@ use Scalar::Util qw( blessed );
 use Web::Machine::FSM::States qw( is_status_code );
 use Module::Runtime qw( require_module );
 use RT::Extension::REST2::Util qw( serialize_record expand_uid format_datetime );
+use POSIX qw( ceil );
 
 has 'collection_class' => (
     is  => 'ro',
@@ -33,16 +34,25 @@ sub _build_collection {
 sub setup_paging {
     my $self = shift;
     my $per_page = $self->request->param('per_page') || 20;
-       $per_page = 20  if $per_page <= 0;
-       $per_page = 100 if $per_page > 100;
+    if    ( $per_page !~ /^\d+$/ ) { $per_page = 20 }
+    elsif ( $per_page == 0 )       { $per_page = 20 }
+    elsif ( $per_page > 100 )      { $per_page = 100 }
     $self->collection->RowsPerPage($per_page);
 
     my $page = $self->request->param('page') || 1;
-       $page = 1 if $page < 0;
+    if    ( $page !~ /^\d+$/ ) { $page = 1 }
+    elsif ( $page == 0 )       { $page = 1 }
     $self->collection->GotoPage($page - 1);
 }
 
-sub limit_collection { 1 }
+sub limit_collection {
+    my $self        = shift;
+    my $collection  = $self->collection;
+    $collection->{'find_disabled_rows'} = 1
+        if $self->request->param('find_disabled_rows');
+
+    return 1;
+}
 
 sub search {
     my $self = shift;
@@ -68,13 +78,39 @@ sub serialize {
         }
         push @results, $result;
     }
-    return {
+
+    my %results = (
         count       => scalar(@results)         + 0,
         total       => $collection->CountAll    + 0,
         per_page    => $collection->RowsPerPage + 0,
         page        => ($collection->FirstRow / $collection->RowsPerPage) + 1,
         items       => \@results,
+    );
+
+    my $uri = $self->request->uri;
+    my @query_form = $uri->query_form;
+    # find page and if it is set, delete it and its value.
+    for my $i (0..$#query_form) {
+        if ($query_form[$i] eq 'page') {
+            delete @query_form[$i, $i + 1];
+            last;
+        }
+    }
+
+    $results{pages} = ceil($results{total} / $results{per_page});
+    if ($results{page} < $results{pages}) {
+        my $page = $results{page} + 1;
+        $uri->query_form( @query_form, page => $results{page} + 1 );
+        $results{next_page} = $uri->as_string;
     };
+    if ($results{page} > 1) {
+        # If we're beyond the last page, set prev_page as the last page
+        # available, otherwise, the previous page.
+        $uri->query_form( @query_form, page => ($results{page} > $results{pages} ? $results{pages} : $results{page} - 1) );
+        $results{prev_page} = $uri->as_string;
+    };
+
+    return \%results;
 }
 
 # XXX TODO: Bulk update via DELETE/PUT on a collection resource?

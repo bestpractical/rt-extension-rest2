@@ -69,6 +69,7 @@ see a response, typical of search results, like this:
        "total" : 1,
        "count" : 1,
        "page" : 1,
+       "pages" : 1,
        "per_page" : 20,
        "items" : [
           {
@@ -817,6 +818,36 @@ C<orderby=Created&order=ASC&orderby=id&order=DESC>. C<orderby> and
 C<order> query parameters are supported in both JSON and TicketSQL
 searches.
 
+The same C<field> is specified more than one time to express more than one
+condition on this field. For example:
+
+    [
+        { "field":    "id",
+          "operator": ">",
+          "value":    $min },
+
+        { "field":     "id",
+          "operator": "<",
+          "value":    $max }
+    ]
+
+By default, RT will aggregate these conditions with an C<OR>, except for
+when searching queues, where an C<AND> is applied. If you want to search for
+multiple conditions on the same field aggregated with an C<AND> (or an C<OR>
+for queues), you can specify C<entry_aggregator> keys in corresponding
+hashes:
+
+    [
+        { "field":    "id",
+          "operator": ">",
+          "value":    $min },
+
+        { "field":             "id",
+          "operator":         "<",
+          "value":            $max,
+          "entry_aggregator": "AND" }
+    ]
+
 Results are returned in
 L<the format described below|/"Example of plural resources (collections)">.
 
@@ -828,7 +859,9 @@ standard JSON format:
     {
        "count" : 20,
        "page" : 1,
+       "pages" : 191,
        "per_page" : 20,
+       "next_page" : "<collection path>?page=2"
        "total" : 3810,
        "items" : [
           { … },
@@ -1011,7 +1044,15 @@ return the content of the file as an octet string:
 All plural resources (such as C</tickets>) require pagination, controlled by
 the query parameters C<page> and C<per_page>.  The default page size is 20
 items, but it may be increased up to 100 (or decreased if desired).  Page
-numbers start at 1.
+numbers start at 1. The number of pages is returned, and if there is a next
+or previous page, then the URL for that page is returned in the next_page
+and prev_page variables respectively. It is up to you to store the required
+JSON to pass with the following page request.
+
+=head2 Disabled items
+
+By default, only enabled objects are returned. To include disabled objects
+you can specify C<find_disabled_rows=1> as a query parameter.
 
 =head2 Fields
 
@@ -1024,13 +1065,14 @@ You can use additional fields parameters to expand child blocks, for
 example (line wrapping inserted for readability):
 
     XX_RT_URL_XX/REST/2.0/tickets
-      ?fields=Owner,Status,Created,Subject,Queue
+      ?fields=Owner,Status,Created,Subject,Queue,CustomFields
       &fields[Queue]=Name,Description
 
 Says that in the result set for tickets, the extra fields for Owner, Status,
-Created, Subject and Queue should be included. But in addition, for the Queue
-block, also include Name and Description. The results would be similar to
-this (only one ticket is displayed):
+Created, Subject, Queue and CustomFields should be included. But in
+addition, for the Queue block, also include Name and Description. The
+results would be similar to this (only one ticket is displayed in this
+example):
 
    "items" : [
       {
@@ -1051,7 +1093,18 @@ this (only one ticket is displayed):
             "Name" : "General",
             "Description" : "The default queue",
             "_url" : "XX_RT_URL_XX/REST/2.0/queue/1"
-         }
+         },
+         "CustomFields" : [
+             {
+                 "id" : "1",
+                 "type" : "customfield",
+                 "_url" : "XX_RT_URL_XX/REST/2.0/customfield/1",
+                 "name" : "My Custom Field",
+                 "values" : [
+                     "CustomField value"
+                 },
+             }
+         ]
       }
       { … },
       …

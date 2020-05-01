@@ -41,6 +41,7 @@ USAGE
            "total" : 1,
            "count" : 1,
            "page" : 1,
+           "pages" : 1,
            "per_page" : 20,
            "items" : [
               {
@@ -750,6 +751,36 @@ USAGE
     order query parameters are supported in both JSON and TicketSQL
     searches.
 
+    The same field is specified more than one time to express more than one
+    condition on this field. For example:
+
+        [
+            { "field":    "id",
+              "operator": ">",
+              "value":    $min },
+
+            { "field":     "id",
+              "operator": "<",
+              "value":    $max }
+        ]
+
+    By default, RT will aggregate these conditions with an OR, except for
+    when searching queues, where an AND is applied. If you want to search
+    for multiple conditions on the same field aggregated with an AND (or an
+    OR for queues), you can specify entry_aggregator keys in corresponding
+    hashes:
+
+        [
+            { "field":    "id",
+              "operator": ">",
+              "value":    $min },
+
+            { "field":             "id",
+              "operator":         "<",
+              "value":            $max,
+              "entry_aggregator": "AND" }
+        ]
+
     Results are returned in the format described below.
 
   Example of plural resources (collections)
@@ -759,7 +790,9 @@ USAGE
         {
            "count" : 20,
            "page" : 1,
+           "pages" : 191,
            "per_page" : 20,
+           "next_page" : "<collection path>?page=2"
            "total" : 3810,
            "items" : [
               { … },
@@ -935,7 +968,14 @@ USAGE
     All plural resources (such as /tickets) require pagination, controlled
     by the query parameters page and per_page. The default page size is 20
     items, but it may be increased up to 100 (or decreased if desired). Page
-    numbers start at 1.
+    numbers start at 1. The number of pages is returned, and if there is a
+    next or previous page, then the URL for that page is returned in the
+    next_page and prev_page variables respectively. It is up to you to store
+    the required JSON to pass with the following page request.
+
+  Disabled items
+    By default, only enabled objects are returned. To include disabled
+    objects you can specify find_disabled_rows=1 as a query parameter.
 
   Fields
     When fetching search results you can include additional fields by adding
@@ -947,13 +987,14 @@ USAGE
     example (line wrapping inserted for readability):
 
         XX_RT_URL_XX/REST/2.0/tickets
-          ?fields=Owner,Status,Created,Subject,Queue
+          ?fields=Owner,Status,Created,Subject,Queue,CustomFields
           &fields[Queue]=Name,Description
 
     Says that in the result set for tickets, the extra fields for Owner,
-    Status, Created, Subject and Queue should be included. But in addition,
-    for the Queue block, also include Name and Description. The results
-    would be similar to this (only one ticket is displayed):
+    Status, Created, Subject, Queue and CustomFields should be included. But
+    in addition, for the Queue block, also include Name and Description. The
+    results would be similar to this (only one ticket is displayed in this
+    example):
 
        "items" : [
           {
@@ -974,7 +1015,18 @@ USAGE
                 "Name" : "General",
                 "Description" : "The default queue",
                 "_url" : "XX_RT_URL_XX/REST/2.0/queue/1"
-             }
+             },
+             "CustomFields" : [
+                 {
+                     "id" : "1",
+                     "type" : "customfield",
+                     "_url" : "XX_RT_URL_XX/REST/2.0/customfield/1",
+                     "name" : "My Custom Field",
+                     "values" : [
+                         "CustomField value"
+                     },
+                 }
+             ]
           }
           { … },
           …
