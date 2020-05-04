@@ -1253,7 +1253,7 @@ L<rt.cpan.org|http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-REST
 
 =head1 LICENSE AND COPYRIGHT
 
-This software is Copyright (c) 2015-2019 by Best Practical Solutions, LLC.
+This software is Copyright (c) 2015-2020 by Best Practical Solutions, LLC.
 
 This is free software, licensed under:
 
