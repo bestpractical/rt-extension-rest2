@@ -6,6 +6,7 @@ license  'gpl_2';
 githubmeta('github');
 
 requires_rt('4.2.4');
+rt_too_new('5.0.0');
 
 requires 'Encode';
 requires 'JSON';

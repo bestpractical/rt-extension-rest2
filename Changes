@@ -1,5 +1,40 @@
 Revision history for RT-Extension-REST2
 
+1.09 2020-05-04
+
+ - Allow searches to return disabled objects with
+   'find_disabled_rows=1'(Thanks gibus!)
+ - Improve the user experience of pagination(Thanks puck!)
+ - Allow 'entry_aggregator' property in JSON search(Thanks gibus!)
+ - Allow including CustomFields in search results(Thanks puck!)
+ - Allow to delete values for single-value custom fields(Thanks gibus!)
+ - Allow binary ObjectCustomFieldValue upload as multipart/form-data or JSON
+   Base64 encoded content(Thanks gibus!)
+ - Add entry point to download image or binary ObjectCustomFieldValue(Thanks
+   gibus!)
+ - Allow attachments as JSON Array with multipart/form-data or Base64
+   encoded content(Thanks gibus!)
+ - Set the Subject on the create attachment(Thanks puck!)
+ - Allow setting privileged flag on user endpoint(Thanks brennanma!)
+ - Improved access and authorisation for user endpoints(Thanks elacour!)
+ - Add searching for customfields attached to a catalog/class/queue(Thanks
+   gibus!)
+ - Add customfieldvalue(s) endpoints(Thanks gibus!)
+ - Add all CRUD operations for CustomField(Thanks gibus!)
+ - Add available values for Select RT::CustomField(Thanks gibus!)
+ - Fix setting single member roles like Owner for Assets(Thanks puck!)
+ - Provide Ticket and Transaction CFs for queue lookup
+ - Add custom field names in hyperlink data
+ - When creating an object, allow CustomFields to use names(Thanks puck!)
+ - Treat CustomFields in a manner that is more consistent to other object
+   types(Thanks puck!)
+ - Bump requirement for Path::Dispatcher to 1.07 to remove warnings about
+   Any::Moose
+
+1.08 2019-08-09
+ - Accept transaction custom fields on comment/correspond
+ - Accept ticket custom fields on comment/correspond
+
 1.07 2019-05-24
  - Accept 'Content' as a parameter on create. The documentation previously showed
    this in examples, but it wasn't yet supported. Now it works as documented.
