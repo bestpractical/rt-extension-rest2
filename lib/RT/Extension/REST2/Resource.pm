@@ -62,7 +62,29 @@ sub expand_field {
 
             push @{ $result }, values %values if %values;
         }
+    } elsif ($field eq 'FriendlyContentLength' && $item->isa('RT::Attachment') && $item->can('FriendlyContentLength')) {
+        $result //= $item->FriendlyContentLength();
+    } elsif ($field eq 'Content' && $item->isa('RT::Transaction') && $item->can('Content') && $item->can('HasContent') && $item->HasContent()) {
+        $result //= $item->Content();
+    } elsif ($field eq 'Attachments' && $item->isa('RT::Transaction') && $item->can('Attachments')) {
+       my $param_field = $param_prefix . '[' . $field . ']';
+       my @subfields = split( /,/, $self->request->param($param_field) || '' );
 
+       $result //= [];
+
+       my $attachments = $item->Attachments();
+       while(my $obj = $attachments->Next()) {
+           my $subresult = {
+               _url => RT::Extension::REST2->base_uri . "/attachment/" . $obj->id,
+               id   => $obj->id,
+               type => 'attachment',
+           };
+           for my $subfield (@subfields) {
+               my $subfield_result = $self->expand_field( $obj, $subfield, $param_field );
+               $subresult->{$subfield} = $subfield_result if defined $subfield_result;
+           }
+           push(@$result, $subresult);
+       }
     } elsif ($item->can('_Accessible') && $item->_Accessible($field => 'read')) {
         # RT::Record derived object, so we can check access permissions.
 
