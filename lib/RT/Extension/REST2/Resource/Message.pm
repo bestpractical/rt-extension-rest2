@@ -152,6 +152,12 @@ sub add_message {
     push @results, update_custom_fields($self->record, $args{CustomFields});
     push @results, $self->_update_txn_custom_fields( $TransObj, $args{TxnCustomFields} || $args{TransactionCustomFields} );
 
+    # Set ticket status if we were passed a "Status":"foo" argument
+    if ($args{Status}) {
+        my ($ok, $msg) = $self->record->SetStatus($args{Status});
+        push(@results, $msg);
+    }
+
     $self->created_transaction($TransObj);
     $self->response->body(JSON::to_json(\@results, { pretty => 1 }));
 
