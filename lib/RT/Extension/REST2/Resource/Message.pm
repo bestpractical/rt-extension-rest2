@@ -148,6 +148,14 @@ sub add_message {
             \400, $msg || "Message failed for unknown reason");
     }
 
+    # This hook will only really matter once the
+    # allow-update-of-ticket-status-on-correspond branch is merged
+    # in, at which point we can delete this comment
+    my ($http_code, $errmsg) = RT::Extension::REST2::Resource::Ticket->validate_hook_before_update(\%args, $self->record);
+    if ($http_code != 200) {
+        return(\$http_code, $errmsg);
+    }
+
     push @results, $msg;
     push @results, update_custom_fields($self->record, $args{CustomFields});
     push @results, $self->_update_txn_custom_fields( $TransObj, $args{TxnCustomFields} || $args{TransactionCustomFields} );
