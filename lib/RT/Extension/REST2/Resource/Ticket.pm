@@ -12,7 +12,8 @@ with (
         => { -alias => { hypermedia_links => '_default_hypermedia_links' } },
     'RT::Extension::REST2::Resource::Record::Deletable',
     'RT::Extension::REST2::Resource::Record::Writable'
-        => { -alias => { create_record => '_create_record' } },
+        => { -alias => { create_record => '_create_record',
+                         update_record => '_update_record'} },
 );
 
 sub dispatch_rules {
@@ -52,8 +53,48 @@ sub create_record {
         );
     }
 
+    my ($retcode, $mesg) = $self->validate_hook_before_create($queue, $data);
+    if ($retcode != 200) {
+        return (\$retcode, $mesg);
+    }
+
     my ($ok, $txn, $msg) = $self->_create_record($data);
     return ($ok, $msg);
+}
+
+sub update_record
+{
+    my ($self, $data) = @_;
+
+    my ($retcode, $msg) = $self->validate_hook_before_update($self->record, $data);
+    if ($retcode != 200) {
+        return (\$retcode, $msg);
+    }
+    return $self->_update_record($data);
+}
+
+# This function is called just before ticket creation; it is passed
+# the REST data and the queue in which the ticket should be created.
+# It should return (200, '') if all is OK, or (4xx, $msg) if something
+# is wrong and the creation should be aborted.
+
+sub validate_hook_before_create
+{
+    my ($self, $queue, $data) = @_;
+
+    return (200, '');
+}
+
+# This function is called just before ticket update; it is passed the
+# REST data and the ticket being updated.  It should return (200, '')
+# if all is OK, or (4xx, $msg) if something is wrong and the creation
+# should be aborted.
+
+sub validate_hook_before_update
+{
+    my ($self, $ticket, $data) = @_;
+
+    return (200, '');
 }
 
 sub forbidden {

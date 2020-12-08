@@ -116,6 +116,11 @@ sub add_message {
         Subject   => $args{Subject},
     );
 
+    my ($http_code, $errmsg) = RT::Extension::REST2::Resource::Ticket->validate_hook_before_update($self->record, \%args);
+    if ($http_code != 200) {
+        return(\$http_code, $errmsg);
+    }
+
     # Process attachments
     foreach my $attachment (@{$args{Attachments}}) {
         $MIME->attach(
