@@ -269,6 +269,12 @@ below).
 
 The time, in minutes, you've taken to work on your response/comment, optional.
 
+=item C<Status>
+
+The new status (for example, "open", "rejected", etc.) to set the
+ticket to.  The Status value must be a valid status based on the
+lifecycle of the ticket's current queue.
+
 =back
 
 =head3 Add Attachments
