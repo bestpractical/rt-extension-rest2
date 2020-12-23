@@ -24,6 +24,11 @@ sub import {
     $class->export_to_level(1);
 
     require RT::Extension::REST2;
+
+    # Explicitly require here to load the base subroutines
+    # before overriding
+    require RT::Extension::REST2::Resource::Ticket;
+    require RT::Extension::REST2::TestValidate;
 }
 
 sub mech { RT::Extension::REST2::Test::Mechanize->new }
@@ -116,5 +121,6 @@ sub mech { RT::Extension::REST2::Test::Mechanize->new }
         return $json->decode($res->content);
     }
 }
+
 
 1;
