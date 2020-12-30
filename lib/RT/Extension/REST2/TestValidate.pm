@@ -1,8 +1,6 @@
 # For testing override of validation methods
 
-package RT::Extension::REST2::Resource::Ticket;
-
-no warnings qw(redefine);
+package RT::Extension::REST2::TestValidate;
 
 sub validate_hook_before_create
 {

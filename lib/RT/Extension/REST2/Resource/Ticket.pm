@@ -68,7 +68,7 @@ sub update_record
 
     my ($retcode, $msg) = $self->validate_hook_before_update($self->record, $data);
     if ($retcode != 200) {
-        return (\$retcode, $msg);
+        return (0, $msg);
     }
     return $self->_update_record($data);
 }

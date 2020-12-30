@@ -3,16 +3,23 @@ use warnings;
 use RT::Extension::REST2::Test tests => undef;
 use Test::Deep;
 
+use RT::Extension::REST2::TestValidate;
+
 my $mech = RT::Extension::REST2::Test->mech;
 
 my $auth = RT::Extension::REST2::Test->authorization_header;
 my $rest_base_path = '/REST/2.0';
 my $user = RT::Extension::REST2::Test->user;
 
-
 diag 'Check validation on create';
 my ($ticket_url, $ticket_id);
 {
+    {
+        no warnings;
+        *RT::Extension::REST2::Resource::Ticket::validate_hook_before_create = *RT::Extension::REST2::TestValidate::validate_hook_before_create;
+        *RT::Extension::REST2::Resource::Ticket::validate_hook_before_update = *RT::Extension::REST2::TestValidate::validate_hook_before_update;
+    }
+
     $user->PrincipalObj->GrantRight( Right => 'CreateTicket' );
     my $payload = {
         Subject => 'Ticket creation using REST',
@@ -45,6 +52,12 @@ my ($ticket_url, $ticket_id);
 
 # Ticket Update
 {
+    {
+        no warnings;
+        *RT::Extension::REST2::Resource::Ticket::validate_hook_before_create = *RT::Extension::REST2::TestValidate::validate_hook_before_create;
+        *RT::Extension::REST2::Resource::Ticket::validate_hook_before_update = *RT::Extension::REST2::TestValidate::validate_hook_before_update;
+    }
+
     my $payload = {
         Subject  => 'Ticket update using REST',
         Priority => 42,
@@ -57,8 +70,10 @@ my ($ticket_url, $ticket_id);
     my $res = $mech->put_json($ticket_url,
         $payload,
         'Authorization' => $auth,
-    );
-    is($res->code, 400, 'Validation returned 400');
+        );
+    is($res->code, 200, 'Validation returned 200');
+    cmp_deeply($mech->json_response, [0, 'Bad data'], "Validation error is indicated by JSON response");
+
 }
 
 
