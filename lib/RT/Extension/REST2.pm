@@ -1250,6 +1250,48 @@ sub CleanupRequest {
             'DBIx::SearchBuilder::Record::Cachable' => 'FlushCache' ) );
 }
 
+# This hash holds all registered validation hooks.
+our $ValidationHooks = {};
+
+# Acceptable validation hook types
+my $ValidationHookTypes = { update => 1, create => 1 };
+
+# Acceptable validation hook objects
+my $ValidationHookObjects = { 'RT::Ticket' => 1 };
+
+# Register a validation hook for the given update type and object type
+# Returns a true value on successful registration; false otherwise.
+# TODO: Should probably carp if we cannot create the hook
+sub add_validation_hook
+{
+    my ($class, $type, $object, $coderef) = @_;
+
+    # Allow caller to pass in an object or a name like RT::Ticket;
+    $object = ref($object) if ref($object);
+
+    return undef unless exists($ValidationHookTypes->{$type});
+    return undef unless exists($ValidationHookObjects->{$object});
+
+    push(@{$ValidationHooks->{$type}->{$object}}, $coderef);
+    return 1;
+}
+
+# Call all of the validation hooks for the given update type
+# and object type.  Returns (1, "") if they all pass, or (0, "msg") if
+# one of them fails.  Each validation hook is expected to return an
+# ($ok, "msg") indicator.
+sub call_validation_hooks
+{
+    my $class = shift;
+    my $type = shift;
+    my $object = shift;
+    foreach my $hook (@{$ValidationHooks->{$type}->{$object}}) {
+        my ($ok, $msg) = $hook->(@_);
+        return (0, $msg) unless $ok;
+    }
+    return (1, "");
+}
+
 =head1 AUTHOR
 
 Best Practical Solutions, LLC <modules@bestpractical.com>
