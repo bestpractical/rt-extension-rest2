@@ -12,7 +12,8 @@ with (
         => { -alias => { hypermedia_links => '_default_hypermedia_links' } },
     'RT::Extension::REST2::Resource::Record::Deletable',
     'RT::Extension::REST2::Resource::Record::Writable'
-        => { -alias => { create_record => '_create_record' } },
+    => { -alias => { create_record => '_create_record',
+                     update_record => '_update_record'} },
 );
 
 sub dispatch_rules {
@@ -52,8 +53,27 @@ sub create_record {
         );
     }
 
-    my ($ok, $txn, $msg) = $self->_create_record($data);
+    my ($ok, $txn, $msg);
+
+    # Call validation hooks and return failure if any fail
+    ($ok, $msg) = RT::Extension::REST2->call_validation_hooks('create', 'RT::Ticket', $queue, $data);
+    if (!$ok) {
+        return (\400, $msg);
+    }
+
+    ($ok, $txn, $msg) = $self->_create_record($data);
     return ($ok, $msg);
+}
+
+sub update_record
+{
+    my ($self, $data) = @_;
+
+    my ($ok, $msg) = RT::Extension::REST2->call_validation_hooks('update', 'RT::Ticket', $self->record, $data);
+    if (!$ok) {
+        return (0, $msg);
+    }
+    return $self->_update_record($data);
 }
 
 sub forbidden {
