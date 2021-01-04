@@ -116,6 +116,12 @@ sub add_message {
         Subject   => $args{Subject},
     );
 
+    # Call validation hooks
+    my ($ok, $errmsg) = RT::Extension::REST2->call_validation_hooks('update', 'RT::Ticket', $self->record, \%args);
+    if (!$ok) {
+        return (\400, $errmsg);
+    }
+
     # Process attachments
     foreach my $attachment (@{$args{Attachments}}) {
         $MIME->attach(
