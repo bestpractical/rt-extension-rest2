@@ -467,6 +467,90 @@ my ($ticket_url, $ticket_id);
     is($content->{ContentType}, 'text/html');
 }
 
+# Ticket Reply, changing status
+{
+    my $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+
+    my ($hypermedia) = grep { $_->{ref} eq 'correspond' } @{ $content->{_hyperlinks} };
+    ok($hypermedia, 'got correspond hypermedia');
+    like($hypermedia->{_url}, qr[$rest_base_path/ticket/$ticket_id/correspond$]);
+
+    $res = $mech->post($mech->url_for_hypermedia('correspond'),
+        'Authorization' => $auth,
+        'Content-Type' => 'application/json',
+        'Content' => '{"Subject":"I am a-changing the status!","ContentType":"text/plain","Content":"Foo","Status":"rejected"}',
+    );
+    is($res->code, 201);
+
+    cmp_deeply($mech->json_response, [re(qr/Correspondence added|Message recorded/), "Status changed from 'open' to 'rejected'"]);
+
+    like($res->header('Location'), qr{$rest_base_path/transaction/\d+$});
+    $res = $mech->get($res->header('Location'),
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    $content = $mech->json_response;
+    is($content->{Type}, 'Correspond');
+    is($content->{TimeTaken}, 0);
+    is($content->{Object}{type}, 'ticket');
+    is($content->{Object}{id}, $ticket_id);
+
+    $res = $mech->get($mech->url_for_hypermedia('attachment'),
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    $content = $mech->json_response;
+    is($content->{Content}, 'Foo'),
+    is($content->{ContentType}, 'text/plain');
+
+    # Check that ticket status was updated
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    $content = $mech->json_response;
+    is($content->{Status}, 'rejected', "Ticket status really was changed");
+
+    # Try an invalid status
+    $res = $mech->post($mech->url_for_hypermedia('correspond'),
+        'Authorization' => $auth,
+        'Content-Type' => 'application/json',
+        'Content' => '{"Subject":"I am a-changing the status!","ContentType":"text/plain","Content":"Foo","Status":"bahaha-youre-so-funny"}',
+    );
+    is($res->code, 201);
+
+    cmp_deeply($mech->json_response, [re(qr/Correspondence added|Message recorded/), "Status 'bahaha-youre-so-funny' isn't a valid status for this ticket."]);
+
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    $content = $mech->json_response;
+    is($content->{Status}, 'open', "Ticket status really was not changed to illegal value");
+
+    # Comment and change status
+    $res = $mech->post($mech->url_for_hypermedia('comment'),
+        'Authorization' => $auth,
+        'Content-Type' => 'application/json',
+        'Content' => '{"Subject":"I am a-changing the status in a comment!","ContentType":"text/plain","Content":"Foo","Status":"rejected"}',
+    );
+    is($res->code, 201);
+
+    cmp_deeply($mech->json_response, ['Comments added', "Status changed from 'open' to 'rejected'"]);
+
+    $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    $content = $mech->json_response;
+    is($content->{Status}, 'rejected', "Ticket status really was changed during a comment");
+
+}
+
 # Ticket Sorted Search
 {
     my $ticket2 = RT::Ticket->new($RT::SystemUser);

@@ -269,6 +269,12 @@ below).
 
 The time, in minutes, you've taken to work on your response/comment, optional.
 
+=item C<Status>
+
+The new status (for example, "open", "rejected", etc.) to set the
+ticket to.  The Status value must be a valid status based on the
+lifecycle of the ticket's current queue.
+
 =back
 
 =head3 Add Attachments
@@ -495,19 +501,9 @@ Below are some examples using the endpoints above.
         'https://myrt.com/REST/2.0/ticket/6/comment'
 
     # Comment on a ticket with custom field update
-    curl -X POST -H "Content-Type: text/plain" -u 'root:password'
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
         -d '{ "Content": "Testing a comment", "ContentType": "text/plain", "CustomFields": {"Severity": "High"} }'
         'https://myrt.com/REST/2.0/ticket/6/comment'
-
-    # Create an Asset
-    curl -X POST -H "Content-Type: application/json" -u 'root:password'
-        -d '{"Name" : "Asset From Rest", "Catalog" : "General assets", "Content" : "Some content"}'
-        'https://myrt.com/REST/2.0/asset'
-
-    # Search Assets
-    curl -X POST -H "Content-Type: application/json" -u 'root:password'
-    -d '[{ "field" : "id", "operator" : ">=", "value" : 0 }]'
-    'https://myrt.com/REST/2.0/asset'
 
 =head3 Transactions
 
@@ -592,6 +588,20 @@ Below are some examples using the endpoints above.
 
     GET /asset/:id/history
         retrieve list of transactions for asset
+
+=head3 Assets Examples
+
+Below are some examples using the endpoints above.
+
+    # Create an Asset
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '{"Name" : "Asset From Rest", "Catalog" : "General assets", "Content" : "Some content"}'
+        'https://myrt.com/REST/2.0/asset'
+
+    # Search Assets
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+    -d '[{ "field" : "id", "operator" : ">=", "value" : 0 }]'
+    'https://myrt.com/REST/2.0/assets'
 
 =head3 Catalogs
 
