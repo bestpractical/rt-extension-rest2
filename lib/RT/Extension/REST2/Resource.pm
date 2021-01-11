@@ -74,6 +74,10 @@ sub expand_field {
                 $result = $contentObj->Content;
             }
         }
+    } elsif ($field eq 'MergedTickets') {
+        my $method = 'Merged';
+        my @obj = $item->$method;
+        $result = \@obj;
     } elsif ($item->can('_Accessible') && $item->_Accessible($field => 'read')) {
         # RT::Record derived object, so we can check access permissions.
 
