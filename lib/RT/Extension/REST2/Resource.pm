@@ -62,7 +62,22 @@ sub expand_field {
 
             push @{ $result }, values %values if %values;
         }
-
+    } elsif ($field eq 'Description' && $item->isa('RT::Ticket')) {
+        my $transactions = $item->Transactions;
+        $transactions->Limit(
+            FIELD => 'Type',
+            VALUE => 'Create'
+        );
+        if ($transactions->Count > 0) {
+            my $contentObj = $transactions->First->ContentObj;
+            if (defined $contentObj) {
+                $result = $contentObj->Content;
+            }
+        }
+    } elsif ($field eq 'MergedTickets') {
+        my $method = 'Merged';
+        my @obj = $item->$method;
+        $result = \@obj;
     } elsif ($item->can('_Accessible') && $item->_Accessible($field => 'read')) {
         # RT::Record derived object, so we can check access permissions.
 
@@ -73,19 +88,40 @@ sub expand_field {
             my $obj = $item->$method;
             if ( $obj->can('UID') and $result = expand_uid( $obj->UID ) ) {
                 my $param_field = $param_prefix . '[' . $field . ']';
-                my @subfields = split( /,/, $self->request->param($param_field) || '' );
-
-                for my $subfield (@subfields) {
-                    my $subfield_result = $self->expand_field( $obj, $subfield, $param_field );
-                    $result->{$subfield} = $subfield_result if defined $subfield_result;
-                }
+                $self->expand_subfield($result, $obj, $param_field);
             }
-        }
+        } elsif ($item->can($field) && defined blessed($item->$field) && $item->$field->isa('RT::Group')) {
+	        my $members = $item->$field->MembersObj;
+            my $param_field = $param_prefix . '[' . $field . ']';
+	        my @objects;
 
+            while (my $member = $members->Next) {
+                my $user = RT::User->new($item->CurrentUser);
+                $user->Load($member->MemberId);
+                my $res = expand_uid($user->UID);
+                $self->expand_subfield($res, $user, $param_field);
+                push(@objects, $res);
+            }
+            $result = \@objects;
+        }
         $result //= $item->$field;
     }
 
     return $result // '';
+}
+
+sub expand_subfield {
+    my $self = shift;
+    my $result = shift;
+    my $obj = shift;
+    my $param_field = shift;
+
+    my @subfields = split( /,/, $self->request->param($param_field) || '' );
+
+    for my $subfield (@subfields) {
+        my $subfield_result = $self->expand_field( $obj, $subfield, $param_field );
+        $result->{$subfield} = $subfield_result if defined $subfield_result;
+    }
 }
 
 __PACKAGE__->meta->make_immutable;
