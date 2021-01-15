@@ -1190,7 +1190,47 @@ that problem.
 The REST API uses the full range of HTTP status codes, and your client should
 handle them appropriately.
 
+=head2 Validation hooks
+
+The REST2 code permits you to add hooks to perform extra validation before
+a create or update call is allowed.  Currently, you can add validation hooks
+for ticket creation or updates.  (These hooks could be added from
+another RT extension, for example.)
+
+To add a validation hook, call
+
+    RT::Extension::REST2->add_validation_hook($type, $objtype, $coderef);
+
+In the above call, $type is the type of action being performed; currently
+it must be one of 'create' or 'update.  $objtype is the type of object
+on which the action is being performed; currently, only 'RT::Ticket'
+is supported.
+
+$coderef is a code reference that will be called by the validation
+machinery.  It should return a two-element list of the form ($ok, $msg).
+If validation succeeds, $ok must be 1 and $msg will be ignored.  If
+validation fails, $ok must be 0 and $msg should be a descriptive
+error message.
+
+The arguments passed to the validation hooks are as follows:
+
+For 'update', 'RT::Ticket', the validation code is passed two
+arguments: the first is the RT::Ticket object that is being
+updated and the second is the $data hash that was passed in
+to the update API call.
+
+For 'create', 'RT::Ticket', the validation code is passed
+two arguments: the first is the RT::Queue object in which
+the ticket is being created and the second is the $data
+hash that was passed in to the create API call.
+
+If multiple validation hooks are defined for the same
+$type and $objtype, then they are called in the order
+they were added.  If any hook returns failure, then
+validation is considered to have failed.
+
 =cut
+
 
 # XXX TODO: API doc
 
