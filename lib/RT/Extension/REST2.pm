@@ -275,6 +275,31 @@ The new status (for example, "open", "rejected", etc.) to set the
 ticket to.  The Status value must be a valid status based on the
 lifecycle of the ticket's current queue.
 
+=item C<CustomRoles>
+
+A hash whose keys are custom role names and values are as described below:
+
+For a single-value custom role, the value must be a string representing an
+email address or user name; the custom role is set to the user with
+that email address or user name.
+
+For a multi-value custom role, the value can be a string representing
+an email address or user name, or can be an array of email addresses
+or user names; in either case, the members of the custom role are set
+to the corresponding users.
+
+=item C<CustomFields>
+
+A hash similar to the C<CustomRoles> hash, but whose keys are custom
+field names that apply to the Ticket; those fields are set to the
+supplied values.
+
+=item C<TxnCustomFields>
+
+A hash similar to the C<CustomRoles> hash, but whose keys are custom
+field names that apply to the Transaction; those fields are set
+to the supplied values.
+
 =back
 
 =head3 Add Attachments
@@ -503,6 +528,11 @@ Below are some examples using the endpoints above.
     # Comment on a ticket with custom field update
     curl -X POST -H "Content-Type: application/json" -u 'root:password'
         -d '{ "Content": "Testing a comment", "ContentType": "text/plain", "CustomFields": {"Severity": "High"} }'
+        'https://myrt.com/REST/2.0/ticket/6/comment'
+
+    # Comment on a ticket with custom role update
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '{ "Content": "Testing a comment", "ContentType": "text/plain", "CustomRoles": {"Manager": "manager@example.com"} }'
         'https://myrt.com/REST/2.0/ticket/6/comment'
 
 =head3 Transactions
