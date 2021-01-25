@@ -20,7 +20,6 @@ name: RT-Extension-REST2
 no_index:
   directory:
     - inc
-    - t
     - xt
   package:
     - RT::Extension::REST2::Test
@@ -45,6 +44,6 @@ requires:
 resources:
   license: http://opensource.org/licenses/gpl-license.php
 version: '1.09'
-x_module_install_rtx_version: '0.40'
+x_module_install_rtx_version: '0.42'
 x_requires_rt: 4.2.4
 x_rt_too_new: 5.0.0

@@ -232,6 +232,34 @@ USAGE
         The time, in minutes, you've taken to work on your response/comment,
         optional.
 
+    Status
+        The new status (for example, "open", "rejected", etc.) to set the
+        ticket to. The Status value must be a valid status based on the
+        lifecycle of the ticket's current queue.
+
+    CustomRoles
+        A hash whose keys are custom role names and values are as described
+        below:
+
+        For a single-value custom role, the value must be a string
+        representing an email address or user name; the custom role is set
+        to the user with that email address or user name.
+
+        For a multi-value custom role, the value can be a string
+        representing an email address or user name, or can be an array of
+        email addresses or user names; in either case, the members of the
+        custom role are set to the corresponding users.
+
+    CustomFields
+        A hash similar to the CustomRoles hash, but whose keys are custom
+        field names that apply to the Ticket; those fields are set to the
+        supplied values.
+
+    TxnCustomFields
+        A hash similar to the CustomRoles hash, but whose keys are custom
+        field names that apply to the Transaction; those fields are set to
+        the supplied values.
+
    Add Attachments
     You can attach any binary or text file to your response or comment by
     specifying Attachements property in the JSON object, which should be a
@@ -444,19 +472,14 @@ USAGE
             'https://myrt.com/REST/2.0/ticket/6/comment'
 
         # Comment on a ticket with custom field update
-        curl -X POST -H "Content-Type: text/plain" -u 'root:password'
+        curl -X POST -H "Content-Type: application/json" -u 'root:password'
             -d '{ "Content": "Testing a comment", "ContentType": "text/plain", "CustomFields": {"Severity": "High"} }'
             'https://myrt.com/REST/2.0/ticket/6/comment'
 
-        # Create an Asset
+        # Comment on a ticket with custom role update
         curl -X POST -H "Content-Type: application/json" -u 'root:password'
-            -d '{"Name" : "Asset From Rest", "Catalog" : "General assets", "Content" : "Some content"}'
-            'https://myrt.com/REST/2.0/asset'
-
-        # Search Assets
-        curl -X POST -H "Content-Type: application/json" -u 'root:password'
-        -d '[{ "field" : "id", "operator" : ">=", "value" : 0 }]'
-        'https://myrt.com/REST/2.0/asset'
+            -d '{ "Content": "Testing a comment", "ContentType": "text/plain", "CustomRoles": {"Manager": "manager@example.com"} }'
+            'https://myrt.com/REST/2.0/ticket/6/comment'
 
    Transactions
         GET /transactions?query=<JSON>
@@ -536,6 +559,19 @@ USAGE
 
         GET /asset/:id/history
             retrieve list of transactions for asset
+
+   Assets Examples
+    Below are some examples using the endpoints above.
+
+        # Create an Asset
+        curl -X POST -H "Content-Type: application/json" -u 'root:password'
+            -d '{"Name" : "Asset From Rest", "Catalog" : "General assets", "Content" : "Some content"}'
+            'https://myrt.com/REST/2.0/asset'
+
+        # Search Assets
+        curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '[{ "field" : "id", "operator" : ">=", "value" : 0 }]'
+        'https://myrt.com/REST/2.0/assets'
 
    Catalogs
         GET /catalogs/all
