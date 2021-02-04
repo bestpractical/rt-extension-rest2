@@ -22,6 +22,9 @@ requires 'Web::Machine' => '0.12';
 requires 'Module::Path';
 requires 'Pod::POM';
 requires 'Path::Dispatcher' => '1.07';
+# Not a direct dependency, but we need the support for PUT passing
+# content data via hashrefs.
+requires 'HTTP::Message' => '6.07';
 
 recommends 'JSON::XS';
 
