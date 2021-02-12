@@ -116,6 +116,17 @@ sub add_message {
         Subject   => $args{Subject},
     );
 
+    # Check for any bad input data before making updates
+    my ($ok, $errmsg, $return_code) = $self->validate_input(\%args);
+    if (!$ok) {
+        if ( $return_code ) {
+            return error_as_json($self->response, \$return_code, $errmsg);
+        }
+        else {
+            return error_as_json($self->response, \400, $errmsg);
+        }
+    }
+
     # Process attachments
     foreach my $attachment (@{$args{Attachments}}) {
         $MIME->attach(
@@ -214,6 +225,15 @@ sub create_path {
     my $self = shift;
     my $id = $self->created_transaction->Id;
     return "/transaction/$id";
+}
+
+sub validate_input {
+    my $self = shift;
+    my $args = shift;
+
+    # Add CF and other pre-update validation here
+
+    return (1, 'Validation passed');
 }
 
 __PACKAGE__->meta->make_immutable;
