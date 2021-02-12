@@ -1,7 +1,15 @@
 Revision history for RT-Extension-REST2
 
-1.09 2020-05-04
+1.10 2021-02-12
+ - Various documentation fixes and updates
+ - Avoid errors for lazy-created custom role groups that may not
+   exist yet
+ - Grant SeeQueue in some tests to align with changes in RT
+ - Allow Status updates on correspond/comment
+ - Allow CustomRoles updates on correspond/comment
+ - Move validation to stand-alone methods for ticket updates
 
+1.09 2020-05-04
  - Allow searches to return disabled objects with
    'find_disabled_rows=1'(Thanks gibus!)
  - Improve the user experience of pagination(Thanks puck!)

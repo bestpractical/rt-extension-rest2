@@ -88,6 +88,7 @@ xt/queues.t
 xt/root.t
 xt/search-json.t
 xt/search-simple.t
+xt/ticket-correspond-customroles.t
 xt/ticket-customfields.t
 xt/ticket-customroles.t
 xt/ticket-links.t
