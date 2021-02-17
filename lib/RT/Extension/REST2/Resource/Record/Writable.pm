@@ -126,6 +126,7 @@ sub update_record {
 
     push @results, update_custom_fields($self->record, $data->{CustomFields});
     push @results, $self->_update_role_members($data);
+    push @results, $self->_update_links($data);
     push @results, $self->_update_disabled($data->{Disabled})
       unless grep { $_ eq 'Disabled' } $self->record->WritableAttributes;
     push @results, $self->_update_privileged($data->{Privileged})
@@ -247,6 +248,37 @@ sub _update_role_members {
                         push @results, $msg;
                     }
                 }
+            }
+        }
+    }
+
+    return @results;
+}
+
+sub _update_links {
+    my $self = shift;
+    my $data = shift;
+
+    my $record = $self->record;
+
+    return unless $record->DOES('RT::Record::Role::Links');
+
+    my @results;
+
+    foreach my $keyword ( 'Add', 'Delete' ) {
+        my $action = $keyword . 'Link';
+        if ( $data->{$action} && ref($data->{$action}) eq 'ARRAY' ) {
+            foreach my $link ( @{ $data->{$action} } ) {
+                next
+                    unless ( $link->{type}
+                    && ( $link->{target} || $link->{base} ) );
+                my ($val, $msg) =
+                    $record->$action(
+                    Type   => $link->{type},
+                    Target => $link->{target} || undef,
+                    Base   => $link->{base} || undef
+                    );
+                push @results, $msg;
             }
         }
     }
