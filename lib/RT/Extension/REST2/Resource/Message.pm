@@ -91,10 +91,9 @@ sub from_json {
                 unless $attachment->{$field};
             }
         }
-
-        $body->{NoContent} = 1 unless $body->{Content};
     }
 
+    $body->{NoContent} = 1 unless $body->{Content};
     if (!$body->{NoContent} && !$body->{ContentType}) {
         return error_as_json(
             $self->response,
