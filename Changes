@@ -1,5 +1,8 @@
 Revision history for RT-Extension-REST2
 
+1.11 2021-02-19
+ - Properly handle comment/correspond with no Content provided
+
 1.10 2021-02-12
  - Various documentation fixes and updates
  - Avoid errors for lazy-created custom role groups that may not
