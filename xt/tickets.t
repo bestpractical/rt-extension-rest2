@@ -467,6 +467,28 @@ my ($ticket_url, $ticket_id);
     is($content->{ContentType}, 'text/html');
 }
 
+# Ticket Reply, JSON request, missing Content
+{
+    my $res = $mech->get($ticket_url,
+        'Authorization' => $auth,
+    );
+    is($res->code, 200);
+    my $content = $mech->json_response;
+
+    my ($hypermedia) = grep { $_->{ref} eq 'correspond' } @{ $content->{_hyperlinks} };
+    ok($hypermedia, 'got correspond hypermedia');
+    like($hypermedia->{_url}, qr[$rest_base_path/ticket/$ticket_id/correspond$]);
+
+    $res = $mech->post($mech->url_for_hypermedia('correspond'),
+        'Authorization' => $auth,
+        'Content-Type' => 'application/json',
+        'Content' => '{"Subject":"No body!"}',
+    );
+    is($res->code, 201);
+
+    cmp_deeply($mech->json_response, [re(qr/Correspondence added|Message recorded/)]);
+}
+
 # Ticket Reply, changing status
 {
     my $res = $mech->get($ticket_url,
