@@ -62,7 +62,48 @@ sub expand_field {
 
             push @{ $result }, values %values if %values;
         }
+    } elsif ($field eq 'CustomRoles') {
+        if ( $item->DOES("RT::Record::Role::Roles") ) {
+            my %data;
+            for my $role ( $item->Roles( ACLOnly => 0 ) ) {
+                next unless $role =~ /^RT::CustomRole-/;
+                $data{$role} = [];
 
+                my $group = $item->RoleGroup($role);
+                if ( !$group->Id ) {
+                    $data{$role} = expand_uid( RT->Nobody->UserObj->UID ) if $item->_ROLES->{$role}{Single};
+                    next;
+                }
+
+                my $gms = $group->MembersObj;
+                while ( my $gm = $gms->Next ) {
+                    push @{ $data{$role} }, expand_uid( $gm->MemberObj->Object->UID );
+                }
+
+                # Avoid the extra array ref for single member roles
+                $data{$role} = shift @{$data{$role}} if $group->SingleMemberRoleGroup;
+            }
+            return \%data;
+        }
+    } elsif ($field =~ /^RT::CustomRole-\d+$/) {
+        if ( $item->DOES("RT::Record::Role::Roles") ) {
+            my $result = [];
+
+            my $group = $item->RoleGroup($field);
+            if ( !$group->Id ) {
+                $result = expand_uid( RT->Nobody->UserObj->UID ) if $item->_ROLES->{$field}{Single};
+                next;
+            }
+
+            my $gms = $group->MembersObj;
+            while ( my $gm = $gms->Next ) {
+                push @$result, expand_uid( $gm->MemberObj->Object->UID );
+            }
+
+            # Avoid the extra array ref for single member roles
+            $result = shift @$result if $group->SingleMemberRoleGroup;
+            return $result;
+        }
     } elsif ($item->can('_Accessible') && $item->_Accessible($field => 'read')) {
         # RT::Record derived object, so we can check access permissions.
 
