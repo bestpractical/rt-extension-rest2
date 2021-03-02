@@ -16,7 +16,7 @@ sub dispatch_rules {
 }
 
 use Encode qw( decode_utf8 );
-use RT::Extension::REST2::Util qw( error_as_json );
+use RT::Extension::REST2::Util qw( error_as_json expand_uid );
 use RT::Search::Simple;
 
 has 'query' => (
@@ -64,6 +64,25 @@ sub limit_collection {
         if @orderby_cols;
 
     return 1;
+}
+
+sub expand_field {
+    my $self         = shift;
+    my $item         = shift;
+    my $field        = shift;
+    my $param_prefix = shift;
+    if ( $field =~ /^(Requestor|AdminCc|Cc)/ ) {
+        my $role    = $1;
+        my $members = [];
+        if ( my $group = $item->RoleGroup($role) ) {
+            my $gms = $group->MembersObj;
+            while ( my $gm = $gms->Next ) {
+                push @$members, expand_uid( $gm->MemberObj->Object->UID );
+            }
+        }
+        return $members;
+    }
+    return $self->SUPER::expand_field( $item, $field, $param_prefix );
 }
 
 __PACKAGE__->meta->make_immutable;
