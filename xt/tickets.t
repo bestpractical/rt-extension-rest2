@@ -194,7 +194,7 @@ my ($ticket_url, $ticket_id);
 
 # Ticket Search - Fields
 {
-    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Subject",
+    my $res = $mech->get("$rest_base_path/tickets?query=id>0&fields=Status,Subject,_hyperlinks",
         'Authorization' => $auth,
     );
     is($res->code, 200);
@@ -204,7 +204,13 @@ my ($ticket_url, $ticket_id);
     my $ticket = $content->{items}->[0];
     is($ticket->{Subject}, 'Ticket creation using REST');
     is($ticket->{Status}, 'new');
-    is(scalar keys %$ticket, 5);
+
+    my $links = $ticket->{_hyperlinks};
+    is( @$links, 2, '2 links by default' );
+    like( $links->[0]{_url}, qr{$rest_base_path/ticket/1$},         'Self link' );
+    like( $links->[1]{_url}, qr{$rest_base_path/ticket/1/history$}, 'History link' );
+
+    is(scalar keys %$ticket, 6);
 }
 
 # Ticket Search - Fields, sub objects, no right to see Queues
