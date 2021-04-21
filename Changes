@@ -1,5 +1,9 @@
 Revision history for RT-Extension-REST2
 
+1.12 2021-04-21
+ - Support _hyperlinks field in collection
+ - Fix the logic of determining if a link is local for assets/articles
+
 1.11 2021-02-19
  - Properly handle comment/correspond with no Content provided
 
