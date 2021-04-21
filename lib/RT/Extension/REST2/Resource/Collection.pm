@@ -72,8 +72,32 @@ sub serialize {
         # Allow selection of desired fields
         if ($result) {
             for my $field (@fields) {
-                my $field_result = $self->expand_field($item, $field);
-                $result->{$field} = $field_result if defined $field_result;
+                if ( $field eq '_hyperlinks' ) {
+                    my $class = ref $item;
+                    $class =~ s!^RT::!RT::Extension::REST2::Resource::!;
+                    if ( $class->require ) {
+                        my $object = $class->new(
+                            record_class => ref $item,
+                            record_id    => $item->id,
+                            record       => $item,
+                            request      => $self->request,
+                            response     => Plack::Response->new,
+                        );
+                        if ( $object->can('hypermedia_links') ) {
+                            $result->{$field} = $object->hypermedia_links;
+                        }
+                        else {
+                            RT->Logger->warning("_hyperlinks is not supported by $class, skipping");
+                        }
+                    }
+                    else {
+                        RT->Logger->warning("Couldn't load $class, skipping _hyperlinks");
+                    }
+                }
+                else {
+                    my $field_result = $self->expand_field($item, $field);
+                    $result->{$field} = $field_result if defined $field_result;
+                }
             }
         }
         push @results, $result;
