@@ -10,7 +10,7 @@ extends 'RT::Extension::REST2::Resource';
 use Scalar::Util qw( blessed );
 use Web::Machine::FSM::States qw( is_status_code );
 use Module::Runtime qw( require_module );
-use RT::Extension::REST2::Util qw( serialize_record expand_uid format_datetime );
+use RT::Extension::REST2::Util qw( expand_uid format_datetime );
 use POSIX qw( ceil );
 use Encode;
 
@@ -84,7 +84,7 @@ sub serialize {
     my @fields = defined $self->request->param('fields') ? split(/,/, $self->request->param('fields')) : ();
 
     while (my $item = $collection->Next) {
-        my $result = expand_uid( $item->UID );
+        my $result = $self->serialize_record( $item->UID );
 
         # Allow selection of desired fields
         if ($result) {
@@ -152,6 +152,12 @@ sub serialize {
     };
 
     return \%results;
+}
+
+sub serialize_record {
+    my $self   = shift;
+    my $record = shift;
+    return expand_uid($record);
 }
 
 # XXX TODO: Bulk update via DELETE/PUT on a collection resource?
