@@ -12,6 +12,7 @@ use Web::Machine::FSM::States qw( is_status_code );
 use Module::Runtime qw( require_module );
 use RT::Extension::REST2::Util qw( serialize_record expand_uid format_datetime );
 use POSIX qw( ceil );
+use Encode;
 
 has 'collection_class' => (
     is  => 'ro',
@@ -45,6 +46,21 @@ sub setup_paging {
     $self->collection->GotoPage($page - 1);
 }
 
+sub setup_ordering {
+    my $self = shift;
+    my @orderby_cols;
+    my @orders = $self->request->param('order');
+    foreach my $orderby ($self->request->param('orderby')) {
+        $orderby = decode_utf8($orderby);
+        my $order = shift @orders || 'ASC';
+        $order = uc(decode_utf8($order));
+        $order = 'ASC' unless $order eq 'DESC';
+        push @orderby_cols, {FIELD => $orderby, ORDER => $order};
+    }
+    $self->collection->OrderByCols(@orderby_cols)
+        if @orderby_cols;
+}
+
 sub limit_collection {
     my $self        = shift;
     my $collection  = $self->collection;
@@ -57,6 +73,7 @@ sub limit_collection {
 sub search {
     my $self = shift;
     $self->setup_paging;
+    $self->setup_ordering;
     return $self->limit_collection;
 }
 

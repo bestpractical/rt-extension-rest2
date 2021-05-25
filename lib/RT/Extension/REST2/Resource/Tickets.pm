@@ -46,25 +46,13 @@ sub allowed_methods {
     [ 'GET', 'HEAD', 'POST' ]
 }
 
-sub limit_collection {
+override 'limit_collection' => sub {
     my $self = shift;
     my ($ok, $msg) = $self->collection->FromSQL( $self->query );
     return error_as_json( $self->response, 0, $msg ) unless $ok;
-
-    my @orderby_cols;
-    my @orders = $self->request->param('order');
-    foreach my $orderby ($self->request->param('orderby')) {
-        $orderby = decode_utf8($orderby);
-        my $order = shift @orders || 'ASC';
-        $order = uc(decode_utf8($order));
-        $order = 'ASC' unless $order eq 'DESC';
-        push @orderby_cols, {FIELD => $orderby, ORDER => $order};
-    }
-    $self->collection->OrderByCols(@orderby_cols)
-        if @orderby_cols;
-
+    super();
     return 1;
-}
+};
 
 sub expand_field {
     my $self         = shift;
