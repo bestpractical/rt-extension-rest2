@@ -28,7 +28,7 @@ sub expand_field {
         if ( my $group = $item->RoleGroup($role) ) {
             my $gms = $group->MembersObj;
             while ( my $gm = $gms->Next ) {
-                push @$members, expand_uid( $gm->MemberObj->Object->UID );
+                push @$members, $self->_expand_object( $gm->MemberObj->Object, $field, $param_prefix );
             }
             $members = shift @$members if $group->SingleMemberRoleGroup;
         }
