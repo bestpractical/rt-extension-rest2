@@ -464,8 +464,19 @@ curl for SSL like --cacert.
     GET /tickets?simple=1;query=<simple search query>
         search for tickets using simple search syntax
 
+    # If there are multiple saved searches using the same description, the
+    # behavior of "which saved search shall be selected" is undefined, use
+    # id instead in this case.
+
+    # If both search and other arguments like "query" are specified, the
+    # latter takes higher precedence than the corresponding fields defined
+    # in the given saved search.
+
+    GET /tickets?search=<saved search id or description>
+        search for tickets using saved search
+
     POST /tickets
-        search for tickets with the 'query' and optional 'simple' parameters
+        search for tickets with the 'search' or 'query' and optional 'simple' parameters 
 
     POST /ticket
         create a ticket; provide JSON content
@@ -809,6 +820,16 @@ Below are some examples using the endpoints above.
 
     GET /customrole/:id
         retrieve a custom role
+
+=head3 Saved Searches
+
+    GET /searches?query=<JSON>
+    POST /searches
+        search for saved searches using L</JSON searches> syntax
+
+    GET /search/:id
+    GET /search/:description
+        retrieve a saved search
 
 =head3 Miscellaneous
 
