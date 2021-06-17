@@ -492,6 +492,10 @@ curl for SSL like --cacert.
     PUT /tickets/bulk
         update multiple tickets' metadata; provide JSON content(array of hashes)
 
+    POST /tickets/bulk/correspond
+    POST /tickets/bulk/comment
+        add a reply or comment to multiple tickets; provide JSON content(array of hashes)
+
 =head3 Ticket Examples
 
 Below are some examples using the endpoints above.
