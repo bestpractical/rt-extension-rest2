@@ -492,6 +492,10 @@ curl for SSL like --cacert.
     PUT /tickets/bulk
         update multiple tickets' metadata; provide JSON content(array of hashes)
 
+    POST /tickets/bulk/correspond
+    POST /tickets/bulk/comment
+        add a reply or comment to multiple tickets; provide JSON content(array of hashes)
+
 =head3 Ticket Examples
 
 Below are some examples using the endpoints above.
@@ -534,6 +538,15 @@ Below are some examples using the endpoints above.
     curl -X POST -H "Content-Type: application/json" -u 'root:password'
         -d '{ "Content": "Testing a comment", "ContentType": "text/plain", "CustomRoles": {"Manager": "manager@example.com"} }'
         'https://myrt.com/REST/2.0/ticket/6/comment'
+
+    # Update many tickets at once with bulk by sending an array with ticket ids
+    # Results are returned for each update in a JSON array with ticket ids and corresponding messages
+    curl -X POST -H "Content-Type: application/json" -u 'root:password'
+        -d '[{ "id": "20", "Content": "Testing a correspondence", "ContentType": "text/plain" },
+             { "id": "18", "Content": "Testing a correspondence", "ContentType": "text/plain", "Status":"resolved", "CustomRoles": {"Manager": "manager@example.com"}, "CustomFields": {"State": "New York"} }]'
+        'https://myrt.com/REST/2.0/tickets/bulk/correspond'
+
+    [["20","Correspondence added"],["18","Correspondence added","State New York added","Added manager@example.com as Manager for this ticket","Status changed from 'open' to 'resolved'"]]
 
 =head3 Transactions
 
