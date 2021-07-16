@@ -464,8 +464,19 @@ curl for SSL like --cacert.
     GET /tickets?simple=1;query=<simple search query>
         search for tickets using simple search syntax
 
+    # If there are multiple saved searches using the same description, the
+    # behavior of "which saved search shall be selected" is undefined, use
+    # id instead in this case.
+
+    # If both search and other arguments like "query" are specified, the
+    # latter takes higher precedence than the corresponding fields defined
+    # in the given saved search.
+
+    GET /tickets?search=<saved search id or description>
+        search for tickets using saved search
+
     POST /tickets
-        search for tickets with the 'query' and optional 'simple' parameters
+        search for tickets with the 'search' or 'query' and optional 'simple' parameters 
 
     POST /ticket
         create a ticket; provide JSON content
@@ -810,6 +821,16 @@ Below are some examples using the endpoints above.
     GET /customrole/:id
         retrieve a custom role
 
+=head3 Saved Searches
+
+    GET /searches?query=<JSON>
+    POST /searches
+        search for saved searches using L</JSON searches> syntax
+
+    GET /search/:id
+    GET /search/:description
+        retrieve a saved search
+
 =head3 Miscellaneous
 
     GET /
@@ -1105,14 +1126,14 @@ You can use additional fields parameters to expand child blocks, for
 example (line wrapping inserted for readability):
 
     XX_RT_URL_XX/REST/2.0/tickets
-      ?fields=Owner,Status,Created,Subject,Queue,CustomFields
+      ?fields=Owner,Status,Created,Subject,Queue,CustomFields,Requestor,Cc,AdminCc,RT::CustomRole-1
       &fields[Queue]=Name,Description
 
 Says that in the result set for tickets, the extra fields for Owner, Status,
-Created, Subject, Queue and CustomFields should be included. But in
-addition, for the Queue block, also include Name and Description. The
-results would be similar to this (only one ticket is displayed in this
-example):
+Created, Subject, Queue, CustomFields, Requestor, Cc, AdminCc and
+CustomRoles should be included. But in addition, for the Queue block, also
+include Name and Description. The results would be similar to this (only one
+ticket is displayed in this example):
 
    "items" : [
       {
@@ -1142,8 +1163,30 @@ example):
                  "name" : "My Custom Field",
                  "values" : [
                      "CustomField value"
-                 },
+                 ]
              }
+         ],
+         "Requestor" : [
+            {
+               "id" : "root",
+               "type" : "user",
+               "_url" : "XX_RT_URL_XX/REST/2.0/user/root"
+            }
+         ],
+         "Cc" : [
+            {
+               "id" : "root",
+               "type" : "user",
+               "_url" : "XX_RT_URL_XX/REST/2.0/user/root"
+            }
+         ],
+         "AdminCc" : [],
+         "RT::CustomRole-1" : [
+            {
+               "_url" : "XX_RT_URL_XX/REST/2.0/user/foo@example.com",
+               "type" : "user",
+               "id" : "foo@example.com"
+            }
          ]
       }
       { … },

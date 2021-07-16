@@ -10,8 +10,9 @@ extends 'RT::Extension::REST2::Resource';
 use Scalar::Util qw( blessed );
 use Web::Machine::FSM::States qw( is_status_code );
 use Module::Runtime qw( require_module );
-use RT::Extension::REST2::Util qw( serialize_record expand_uid format_datetime );
+use RT::Extension::REST2::Util qw( expand_uid format_datetime );
 use POSIX qw( ceil );
+use Encode;
 
 has 'collection_class' => (
     is  => 'ro',
@@ -45,6 +46,21 @@ sub setup_paging {
     $self->collection->GotoPage($page - 1);
 }
 
+sub setup_ordering {
+    my $self = shift;
+    my @orderby_cols;
+    my @orders = $self->request->param('order');
+    foreach my $orderby ($self->request->param('orderby')) {
+        $orderby = decode_utf8($orderby);
+        my $order = shift @orders || 'ASC';
+        $order = uc(decode_utf8($order));
+        $order = 'ASC' unless $order eq 'DESC';
+        push @orderby_cols, {FIELD => $orderby, ORDER => $order};
+    }
+    $self->collection->OrderByCols(@orderby_cols)
+        if @orderby_cols;
+}
+
 sub limit_collection {
     my $self        = shift;
     my $collection  = $self->collection;
@@ -57,6 +73,7 @@ sub limit_collection {
 sub search {
     my $self = shift;
     $self->setup_paging;
+    $self->setup_ordering;
     return $self->limit_collection;
 }
 
@@ -67,7 +84,7 @@ sub serialize {
     my @fields = defined $self->request->param('fields') ? split(/,/, $self->request->param('fields')) : ();
 
     while (my $item = $collection->Next) {
-        my $result = expand_uid( $item->UID );
+        my $result = $self->serialize_record( $item->UID );
 
         # Allow selection of desired fields
         if ($result) {
@@ -135,6 +152,12 @@ sub serialize {
     };
 
     return \%results;
+}
+
+sub serialize_record {
+    my $self   = shift;
+    my $record = shift;
+    return expand_uid($record);
 }
 
 # XXX TODO: Bulk update via DELETE/PUT on a collection resource?
