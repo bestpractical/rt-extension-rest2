@@ -284,7 +284,7 @@ sub update_custom_fields {
         my $val = $data->{$cfid};
 
         my $cf = $record->LoadCustomFieldByIdentifier($cfid);
-        next unless $cf->ObjectTypeFromLookupType($cf->__Value('LookupType'))->isa(ref $record);
+        next unless $cf->Id && $cf->ObjectTypeFromLookupType($cf->__Value('LookupType'))->isa(ref $record);
 
         if ($cf->SingleValue) {
             my %args;
