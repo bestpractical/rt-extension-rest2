@@ -324,7 +324,7 @@ sub update_custom_fields {
                 Value => $val,
                 %args,
             );
-            push @results, $msg;
+            push @results, $msg // ();
         }
         else {
             my %count;
