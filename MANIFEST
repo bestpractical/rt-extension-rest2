@@ -31,6 +31,7 @@ lib/RT/Extension/REST2/Resource/Catalogs.pm
 lib/RT/Extension/REST2/Resource/Collection.pm
 lib/RT/Extension/REST2/Resource/Collection/ProcessPOSTasGET.pm
 lib/RT/Extension/REST2/Resource/Collection/QueryByJSON.pm
+lib/RT/Extension/REST2/Resource/Collection/Search.pm
 lib/RT/Extension/REST2/Resource/CustomField.pm
 lib/RT/Extension/REST2/Resource/CustomFields.pm
 lib/RT/Extension/REST2/Resource/CustomFieldValue.pm
@@ -54,6 +55,8 @@ lib/RT/Extension/REST2/Resource/Record/Writable.pm
 lib/RT/Extension/REST2/Resource/Role/RequestBodyIsJSON.pm
 lib/RT/Extension/REST2/Resource/Root.pm
 lib/RT/Extension/REST2/Resource/RT.pm
+lib/RT/Extension/REST2/Resource/Search.pm
+lib/RT/Extension/REST2/Resource/Searches.pm
 lib/RT/Extension/REST2/Resource/Ticket.pm
 lib/RT/Extension/REST2/Resource/Tickets.pm
 lib/RT/Extension/REST2/Resource/TicketsBulk.pm
@@ -88,6 +91,7 @@ xt/queues.t
 xt/root.t
 xt/search-json.t
 xt/search-simple.t
+xt/searches.t
 xt/ticket-correspond-customroles.t
 xt/ticket-customfields.t
 xt/ticket-customroles.t

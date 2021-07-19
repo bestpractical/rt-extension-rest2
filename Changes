@@ -1,5 +1,14 @@
 Revision history for RT-Extension-REST2
 
+1.13 2021-07-19
+
+ - Add /tickets/bulk/correspond and /tickets/bulk/comment endpoints
+ - Add /searches/ and /search/ endpoits for saved searches
+ - Support to search tickets from saved searches
+ - Support additional fields parameters for Roles and CustomFields in Collection
+ - Support roles for ticket/asset searches
+ - Skip empty messages from custom field updates
+
 1.12 2021-04-21
  - Support _hyperlinks field in collection
  - Fix the logic of determining if a link is local for assets/articles
