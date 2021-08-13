@@ -1,5 +1,9 @@
 Revision history for RT-Extension-REST2
 
+1.14 2021-08-13
+ - Support custom roles by name on ticket create
+ - Skip invalid custom fields on create/update
+
 1.13 2021-07-19
 
  - Add /tickets/bulk/correspond and /tickets/bulk/comment endpoints
