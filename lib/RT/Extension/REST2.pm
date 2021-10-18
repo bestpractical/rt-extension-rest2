@@ -16,6 +16,13 @@ use RT::Extension::REST2::Dispatcher;
 
 RT::Extension::REST2 - Adds a modern REST API to RT under /REST/2.0/
 
+=head1 RT VERSION
+
+Works with RT 4.4.
+
+REST2 is core in RT 5.0.0 and later, so you do not need this extension
+for those versions.
+
 =head1 INSTALLATION
 
 =over
