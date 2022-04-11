@@ -1291,17 +1291,13 @@ handle them appropriately.
 sub to_psgi_app {
     my $self = shift;
     my $res = $self->to_app(@_);
-
-    return Plack::Util::response_cb($res, sub {
-        my $res = shift;
-        $self->CleanupRequest;
-    });
 }
 
 sub to_app {
     my $class = shift;
 
     return builder {
+        enable '+RT::Extension::REST2::Middleware::CleanupRequest';
         enable '+RT::Extension::REST2::Middleware::ErrorAsJSON';
         enable '+RT::Extension::REST2::Middleware::Log';
         enable '+RT::Extension::REST2::Middleware::Auth';
@@ -1324,24 +1320,6 @@ sub PSGIWrap {
         mount $REST_PATH => $class->to_app;
         mount '/' => $app;
     };
-}
-
-sub CleanupRequest {
-
-    if ( $RT::Handle && $RT::Handle->TransactionDepth ) {
-        $RT::Handle->ForceRollback;
-        $RT::Logger->crit(
-            "Transaction not committed. Usually indicates a software fault."
-            . "Data loss may have occurred" );
-    }
-
-    # Clean out the ACL cache. the performance impact should be marginal.
-    # Consistency is imprived, too.
-    RT::Principal->InvalidateACLCache();
-    DBIx::SearchBuilder::Record::Cachable->FlushCache
-      if ( RT->Config->Get('WebFlushDbCacheEveryRequest')
-        and UNIVERSAL::can(
-            'DBIx::SearchBuilder::Record::Cachable' => 'FlushCache' ) );
 }
 
 =head1 AUTHOR
