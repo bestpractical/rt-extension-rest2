@@ -17,6 +17,7 @@ inc/YAML/Tiny.pm
 lib/RT/Extension/REST2.pm
 lib/RT/Extension/REST2/Dispatcher.pm
 lib/RT/Extension/REST2/Middleware/Auth.pm
+lib/RT/Extension/REST2/Middleware/CleanupRequest.pm
 lib/RT/Extension/REST2/Middleware/ErrorAsJSON.pm
 lib/RT/Extension/REST2/Middleware/Log.pm
 lib/RT/Extension/REST2/PodViewer.pm

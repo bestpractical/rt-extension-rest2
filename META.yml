@@ -43,7 +43,7 @@ requires:
   perl: 5.10.1
 resources:
   license: http://opensource.org/licenses/gpl-license.php
-version: '1.15'
-x_module_install_rtx_version: '0.42'
+version: '1.16'
+x_module_install_rtx_version: '0.43'
 x_requires_rt: 4.2.4
 x_rt_too_new: 5.0.0

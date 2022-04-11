@@ -1,5 +1,11 @@
 Revision history for RT-Extension-REST2
 
+1.16 2022-04-11
+ - Refactor CleanupRequest into a PSGI middleware module to make sure it
+   gets called consistently.
+ - Set the current interface to REST2 for REST2-based requests, if
+   supported in the running RT.
+
 1.15 2021-10-18
  - Support custom roles by name on ticket update
  - Add RT Version section
