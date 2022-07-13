@@ -1,5 +1,8 @@
 Revision history for RT-Extension-REST2
 
+1.17 2022-07-13
+ - Update tests for the custom field error message change in 4.4.6
+
 1.16 2022-04-11
  - Refactor CleanupRequest into a PSGI middleware module to make sure it
    gets called consistently.
