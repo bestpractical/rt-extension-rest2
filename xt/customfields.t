@@ -2,6 +2,7 @@ use strict;
 use warnings;
 use lib 't/lib';
 use RT::Extension::REST2::Test tests => undef;
+use Test::Deep;
 
 my $mech = RT::Extension::REST2::Test->mech;
 my $auth = RT::Extension::REST2::Test->authorization_header;
@@ -206,7 +207,7 @@ my $freeform_cf_id;
     like($links->[1]{_url}, qr{$rest_base_path/customfield/$basedon_cf_id/values$});
 
     my $values = $content->{Values};
-    is_deeply($values, ['With First Value', 'With No Value']);
+    cmp_deeply($values, bag('With First Value', 'With No Value'));
 }
 
 # BasedOn CustomField display with category filter

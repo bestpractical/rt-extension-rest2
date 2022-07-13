@@ -19,7 +19,7 @@ my $select_cf_values = $select_cf->Values->ItemsArrayRef;
 my $basedon_cf = RT::CustomField->new(RT->SystemUser);
 $basedon_cf->Create(Name => 'SubSelect CF', Type => 'Select', MaxValues => 1, BasedOn => $select_cf->id);
 $basedon_cf->AddValue(Name => 'With First Value', Category => $select_cf_values->[0]->Name, SortOder => 0);
-$basedon_cf->AddValue(Name => 'With No Value', SortOder => 0);
+$basedon_cf->AddValue(Name => 'With No Value', Category => $select_cf_values->[1]->Name, SortOder => 0);
 my $basedon_cf_id = $basedon_cf->id;
 my $basedon_cf_values = $basedon_cf->Values->ItemsArrayRef;
 
