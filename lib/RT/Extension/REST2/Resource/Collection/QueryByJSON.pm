@@ -63,6 +63,9 @@ sub limit_collection {
             ( $limit->{entry_aggregator}
                 ? (ENTRYAGGREGATOR => $limit->{entry_aggregator})
                 : () ),
+            # Always force a subclause here as some collections such as
+            # RT::Users for example needs it when using an OR entry aggregator
+            SUBCLAUSE => 'json_search',
         );
     }
 
